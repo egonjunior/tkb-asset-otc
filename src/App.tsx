@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import NewOrder from "./pages/NewOrder";
 import OrderDetails from "./pages/OrderDetails";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import QuotePage from "./pages/QuotePage";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/home" element={<Landing />} />
+          <Route path="/cotacao" element={<QuotePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/dashboard" element={<Dashboard />} />

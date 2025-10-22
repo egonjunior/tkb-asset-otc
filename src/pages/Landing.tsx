@@ -2,14 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Shield, TrendingUp, Zap, ArrowRight, LineChart } from "lucide-react";
 import tkbLogo from "@/assets/tkb-logo.png";
-import QuoteChart from "@/components/QuoteChart";
+import { useBinancePrice } from "@/hooks/useBinancePrice";
 
 const Landing = () => {
   const navigate = useNavigate();
-  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const { binancePrice, tkbPrice, isLoading } = useBinancePrice();
 
   const features = [
     {
@@ -82,7 +81,7 @@ const Landing = () => {
               size="lg" 
               variant="outline" 
               className="min-w-[200px]"
-              onClick={() => setShowQuoteModal(true)}
+              onClick={() => navigate("/cotacao")}
             >
               <LineChart className="mr-2 h-5 w-5" />
               Ver Cotação Atual
@@ -93,20 +92,24 @@ const Landing = () => {
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
             <Card className="bg-card/50 backdrop-blur-sm shadow-lg animate-fade-in">
               <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-primary">+0,9%</p>
+                <p className="text-3xl font-bold text-primary">
+                  {isLoading ? "..." : `R$ ${binancePrice?.toFixed(2)}`}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">Binance (agora)</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-card/50 backdrop-blur-sm shadow-lg animate-fade-in">
+              <CardContent className="pt-6 text-center">
+                <p className="text-3xl font-bold text-success">
+                  {isLoading ? "..." : `R$ ${tkbPrice?.toFixed(3)}`}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">TKB Asset</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-card/50 backdrop-blur-sm shadow-lg animate-fade-in">
+              <CardContent className="pt-6 text-center">
+                <p className="text-3xl font-bold text-foreground">+0,9%</p>
                 <p className="text-sm text-muted-foreground mt-1">Spread fixo</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card/50 backdrop-blur-sm shadow-lg animate-fade-in">
-              <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-success">15 min</p>
-                <p className="text-sm text-muted-foreground mt-1">Tempo médio</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card/50 backdrop-blur-sm shadow-lg animate-fade-in">
-              <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-foreground">24/7</p>
-                <p className="text-sm text-muted-foreground mt-1">Disponível</p>
               </CardContent>
             </Card>
           </div>
@@ -174,7 +177,7 @@ const Landing = () => {
                 size="lg" 
                 variant="outline"
                 className="min-w-[200px]"
-                onClick={() => setShowQuoteModal(true)}
+                onClick={() => navigate("/cotacao")}
               >
                 <LineChart className="mr-2 h-5 w-5" />
                 Ver Cotação
@@ -196,16 +199,6 @@ const Landing = () => {
           </p>
         </div>
       </footer>
-
-      {/* Quote Modal */}
-      <Dialog open={showQuoteModal} onOpenChange={setShowQuoteModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Cotação em Tempo Real</DialogTitle>
-          </DialogHeader>
-          <QuoteChart />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
