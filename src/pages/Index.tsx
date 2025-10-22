@@ -5,14 +5,15 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirecionar para login se não estiver autenticado
+    // Redirecionar baseado no status de autenticação
     const userType = localStorage.getItem("userType");
     if (userType === "client") {
       navigate("/dashboard");
     } else if (userType === "admin") {
       navigate("/admin/dashboard");
     } else {
-      navigate("/login");
+      // Se não estiver autenticado, mostrar landing page
+      navigate("/home");
     }
   }, [navigate]);
 
