@@ -9,7 +9,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
 import Dashboard from "./pages/Dashboard";
-import NewOrder from "./pages/NewOrder";
+import TradingOrderPage from "./pages/TradingOrderPage";
 import OrderDetails from "./pages/OrderDetails";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import QuotePage from "./pages/QuotePage";
@@ -29,7 +29,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/order/new" element={<NewOrder />} />
+          <Route path="/order/new" element={<TradingOrderPage />} />
           <Route path="/order/:orderId" element={<OrderDetails />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

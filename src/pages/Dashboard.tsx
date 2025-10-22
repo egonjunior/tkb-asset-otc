@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import QuoteCard from "@/components/QuoteCard";
 import { Coins, LogOut, Plus, Clock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useBinancePrice } from "@/hooks/useBinancePrice";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Order {
   id: string;
@@ -27,35 +29,38 @@ interface Order {
 const Dashboard = () => {
   const navigate = useNavigate();
   const userName = localStorage.getItem("userName") || "Usuário";
-  const [binancePrice] = useState(5.40);
-  const [otcPrice] = useState(5.449);
-  const [lastUpdate, setLastUpdate] = useState(new Date());
-  const [orders] = useState<Order[]>([
-    {
-      id: "OTC-2025-001",
-      amount: 1000,
-      network: "TRC20",
-      total: 5449.00,
-      status: "completed",
-      createdAt: new Date(Date.now() - 86400000),
-    },
-    {
-      id: "OTC-2025-002",
-      amount: 500,
-      network: "ERC20",
-      total: 2724.50,
-      status: "expired",
-      createdAt: new Date(Date.now() - 43200000),
-    },
-  ]);
+  const { binancePrice, tkbPrice, lastUpdate, isLoading } = useBinancePrice();
+  const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    // Simular atualização da cotação a cada 30 segundos
-    const interval = setInterval(() => {
-      setLastUpdate(new Date());
-    }, 30000);
+    const fetchOrders = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    return () => clearInterval(interval);
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching orders:', error);
+        return;
+      }
+
+      if (data) {
+        setOrders(data.map(order => ({
+          id: order.id,
+          amount: Number(order.amount),
+          network: order.network,
+          total: Number(order.total),
+          status: order.status as Order['status'],
+          createdAt: new Date(order.created_at),
+        })));
+      }
+    };
+
+    fetchOrders();
   }, []);
 
   const handleLogout = () => {
@@ -114,8 +119,8 @@ const Dashboard = () => {
           {/* Cotação */}
           <div>
             <QuoteCard
-              binancePrice={binancePrice}
-              otcPrice={otcPrice}
+              binancePrice={binancePrice || 0}
+              otcPrice={tkbPrice || 0}
               lastUpdate={lastUpdate}
             />
             <div className="mt-4">
