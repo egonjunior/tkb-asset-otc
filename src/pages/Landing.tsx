@@ -37,12 +37,12 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-gray-800 bg-black sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
-              <span className="text-xl font-bold text-foreground">TKB Asset</span>
+              <span className="text-xl font-bold text-white">TKB Asset</span>
             </div>
             <div className="flex items-center gap-3">
               <Button variant="ghost" onClick={() => navigate("/login")}>
@@ -188,13 +188,13 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card/50 py-8">
+      <footer className="border-t border-gray-800 bg-black py-8">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
             <img src={tkbLogo} alt="TKB Asset" className="h-8 w-8" />
-            <span className="text-lg font-bold text-foreground">TKB Asset</span>
+            <span className="text-lg font-bold text-white">TKB Asset</span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-400">
             © 2025 TKB Asset. Todos os direitos reservados.
           </p>
         </div>
