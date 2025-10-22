@@ -45,7 +45,7 @@ const Landing = () => {
               <span className="text-xl font-bold text-white">TKB Asset</span>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="ghost" onClick={() => navigate("/login")}>
+              <Button variant="ghost" className="text-white hover:text-white hover:bg-white/10" onClick={() => navigate("/login")}>
                 Login
               </Button>
               <Button onClick={() => navigate("/login")}>
