@@ -21,7 +21,7 @@ const Landing = () => {
     {
       icon: TrendingUp,
       title: "Transparência",
-      description: "Cotações em tempo real direto da Binance. Spread fixo de +0,9% sem taxas ocultas.",
+      description: "Cotações em tempo real. Spread fixo de +1% sem taxas ocultas.",
       color: "text-success",
       bgColor: "bg-success/10",
     },
@@ -68,7 +68,7 @@ const Landing = () => {
               de comprar USDT
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Plataforma OTC profissional para empresas. Cotação em tempo real com spread fixo de +0,9% sobre Binance.
+              Plataforma OTC profissional para empresas. Cotação em tempo real com spread fixo de +1%.
             </p>
           </div>
 
@@ -95,7 +95,7 @@ const Landing = () => {
                 <p className="text-3xl font-bold text-primary">
                   {isLoading ? "..." : `R$ ${binancePrice?.toFixed(2)}`}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">Binance (agora)</p>
+                <p className="text-sm text-muted-foreground mt-1">Mercado (agora)</p>
               </CardContent>
             </Card>
             <Card className="bg-card/50 backdrop-blur-sm shadow-lg animate-fade-in">
@@ -108,7 +108,7 @@ const Landing = () => {
             </Card>
             <Card className="bg-card/50 backdrop-blur-sm shadow-lg animate-fade-in">
               <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-foreground">+0,9%</p>
+                <p className="text-3xl font-bold text-foreground">+1%</p>
                 <p className="text-sm text-muted-foreground mt-1">Spread fixo</p>
               </CardContent>
             </Card>

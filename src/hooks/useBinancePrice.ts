@@ -26,7 +26,7 @@ export const useBinancePrice = () => {
       setLastUpdate(new Date());
       setError(null);
     } catch (err) {
-      console.error('Erro ao buscar preço da Binance:', err);
+      console.error('Erro ao buscar preço:', err);
       setError('Não foi possível buscar a cotação. Usando valor de referência.');
       // Fallback para um valor de referência
       setPrice(5.40);
@@ -45,7 +45,7 @@ export const useBinancePrice = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const tkbPrice = price ? price * 1.009 : null;
+  const tkbPrice = price ? price * 1.01 : null;
 
   return {
     binancePrice: price,

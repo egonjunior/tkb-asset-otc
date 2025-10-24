@@ -51,7 +51,7 @@ const QuoteChart = () => {
         <Card className="shadow-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Binance</CardTitle>
+              <CardTitle className="text-lg">Mercado</CardTitle>
               <Badge variant="secondary">Referência</Badge>
             </div>
           </CardHeader>
@@ -82,19 +82,19 @@ const QuoteChart = () => {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">TKB Asset</CardTitle>
-              <Badge className="bg-success text-success-foreground">+0,9%</Badge>
+              <Badge className="bg-success text-success-foreground">+1%</Badge>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-primary">
-                  R$ {(currentPrice * 1.009).toFixed(3)}
+                 <span className="text-3xl font-bold text-primary">
+                  R$ {(currentPrice * 1.01).toFixed(3)}
                 </span>
                 <TrendingUp className="h-5 w-5 text-primary" />
               </div>
               <p className="text-xs text-muted-foreground">
-                Spread fixo sobre cotação Binance
+                Spread fixo sobre mercado
               </p>
             </div>
           </CardContent>
@@ -160,7 +160,7 @@ const QuoteChart = () => {
                 {/* Line for TKB */}
                 <polyline
                   points={priceHistory.map((price, i) => {
-                    const tkbPrice = price * 1.009;
+                    const tkbPrice = price * 1.01;
                     const x = (i / (priceHistory.length - 1)) * 100;
                     const y = 256 - ((tkbPrice - minPrice) / range) * 240;
                     return `${x}%,${y}`;
@@ -195,11 +195,11 @@ const QuoteChart = () => {
           <div className="flex items-center justify-center gap-6 mt-6 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-4 h-0.5 bg-primary" />
-              <span className="text-muted-foreground">Binance</span>
+              <span className="text-muted-foreground">Mercado</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-0.5 bg-success border-t-2 border-dashed border-success" />
-              <span className="text-muted-foreground">TKB Asset (+0,9%)</span>
+              <span className="text-muted-foreground">TKB Asset (+1%)</span>
             </div>
           </div>
         </CardContent>
@@ -208,7 +208,7 @@ const QuoteChart = () => {
       {/* Info */}
       <div className="text-center text-sm text-muted-foreground">
         <p>Cotação atualizada automaticamente a cada 5 segundos</p>
-        <p className="mt-1">Fonte: Binance API</p>
+        <p className="mt-1">Fonte: Dados de Mercado em Tempo Real</p>
       </div>
     </div>
   );

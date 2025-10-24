@@ -79,7 +79,7 @@ const PriceChart = ({ currentPrice, isLoading }: PriceChartProps) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>USDT/BRL - Binance</span>
+          <span>USDT/BRL - Mercado</span>
           <div className="flex items-center gap-2">
             <span className="text-2xl font-bold">R$ {currentPrice.toFixed(3)}</span>
             {priceChange !== 0 && (

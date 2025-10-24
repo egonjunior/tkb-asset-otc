@@ -24,7 +24,7 @@ const QuoteCard = ({ binancePrice, otcPrice, lastUpdate }: QuoteCardProps) => {
                 R$ {binancePrice.toFixed(2)}
               </span>
               <Badge variant="secondary" className="text-xs">
-                Binance
+                Mercado
               </Badge>
             </div>
           </div>
