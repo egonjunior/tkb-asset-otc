@@ -82,7 +82,6 @@ const QuoteChart = () => {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">TKB Asset</CardTitle>
-              <Badge className="bg-success text-success-foreground">+1%</Badge>
             </div>
           </CardHeader>
           <CardContent>
@@ -94,7 +93,7 @@ const QuoteChart = () => {
                 <TrendingUp className="h-5 w-5 text-primary" />
               </div>
               <p className="text-xs text-muted-foreground">
-                Spread fixo sobre mercado
+                Cotação TKB Asset
               </p>
             </div>
           </CardContent>
@@ -199,7 +198,7 @@ const QuoteChart = () => {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-0.5 bg-success border-t-2 border-dashed border-success" />
-              <span className="text-muted-foreground">TKB Asset (+1%)</span>
+              <span className="text-muted-foreground">TKB Asset</span>
             </div>
           </div>
         </CardContent>

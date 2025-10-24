@@ -100,7 +100,7 @@ const PriceLockCard = ({ currentPrice, tkbPrice, onPriceLocked, onPriceExpired }
             <span className="font-medium">R$ {currentPrice.toFixed(3)}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Spread TKB Asset (+1%):</span>
+            <span className="text-sm text-muted-foreground">Cotação TKB Asset:</span>
             <span className="font-semibold text-primary text-lg">
               R$ {(isLocked && lockedPrice ? lockedPrice : tkbPrice).toFixed(3)}
             </span>

@@ -154,7 +154,6 @@ const QuotePage = () => {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-xl">TKB Asset</CardTitle>
-                  <Badge className="bg-success text-success-foreground">+1%</Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -173,7 +172,7 @@ const QuotePage = () => {
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-muted-foreground">
-                        Spread fixo de mercado
+                        Cotação TKB Asset
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Diferença: +R$ {((tkbPrice || 0) - currentPrice).toFixed(3)}
@@ -286,7 +285,7 @@ const QuotePage = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-1 bg-success rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, hsl(142 71% 45%) 0, hsl(142 71% 45%) 8px, transparent 8px, transparent 12px)' }} />
-                  <span className="text-muted-foreground">TKB Asset (+1%)</span>
+                  <span className="text-muted-foreground">TKB Asset</span>
                 </div>
               </div>
             </CardContent>

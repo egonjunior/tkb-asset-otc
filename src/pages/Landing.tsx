@@ -21,7 +21,7 @@ const Landing = () => {
     {
       icon: TrendingUp,
       title: "Transparência",
-      description: "Cotações em tempo real. Spread fixo de +1% sem taxas ocultas.",
+      description: "Cotações em tempo real, transparentes e sem taxas ocultas.",
       color: "text-success",
       bgColor: "bg-success/10",
     },
@@ -68,7 +68,7 @@ const Landing = () => {
               de comprar USDT
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Plataforma OTC profissional para empresas. Cotação em tempo real com spread fixo de +1%.
+              Plataforma OTC profissional para empresas. Cotação em tempo real para suas operações.
             </p>
           </div>
 
@@ -89,7 +89,7 @@ const Landing = () => {
           </div>
 
           {/* Live Stats */}
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
             <Card className="bg-card/50 backdrop-blur-sm shadow-lg animate-fade-in">
               <CardContent className="pt-6 text-center">
                 <p className="text-3xl font-bold text-primary">
@@ -104,12 +104,6 @@ const Landing = () => {
                   {isLoading ? "..." : `R$ ${tkbPrice?.toFixed(3)}`}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">TKB Asset</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card/50 backdrop-blur-sm shadow-lg animate-fade-in">
-              <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-foreground">+1%</p>
-                <p className="text-sm text-muted-foreground mt-1">Spread fixo</p>
               </CardContent>
             </Card>
           </div>
