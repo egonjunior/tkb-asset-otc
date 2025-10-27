@@ -9,8 +9,6 @@ interface QuoteCardProps {
 }
 
 const QuoteCard = ({ binancePrice, otcPrice, lastUpdate }: QuoteCardProps) => {
-  const spread = ((otcPrice - binancePrice) / binancePrice * 100).toFixed(2);
-
   return (
     <Card className="shadow-lg border-primary/10">
       <CardContent className="pt-6">
@@ -34,12 +32,9 @@ const QuoteCard = ({ binancePrice, otcPrice, lastUpdate }: QuoteCardProps) => {
         </div>
 
         <div className="bg-primary/5 rounded-lg p-4 mb-4">
-          <div className="flex justify-between items-center mb-2">
+          <div className="mb-2">
             <span className="text-sm font-medium text-muted-foreground">
-              Seu preço OTC
-            </span>
-            <span className="text-xs text-success font-medium">
-              +{spread}%
+              Cotação TKB Asset
             </span>
           </div>
           <span className="text-2xl font-bold text-primary">

@@ -170,14 +170,11 @@ const QuotePage = () => {
                       </span>
                       <TrendingUp className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">
-                        Cotação TKB Asset
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Diferença: +R$ {((tkbPrice || 0) - currentPrice).toFixed(3)}
-                      </p>
-                    </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  Cotação TKB Asset
+                </p>
+              </div>
                   </div>
                 )}
               </CardContent>
