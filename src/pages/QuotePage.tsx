@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, TrendingUp, RefreshCw, ArrowUpRight, ArrowDownRight, Share2 } from "lucide-react";
+import { ArrowLeft, TrendingUp, RefreshCw, ArrowUpRight, ArrowDownRight, Share2, ArrowRight } from "lucide-react";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -81,32 +81,37 @@ const QuotePage = () => {
   }), [priceHistory, minPrice, range]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+      <header className="border-b border-neutral-700 bg-glass backdrop-blur-lg sticky top-0 z-50">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/home")}>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/home")} className="text-white hover:bg-white/10">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <img src={tkbLogo} alt="TKB Asset" className="h-8 w-8" />
-              <span className="text-lg font-bold text-foreground">Cotação em Tempo Real</span>
+              <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
+              <div>
+                <h1 className="text-xl font-playfair font-bold text-white">Cotação em Tempo Real</h1>
+                <p className="text-xs text-neutral-300 font-inter">USDT/BRL</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={handleShare}
+                className="border-neutral-600 text-white hover:bg-white/10"
               >
                 <Share2 className="h-4 w-4 mr-2" />
-                Compartilhar
+                <span className="hidden sm:inline">Compartilhar</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={handleRefresh}
                 disabled={isRefreshing}
+                className="border-neutral-600 text-white hover:bg-white/10"
               >
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               </Button>
@@ -116,53 +121,51 @@ const QuotePage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto space-y-6">
+      <main className="container mx-auto px-6 py-10">
+        <div className="max-w-6xl mx-auto space-y-8">
           {/* Error Message */}
           {error && (
-            <Card className="border-warning/50 bg-warning/5">
+            <Card className="border-warning bg-warning/10">
               <CardContent className="pt-6">
-                <p className="text-sm text-warning">{error}</p>
+                <p className="text-sm text-warning font-inter">{error}</p>
               </CardContent>
             </Card>
           )}
 
           {/* Price Cards */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-8">
             {/* Binance Card */}
-            <Card className="shadow-xl animate-fade-in">
-              <CardHeader className="pb-3">
+            <Card className="shadow-elevated animate-fade-in bg-white border-neutral-200">
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">Mercado</CardTitle>
-                  <Badge variant="secondary">Referência</Badge>
+                  <CardTitle className="text-2xl font-playfair">Mercado</CardTitle>
+                  <Badge variant="secondary" className="text-xs">Referência</Badge>
                 </div>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
-                  <div className="space-y-3 animate-pulse">
-                    <div className="h-10 bg-muted rounded w-3/4" />
-                    <div className="h-4 bg-muted rounded w-1/2" />
+                  <div className="space-y-4 animate-pulse">
+                    <div className="h-12 bg-neutral-100 rounded w-3/4" />
+                    <div className="h-6 bg-neutral-100 rounded w-1/2" />
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-4xl font-bold">R$ {currentPrice.toFixed(2)}</span>
-                      <div className={`flex items-center gap-1 text-base font-medium ${
+                  <div className="space-y-4">
+                    <div className="flex items-baseline gap-4">
+                      <span className="text-6xl font-playfair font-bold text-foreground">R$ {currentPrice.toFixed(2)}</span>
+                      <div className={`flex items-center gap-1.5 text-lg font-semibold ${
                         isPositive ? "text-success" : "text-danger"
                       }`}>
                         {isPositive ? (
-                          <ArrowUpRight className="h-5 w-5" />
+                          <ArrowUpRight className="h-6 w-6" />
                         ) : (
-                          <ArrowDownRight className="h-5 w-5" />
+                          <ArrowDownRight className="h-6 w-6" />
                         )}
                         <span>{priceChangePercent}%</span>
                       </div>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">
-                        Par: USDT/BRL
-                      </p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="space-y-2">
+                      <Badge variant="secondary" className="text-xs font-semibold">Par: USDT/BRL</Badge>
+                      <p className="text-xs text-muted-foreground font-inter">
                         Última atualização: {lastUpdate.toLocaleTimeString('pt-BR', { 
                           hour: '2-digit', 
                           minute: '2-digit',
@@ -176,31 +179,41 @@ const QuotePage = () => {
             </Card>
 
             {/* TKB Card */}
-            <Card className="shadow-xl border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5 animate-fade-in">
-              <CardHeader className="pb-3">
+            <Card className="shadow-elevated border-none bg-gradient-to-br from-primary via-primary-hover to-primary animate-fade-in overflow-hidden relative" style={{ animationDelay: '150ms' }}>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_60%)]" />
+              <CardHeader className="pb-4 relative">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">TKB Asset</CardTitle>
+                  <CardTitle className="text-2xl font-playfair text-white">TKB Asset</CardTitle>
+                  <Badge className="bg-success/20 text-white border-white/30">AO VIVO</Badge>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative">
                 {isLoading ? (
-                  <div className="space-y-3 animate-pulse">
-                    <div className="h-10 bg-muted rounded w-3/4" />
-                    <div className="h-4 bg-muted rounded w-1/2" />
+                  <div className="space-y-4 animate-pulse">
+                    <div className="h-12 bg-white/20 rounded w-3/4" />
+                    <div className="h-6 bg-white/20 rounded w-1/2" />
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-4xl font-bold text-primary">
+                  <div className="space-y-5">
+                    <div className="flex items-baseline gap-4">
+                      <span className="text-6xl font-playfair font-bold text-white">
                         R$ {tkbPrice?.toFixed(3)}
                       </span>
-                      <TrendingUp className="h-6 w-6 text-primary" />
+                      <TrendingUp className="h-8 w-8 text-white" strokeWidth={2} />
                     </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">
-                  Cotação TKB Asset
-                </p>
-              </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-white/90 font-semibold font-inter uppercase tracking-wider">
+                        Cotação Institucional
+                      </p>
+                      <Button 
+                        size="lg" 
+                        className="bg-white text-primary hover:bg-neutral-100 shadow-xl font-semibold mt-2"
+                        onClick={() => navigate("/login")}
+                      >
+                        Solicitar Operação
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -208,29 +221,34 @@ const QuotePage = () => {
           </div>
 
           {/* Chart */}
-          <Card className="shadow-xl">
+          <Card className="shadow-elevated bg-neutral-800/50 backdrop-blur border-neutral-700">
             <CardHeader>
-              <CardTitle className="text-xl">Histórico de Cotação</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Últimas {priceHistory.length} atualizações (atualização automática a cada 5s)
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl font-playfair text-white">Histórico de Cotação</CardTitle>
+                  <p className="text-sm text-neutral-300 font-inter mt-1">
+                    Últimas {priceHistory.length} atualizações • 5s refresh
+                  </p>
+                </div>
+                <Badge className="bg-success/20 text-success border-success/30">AO VIVO</Badge>
+              </div>
             </CardHeader>
             <CardContent>
               {priceHistory.length > 1 ? (
                 <div className="h-80 relative">
                   {/* Y-axis labels */}
-                  <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-muted-foreground pr-3">
-                    <span>R$ {maxPrice.toFixed(2)}</span>
+                  <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-neutral-400 pr-3">
+                    <span className="font-semibold">R$ {maxPrice.toFixed(2)}</span>
                     <span>R$ {((maxPrice + minPrice) / 2).toFixed(2)}</span>
-                    <span>R$ {minPrice.toFixed(2)}</span>
+                    <span className="font-semibold">R$ {minPrice.toFixed(2)}</span>
                   </div>
 
                   {/* Chart area */}
-                  <div className="ml-20 h-full relative border-l border-b border-border rounded-bl-lg">
+                  <div className="ml-20 h-full relative border-l border-b border-neutral-600 rounded-bl-lg">
                     {/* Grid lines */}
                     <div className="absolute inset-0 flex flex-col justify-between">
                       {[0, 1, 2, 3, 4].map(i => (
-                        <div key={i} className="border-t border-border/30" />
+                        <div key={i} className="border-t border-neutral-700/50" />
                       ))}
                     </div>
 
@@ -292,28 +310,34 @@ const QuotePage = () => {
               {/* Legend */}
               <div className="flex items-center justify-center gap-8 mt-6 text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-1 bg-primary rounded" />
-                  <span className="text-muted-foreground">Mercado</span>
+                  <div className="w-8 h-1 bg-primary rounded shadow-sm" />
+                  <span className="text-neutral-300 font-inter">Mercado</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-1 bg-success rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, hsl(142 71% 45%) 0, hsl(142 71% 45%) 8px, transparent 8px, transparent 12px)' }} />
-                  <span className="text-muted-foreground">TKB Asset</span>
+                  <div className="w-8 h-1 bg-success rounded shadow-sm" style={{ backgroundImage: 'repeating-linear-gradient(90deg, hsl(158 45% 38%) 0, hsl(158 45% 38%) 8px, transparent 8px, transparent 12px)' }} />
+                  <span className="text-neutral-300 font-inter">TKB Asset</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* CTA */}
-          <Card className="shadow-xl bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-            <CardContent className="p-8 text-center space-y-4">
-              <h3 className="text-2xl font-bold text-foreground">
+          <Card className="shadow-elevated bg-gradient-to-br from-primary via-primary-hover to-primary border-none overflow-hidden relative">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_50%)]" />
+            <CardContent className="relative p-10 text-center space-y-6">
+              <h3 className="text-4xl font-playfair font-bold text-white">
                 Pronto para comprar USDT?
               </h3>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-lg text-white/90 max-w-2xl mx-auto font-inter leading-relaxed">
                 Aproveite nossa cotação competitiva e realize suas operações com segurança
               </p>
-              <Button size="lg" onClick={() => navigate("/login")}>
+              <Button 
+                size="lg" 
+                className="bg-white text-primary hover:bg-neutral-100 shadow-xl font-semibold"
+                onClick={() => navigate("/login")}
+              >
                 Acessar Plataforma
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </CardContent>
           </Card>

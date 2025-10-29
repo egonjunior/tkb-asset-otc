@@ -6,34 +6,42 @@
 All colors MUST be HSL.
 */
 
+/* Google Fonts - Inter & Playfair Display */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap');
+
 @layer base {
   :root {
-    /* Base colors */
-    --background: 220 17% 97%;
-    --foreground: 220 20% 15%;
+    /* Base colors - Institutional */
+    --background: 225 15% 97%;
+    --foreground: 225 20% 12%;
 
     /* Card colors */
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 225 20% 12%;
 
     /* Popover colors */
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 225 20% 12%;
 
-    /* Primary - Professional Blue */
-    --primary: 217 91% 60%;
+    /* Primary - Deep Trust Blue (JP Morgan inspired) */
+    --primary: 220 60% 35%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 217 91% 55%;
+    --primary-hover: 220 60% 30%;
+    --primary-glow: 220 55% 45%;
 
-    /* Secondary - Light Gray */
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 20% 15%;
+    /* Accent Gold - Exclusivity */
+    --accent-gold: 45 80% 55%;
+    --accent-gold-foreground: 220 20% 15%;
 
-    /* Success - Green */
-    --success: 142 71% 45%;
+    /* Secondary - Sophisticated Gray */
+    --secondary: 225 15% 95%;
+    --secondary-foreground: 225 20% 12%;
+
+    /* Success - Refined Green */
+    --success: 158 45% 38%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning - Orange */
+    /* Warning - Professional Orange */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
@@ -42,11 +50,11 @@ All colors MUST be HSL.
     --danger-foreground: 0 0% 100%;
 
     /* Muted */
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 225 15% 95%;
+    --muted-foreground: 225 10% 46%;
 
     /* Accent */
-    --accent: 217 91% 60%;
+    --accent: 220 60% 35%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive */
@@ -54,25 +62,42 @@ All colors MUST be HSL.
     --destructive-foreground: 0 0% 100%;
 
     /* Borders and inputs */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 60%;
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 220 60% 35%;
+
+    /* Neutral Premium Scales */
+    --neutral-50: 225 15% 98%;
+    --neutral-100: 225 15% 95%;
+    --neutral-200: 225 15% 90%;
+    --neutral-700: 225 18% 25%;
+    --neutral-800: 225 20% 18%;
+    --neutral-900: 225 20% 12%;
+
+    /* Glass Effect */
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(220, 224, 232, 0.5);
 
     /* Radius */
-    --radius: 0.75rem;
+    --radius: 0.875rem;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(217 91% 50%) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(142 71% 45%) 0%, hsl(142 71% 40%) 100%);
+    /* Gradients - Institutional */
+    --gradient-primary: linear-gradient(135deg, hsl(220 60% 35%) 0%, hsl(220 60% 30%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(158 45% 38%) 0%, hsl(158 45% 33%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(45 80% 55%) 0%, hsl(45 75% 50%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(225 15% 98%) 0%, hsl(225 15% 96%) 100%);
 
-    /* Shadows */
+    /* Shadows - Institutional Depth */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-institutional: 0 20px 60px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+    --shadow-elevated: 0 30px 90px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.06);
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-premium: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -81,7 +106,7 @@ All colors MUST be HSL.
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 220 60% 35%;
   }
 
   .dark {
@@ -141,5 +166,85 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+}
+
+@layer utilities {
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .font-inter {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  }
+
+  .bg-glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .border-glass {
+    border-color: var(--glass-border);
+  }
+
+  .shadow-institutional {
+    box-shadow: var(--shadow-institutional);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .transition-premium {
+    transition: var(--transition-premium);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .btn-premium {
+    @apply relative overflow-hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-premium::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .btn-premium:hover::before {
+    width: 300px;
+    height: 300px;
   }
 }

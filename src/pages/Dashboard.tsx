@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -10,12 +11,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import QuoteCard from "@/components/QuoteCard";
-import { Coins, LogOut, Plus, Clock } from "lucide-react";
+import { StatCard } from "@/components/StatCard";
+import { Briefcase, LogOut, Plus, Clock, TrendingUp, Settings, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
 import { supabase } from "@/integrations/supabase/client";
+import tkbLogo from "@/assets/tkb-logo.png";
 
 interface Order {
   id: string;
@@ -85,26 +87,33 @@ const Dashboard = () => {
     return <Badge className={variant.className}>{variant.label}</Badge>;
   };
 
+  const totalVolume = orders.reduce((sum, order) => sum + order.total, 0);
+  const completedOrders = orders.filter(order => order.status === 'completed').length;
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-neutral-50 to-background">
       {/* Header */}
-      <header className="bg-card border-b border-border shadow-sm">
-        <div className="container mx-auto px-4 py-4">
+      <header className="bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
+        <div className="container mx-auto px-6 py-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
-                <Coins className="h-6 w-6 text-primary-foreground" />
-              </div>
+            <div className="flex items-center gap-4">
+              <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
               <div>
-                <h1 className="text-xl font-bold text-foreground">TKB Asset</h1>
-                <p className="text-xs text-muted-foreground">Plataforma OTC</p>
+                <h1 className="text-2xl font-playfair font-bold">TKB ASSET</h1>
+                <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Private Banking</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground hidden sm:inline">
-                Olá, <strong className="text-foreground">{userName}</strong>
+            <div className="flex items-center gap-6">
+              <span className="text-sm font-inter hidden sm:inline">
+                Olá, <strong className="font-semibold">{userName}</strong>
               </span>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                <Settings className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                <ExternalLink className="h-5 w-5" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleLogout} className="border-neutral-600 text-white hover:bg-white/10">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair
               </Button>
@@ -114,77 +123,133 @@ const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-5xl mx-auto space-y-8">
-          {/* Cotação */}
+      <main className="container mx-auto px-6 py-10">
+        <div className="max-w-6xl mx-auto space-y-10">
+          
+          {/* Stats Overview */}
           <div>
-            <QuoteCard
-              binancePrice={binancePrice || 0}
-              otcPrice={tkbPrice || 0}
-              lastUpdate={lastUpdate}
-            />
-            <div className="mt-4">
-              <Button 
-                size="lg" 
-                className="w-full sm:w-auto"
-                onClick={() => navigate("/order/new")}
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Solicitar Compra de USDT
-              </Button>
+            <h2 className="text-2xl font-playfair font-bold text-foreground mb-6 flex items-center gap-2">
+              <Briefcase className="h-6 w-6 text-primary" />
+              Visão Geral
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatCard 
+                icon={Briefcase}
+                label="Patrimônio Operado"
+                value={`R$ ${totalVolume.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                trend={completedOrders > 0 ? `${completedOrders} operações concluídas` : 'Nenhuma operação'}
+                trendDirection="up"
+              />
+              <StatCard 
+                icon={Clock}
+                label="Última Operação"
+                value={orders.length > 0 ? orders[0].createdAt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : 'Nenhuma'}
+                trend={orders.length > 0 ? getStatusBadge(orders[0].status).props.children : ''}
+              />
+              <StatCard 
+                icon={TrendingUp}
+                label="Total de Ordens"
+                value={orders.length.toString()}
+                trend={`${orders.length} ${orders.length === 1 ? 'ordem' : 'ordens'} criada${orders.length === 1 ? '' : 's'}`}
+              />
             </div>
           </div>
 
+          {/* Cotação Premium */}
+          <div>
+            <h2 className="text-2xl font-playfair font-bold text-foreground mb-6 flex items-center gap-2">
+              <TrendingUp className="h-6 w-6 text-primary" />
+              Cotação Atual
+            </h2>
+            <Card className="shadow-institutional border-primary/20 bg-gradient-to-br from-white to-neutral-50">
+              <CardContent className="p-8">
+                <div className="grid md:grid-cols-2 gap-8 mb-6">
+                  <div className="space-y-3">
+                    <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Mercado</p>
+                    <p className="text-5xl font-playfair font-bold text-foreground">
+                      R$ {(binancePrice || 0).toFixed(2)}
+                    </p>
+                    <p className="text-sm text-muted-foreground font-inter">Par USDT/BRL</p>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm uppercase tracking-wider text-primary font-semibold">TKB Asset</p>
+                      <Badge className="bg-success/20 text-success border-success/30">AO VIVO</Badge>
+                    </div>
+                    <p className="text-5xl font-playfair font-bold text-primary">
+                      R$ {(tkbPrice || 0).toFixed(3)}
+                    </p>
+                    <p className="text-sm text-muted-foreground font-inter">Cotação Institucional</p>
+                  </div>
+                </div>
+                <Button 
+                  size="lg" 
+                  variant="premium"
+                  className="w-full"
+                  onClick={() => navigate("/order/new")}
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Solicitar Operação
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Histórico */}
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Histórico de Ordens
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {orders.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Rede</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Data</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orders.map((order) => (
-                        <TableRow 
-                          key={order.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => navigate(`/order/${order.id}`)}
-                        >
-                          <TableCell className="font-medium">{order.id}</TableCell>
-                          <TableCell>{order.amount.toLocaleString()} USDT</TableCell>
-                          <TableCell>{order.network}</TableCell>
-                          <TableCell>R$ {order.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                          <TableCell>{getStatusBadge(order.status)}</TableCell>
-                          <TableCell>
-                            {order.createdAt.toLocaleDateString('pt-BR')}
-                          </TableCell>
+          <div>
+            <h2 className="text-2xl font-playfair font-bold text-foreground mb-6 flex items-center gap-2">
+              <Clock className="h-6 w-6 text-primary" />
+              Histórico de Operações
+            </h2>
+            <Card className="shadow-institutional">
+              <CardContent className="p-0">
+                {orders.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b border-border hover:bg-transparent">
+                          <TableHead className="font-semibold text-foreground">ID</TableHead>
+                          <TableHead className="font-semibold text-foreground">Valor</TableHead>
+                          <TableHead className="font-semibold text-foreground">Rede</TableHead>
+                          <TableHead className="font-semibold text-foreground">Total</TableHead>
+                          <TableHead className="font-semibold text-foreground">Status</TableHead>
+                          <TableHead className="font-semibold text-foreground">Data</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Nenhuma ordem encontrada</p>
-                  <p className="text-sm mt-2">Comece criando sua primeira ordem de compra</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                      </TableHeader>
+                      <TableBody>
+                        {orders.map((order) => (
+                          <TableRow 
+                            key={order.id}
+                            className="cursor-pointer hover:bg-neutral-50 transition-colors"
+                            onClick={() => navigate(`/order/${order.id}`)}
+                          >
+                            <TableCell className="font-medium font-inter">#{order.id.slice(0, 8)}</TableCell>
+                            <TableCell className="font-semibold">{order.amount.toLocaleString()} USDT</TableCell>
+                            <TableCell className="text-muted-foreground">{order.network}</TableCell>
+                            <TableCell className="font-semibold">R$ {order.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                            <TableCell>{getStatusBadge(order.status)}</TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {order.createdAt.toLocaleDateString('pt-BR')}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-16 px-4">
+                    <div className="max-w-md mx-auto space-y-4">
+                      <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+                        <Clock className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <p className="text-lg font-semibold text-foreground">Nenhuma ordem encontrada</p>
+                      <p className="text-sm text-muted-foreground">Comece criando sua primeira ordem de compra</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </main>
     </div>

@@ -23,6 +23,7 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
           hover: "hsl(var(--primary-hover))",
+          glow: "hsl(var(--primary-glow))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -39,6 +40,18 @@ export default {
         danger: {
           DEFAULT: "hsl(var(--danger))",
           foreground: "hsl(var(--danger-foreground))",
+        },
+        gold: {
+          DEFAULT: "hsl(var(--accent-gold))",
+          foreground: "hsl(var(--accent-gold-foreground))",
+        },
+        neutral: {
+          50: "hsl(var(--neutral-50))",
+          100: "hsl(var(--neutral-100))",
+          200: "hsl(var(--neutral-200))",
+          700: "hsl(var(--neutral-700))",
+          800: "hsl(var(--neutral-800))",
+          900: "hsl(var(--neutral-900))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",

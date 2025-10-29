@@ -1,10 +1,12 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, TrendingUp, Zap, ArrowRight, LineChart } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Shield, TrendingUp, Zap, ArrowRight, LineChart, Lock, Clock, CheckCircle2 } from "lucide-react";
 import tkbLogo from "@/assets/tkb-logo.png";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
+import { TrustBadge } from "@/components/TrustBadge";
+import { PremiumButton } from "@/components/PremiumButton";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -35,90 +37,108 @@ const Landing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-neutral-50 to-background">
       {/* Header */}
-      <header className="border-b border-gray-800 bg-black sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+      <header className="bg-glass backdrop-blur-lg border-b border-glass sticky top-0 z-50">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
-              <span className="text-xl font-bold text-white">TKB Asset</span>
+              <div>
+                <h1 className="text-xl font-playfair font-bold text-foreground">TKB ASSET</h1>
+                <p className="text-xs text-muted-foreground font-inter uppercase tracking-wider">Private Banking</p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="ghost" className="text-white hover:text-white hover:bg-white/10" onClick={() => navigate("/login")}>
+              <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:inline-flex">
                 Login
               </Button>
-              <Button onClick={() => navigate("/login")}>
+              <PremiumButton onClick={() => navigate("/login")}>
                 Começar
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              </PremiumButton>
             </div>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 lg:py-32">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <div className="space-y-4 animate-fade-in">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-              A forma mais{" "}
-              <span className="text-primary">segura e ágil</span>
+      <section className="container mx-auto px-6 py-16 lg:py-24">
+        <div className="max-w-5xl mx-auto text-center space-y-10">
+          <div className="space-y-6 animate-fade-in">
+            <Badge variant="secondary" className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider border border-gold/30 bg-gold/10 text-gold">
+              Instituição OTC Brasileira
+            </Badge>
+            
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-playfair font-bold text-foreground leading-[1.1]">
+              Segurança Institucional
               <br />
-              de comprar USDT
+              <span className="text-primary">para Operações Digitais</span>
             </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Plataforma OTC profissional para empresas. Cotação em tempo real para suas operações.
+            
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto font-inter leading-relaxed">
+              Plataforma profissional de USDT com cotações em tempo real e transparência total
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in">
-            <Button size="lg" className="min-w-[200px]" onClick={() => navigate("/login")}>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in" style={{ animationDelay: '150ms' }}>
+            <PremiumButton onClick={() => navigate("/login")}>
               Acessar Plataforma
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            </PremiumButton>
             <Button 
               size="lg" 
-              variant="outline" 
-              className="min-w-[200px]"
+              variant="gold"
               onClick={() => navigate("/cotacao")}
             >
               <LineChart className="mr-2 h-5 w-5" />
-              Ver Cotação Atual
+              Ver Cotações
             </Button>
           </div>
 
-          {/* Live Stats */}
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-            <Card className="bg-card/50 backdrop-blur-sm shadow-lg animate-fade-in">
-              <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-primary">
+          {/* Live Price Cards */}
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '300ms' }}>
+            <Card className="bg-glass backdrop-blur-md border-glass shadow-institutional hover:shadow-elevated transition-premium hover:-translate-y-1">
+              <CardContent className="pt-8 pb-8 text-center">
+                <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold mb-2">Mercado</p>
+                <p className="text-5xl font-playfair font-bold text-foreground">
                   {isLoading ? "..." : `R$ ${binancePrice?.toFixed(2)}`}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">Mercado (agora)</p>
+                <p className="text-xs text-muted-foreground mt-2 font-inter">Cotação Base</p>
               </CardContent>
             </Card>
-            <Card className="bg-card/50 backdrop-blur-sm shadow-lg animate-fade-in">
-              <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-success">
+            
+            <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent backdrop-blur-md border-primary/30 shadow-institutional hover:shadow-elevated transition-premium hover:-translate-y-1">
+              <CardContent className="pt-8 pb-8 text-center">
+                <p className="text-sm uppercase tracking-wider text-primary font-semibold mb-2">TKB Asset</p>
+                <p className="text-5xl font-playfair font-bold text-primary">
                   {isLoading ? "..." : `R$ ${tkbPrice?.toFixed(3)}`}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">TKB Asset</p>
+                <p className="text-xs text-muted-foreground mt-2 font-inter">Cotação Institucional</p>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Trust Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-3 animate-fade-in" style={{ animationDelay: '450ms' }}>
+            <TrustBadge icon={Lock} label="Criptografia Bancária" />
+            <TrustBadge icon={Clock} label="Liquidação em 24h" />
+            <TrustBadge icon={CheckCircle2} label="Transparência Total" />
+            <TrustBadge icon={Shield} label="100% Seguro" />
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="bg-muted/30 py-20">
-        <div className="container mx-auto px-4">
+      <section className="py-24 bg-gradient-to-b from-neutral-50 to-background">
+        <div className="container mx-auto px-6">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16 space-y-4">
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
+            <div className="text-center mb-20 space-y-4">
+              <Badge variant="secondary" className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider">
+                Diferenciais
+              </Badge>
+              <h2 className="text-4xl sm:text-5xl font-playfair font-bold text-foreground">
                 Por que escolher a TKB Asset?
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-inter">
                 Nossa plataforma oferece tudo que você precisa para operar com confiança no mercado OTC
               </p>
             </div>
@@ -127,18 +147,18 @@ const Landing = () => {
               {features.map((feature, index) => (
                 <Card 
                   key={index}
-                  className="shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-fade-in border-border/50"
-                  style={{ animationDelay: `${index * 100}ms` }}
+                  className="shadow-institutional hover:shadow-elevated transition-premium hover:-translate-y-2 animate-fade-in border-border bg-white"
+                  style={{ animationDelay: `${index * 150}ms` }}
                 >
-                  <CardContent className="pt-8 pb-8 text-center space-y-4">
-                    <div className={`h-16 w-16 rounded-2xl ${feature.bgColor} flex items-center justify-center mx-auto`}>
-                      <feature.icon className={`h-8 w-8 ${feature.color}`} />
+                  <CardContent className="pt-10 pb-10 px-8 text-center space-y-5">
+                    <div className={`h-20 w-20 rounded-2xl ${feature.bgColor} flex items-center justify-center mx-auto shadow-lg`}>
+                      <feature.icon className={`h-10 w-10 ${feature.color}`} strokeWidth={1.5} />
                     </div>
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-bold text-foreground">
+                    <div className="space-y-3">
+                      <h3 className="text-2xl font-playfair font-bold text-foreground">
                         {feature.title}
                       </h3>
-                      <p className="text-muted-foreground">
+                      <p className="text-muted-foreground font-inter leading-relaxed">
                         {feature.description}
                       </p>
                     </div>
@@ -151,26 +171,31 @@ const Landing = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20">
-        <Card className="max-w-4xl mx-auto shadow-2xl bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-          <CardContent className="p-8 sm:p-12 text-center space-y-6">
-            <div className="space-y-4">
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
+      <section className="container mx-auto px-6 py-20">
+        <Card className="max-w-4xl mx-auto shadow-elevated bg-gradient-to-br from-primary via-primary-hover to-primary border-none overflow-hidden relative">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_50%)]" />
+          <CardContent className="relative p-10 sm:p-16 text-center space-y-8">
+            <div className="space-y-5">
+              <h2 className="text-4xl sm:text-5xl font-playfair font-bold text-white">
                 Pronto para começar?
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-lg text-white/90 max-w-2xl mx-auto font-inter leading-relaxed">
                 Acesse a plataforma agora e realize suas operações de USDT com segurança e transparência
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="min-w-[200px]" onClick={() => navigate("/login")}>
+              <Button 
+                size="lg" 
+                className="min-w-[220px] bg-white text-primary hover:bg-neutral-100 shadow-xl font-semibold"
+                onClick={() => navigate("/login")}
+              >
                 Acessar Agora
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button 
                 size="lg" 
                 variant="outline"
-                className="min-w-[200px]"
+                className="min-w-[220px] border-2 border-white text-white hover:bg-white/10 font-semibold"
                 onClick={() => navigate("/cotacao")}
               >
                 <LineChart className="mr-2 h-5 w-5" />
@@ -182,15 +207,20 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-800 bg-black py-8">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <img src={tkbLogo} alt="TKB Asset" className="h-8 w-8" />
-            <span className="text-lg font-bold text-white">TKB Asset</span>
+      <footer className="border-t border-border bg-neutral-900 py-12">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto text-center space-y-6">
+            <div className="flex items-center justify-center gap-3">
+              <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
+              <div>
+                <h3 className="text-xl font-playfair font-bold text-white">TKB ASSET</h3>
+                <p className="text-xs text-neutral-400 font-inter uppercase tracking-wider">Private Banking</p>
+              </div>
+            </div>
+            <p className="text-sm text-neutral-400 font-inter">
+              © 2025 TKB Asset. Todos os direitos reservados.
+            </p>
           </div>
-          <p className="text-sm text-gray-400">
-            © 2025 TKB Asset. Todos os direitos reservados.
-          </p>
         </div>
       </footer>
     </div>
