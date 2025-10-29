@@ -3,14 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import QuoteCard from "@/components/QuoteCard";
 import { StatCard } from "@/components/StatCard";
 import { Briefcase, LogOut, Plus, Clock, TrendingUp, Settings, ExternalLink } from "lucide-react";
@@ -18,7 +11,6 @@ import { toast } from "@/hooks/use-toast";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
 import { supabase } from "@/integrations/supabase/client";
 import tkbLogo from "@/assets/tkb-logo.png";
-
 interface Order {
   id: string;
   amount: number;
@@ -27,29 +19,34 @@ interface Order {
   status: "pending" | "paid" | "completed" | "expired";
   createdAt: Date;
 }
-
 const Dashboard = () => {
   const navigate = useNavigate();
   const userName = localStorage.getItem("userName") || "Usuário";
-  const { binancePrice, tkbPrice, lastUpdate, isLoading } = useBinancePrice();
+  const {
+    binancePrice,
+    tkbPrice,
+    lastUpdate,
+    isLoading
+  } = useBinancePrice();
   const [orders, setOrders] = useState<Order[]>([]);
-
   useEffect(() => {
     const fetchOrders = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) return;
-
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', {
+        ascending: false
+      });
       if (error) {
         console.error('Error fetching orders:', error);
         return;
       }
-
       if (data) {
         setOrders(data.map(order => ({
           id: order.id,
@@ -57,41 +54,46 @@ const Dashboard = () => {
           network: order.network,
           total: Number(order.total),
           status: order.status as Order['status'],
-          createdAt: new Date(order.created_at),
+          createdAt: new Date(order.created_at)
         })));
       }
     };
-
     fetchOrders();
   }, []);
-
   const handleLogout = () => {
     localStorage.removeItem("userType");
     localStorage.removeItem("userName");
     toast({
       title: "Logout realizado",
-      description: "Até logo!",
+      description: "Até logo!"
     });
     navigate("/login");
   };
-
   const getStatusBadge = (status: Order["status"]) => {
     const variants = {
-      pending: { label: "Aguardando", className: "bg-warning text-warning-foreground" },
-      paid: { label: "Pago", className: "bg-primary text-primary-foreground" },
-      completed: { label: "Concluído", className: "bg-success text-success-foreground" },
-      expired: { label: "Expirado", className: "bg-muted text-muted-foreground" },
+      pending: {
+        label: "Aguardando",
+        className: "bg-warning text-warning-foreground"
+      },
+      paid: {
+        label: "Pago",
+        className: "bg-primary text-primary-foreground"
+      },
+      completed: {
+        label: "Concluído",
+        className: "bg-success text-success-foreground"
+      },
+      expired: {
+        label: "Expirado",
+        className: "bg-muted text-muted-foreground"
+      }
     };
-    
     const variant = variants[status];
     return <Badge className={variant.className}>{variant.label}</Badge>;
   };
-
   const totalVolume = orders.reduce((sum, order) => sum + order.total, 0);
   const completedOrders = orders.filter(order => order.status === 'completed').length;
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-neutral-50 to-background">
+  return <div className="min-h-screen bg-gradient-to-br from-background via-neutral-50 to-background">
       {/* Header */}
       <header className="bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
         <div className="container mx-auto px-6 py-5">
@@ -100,7 +102,7 @@ const Dashboard = () => {
               <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
               <div>
                 <h1 className="text-2xl font-playfair font-bold">TKB ASSET</h1>
-                <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Private Banking</p>
+                
               </div>
             </div>
             <div className="flex items-center gap-6">
@@ -133,25 +135,14 @@ const Dashboard = () => {
               Visão Geral
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatCard 
-                icon={Briefcase}
-                label="Patrimônio Operado"
-                value={`R$ ${totalVolume.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                trend={completedOrders > 0 ? `${completedOrders} operações concluídas` : 'Nenhuma operação'}
-                trendDirection="up"
-              />
-              <StatCard 
-                icon={Clock}
-                label="Última Operação"
-                value={orders.length > 0 ? orders[0].createdAt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : 'Nenhuma'}
-                trend={orders.length > 0 ? getStatusBadge(orders[0].status).props.children : ''}
-              />
-              <StatCard 
-                icon={TrendingUp}
-                label="Total de Ordens"
-                value={orders.length.toString()}
-                trend={`${orders.length} ${orders.length === 1 ? 'ordem' : 'ordens'} criada${orders.length === 1 ? '' : 's'}`}
-              />
+              <StatCard icon={Briefcase} label="Patrimônio Operado" value={`R$ ${totalVolume.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2
+            })}`} trend={completedOrders > 0 ? `${completedOrders} operações concluídas` : 'Nenhuma operação'} trendDirection="up" />
+              <StatCard icon={Clock} label="Última Operação" value={orders.length > 0 ? orders[0].createdAt.toLocaleDateString('pt-BR', {
+              day: '2-digit',
+              month: 'short'
+            }) : 'Nenhuma'} trend={orders.length > 0 ? getStatusBadge(orders[0].status).props.children : ''} />
+              <StatCard icon={TrendingUp} label="Total de Ordens" value={orders.length.toString()} trend={`${orders.length} ${orders.length === 1 ? 'ordem' : 'ordens'} criada${orders.length === 1 ? '' : 's'}`} />
             </div>
           </div>
 
@@ -182,12 +173,7 @@ const Dashboard = () => {
                     <p className="text-sm text-muted-foreground font-inter">Cotação Institucional</p>
                   </div>
                 </div>
-                <Button 
-                  size="lg" 
-                  variant="premium"
-                  className="w-full"
-                  onClick={() => navigate("/order/new")}
-                >
+                <Button size="lg" variant="premium" className="w-full" onClick={() => navigate("/order/new")}>
                   <Plus className="h-5 w-5 mr-2" />
                   Solicitar Operação
                 </Button>
@@ -203,8 +189,7 @@ const Dashboard = () => {
             </h2>
             <Card className="shadow-institutional">
               <CardContent className="p-0">
-                {orders.length > 0 ? (
-                  <div className="overflow-x-auto">
+                {orders.length > 0 ? <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="border-b border-border hover:bg-transparent">
@@ -217,27 +202,21 @@ const Dashboard = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {orders.map((order) => (
-                          <TableRow 
-                            key={order.id}
-                            className="cursor-pointer hover:bg-neutral-50 transition-colors"
-                            onClick={() => navigate(`/order/${order.id}`)}
-                          >
+                        {orders.map(order => <TableRow key={order.id} className="cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => navigate(`/order/${order.id}`)}>
                             <TableCell className="font-medium font-inter">#{order.id.slice(0, 8)}</TableCell>
                             <TableCell className="font-semibold">{order.amount.toLocaleString()} USDT</TableCell>
                             <TableCell className="text-muted-foreground">{order.network}</TableCell>
-                            <TableCell className="font-semibold">R$ {order.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                            <TableCell className="font-semibold">R$ {order.total.toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2
+                        })}</TableCell>
                             <TableCell>{getStatusBadge(order.status)}</TableCell>
                             <TableCell className="text-muted-foreground">
                               {order.createdAt.toLocaleDateString('pt-BR')}
                             </TableCell>
-                          </TableRow>
-                        ))}
+                          </TableRow>)}
                       </TableBody>
                     </Table>
-                  </div>
-                ) : (
-                  <div className="text-center py-16 px-4">
+                  </div> : <div className="text-center py-16 px-4">
                     <div className="max-w-md mx-auto space-y-4">
                       <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mx-auto">
                         <Clock className="h-8 w-8 text-muted-foreground" />
@@ -245,15 +224,12 @@ const Dashboard = () => {
                       <p className="text-lg font-semibold text-foreground">Nenhuma ordem encontrada</p>
                       <p className="text-sm text-muted-foreground">Comece criando sua primeira ordem de compra</p>
                     </div>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;
