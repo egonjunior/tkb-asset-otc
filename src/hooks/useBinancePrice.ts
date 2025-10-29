@@ -39,8 +39,8 @@ export const useBinancePrice = () => {
     // Buscar preço inicial
     fetchPrice();
 
-    // Atualizar a cada 10 segundos
-    const interval = setInterval(fetchPrice, 10000);
+    // Atualizar a cada 5 segundos
+    const interval = setInterval(fetchPrice, 5000);
 
     return () => clearInterval(interval);
   }, []);

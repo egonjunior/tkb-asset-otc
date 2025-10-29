@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, TrendingUp, RefreshCw, ArrowUpRight, ArrowDownRight, Share2 } from "lucide-react";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "@/hooks/use-toast";
 import tkbLogo from "@/assets/tkb-logo.png";
 
@@ -13,15 +13,21 @@ const QuotePage = () => {
   const { binancePrice, tkbPrice, isLoading, error, lastUpdate, refetch } = useBinancePrice();
   const [priceHistory, setPriceHistory] = useState<number[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Construir histórico de preços
+  // Construir histórico de preços com debounce
   useEffect(() => {
     if (binancePrice) {
-      setPriceHistory(prev => {
-        const newHistory = [...prev, binancePrice];
-        // Manter apenas últimas 50 atualizações
-        return newHistory.slice(-50);
-      });
+      setIsUpdating(true);
+      const timeout = setTimeout(() => {
+        setPriceHistory(prev => {
+          const newHistory = [...prev, binancePrice];
+          // Manter apenas últimas 30 atualizações para melhor performance
+          return newHistory.slice(-30);
+        });
+        setIsUpdating(false);
+      }, 100);
+      return () => clearTimeout(timeout);
     }
   }, [binancePrice]);
 
@@ -53,6 +59,26 @@ const QuotePage = () => {
   const maxPrice = priceHistory.length > 0 ? Math.max(...priceHistory) : currentPrice;
   const minPrice = priceHistory.length > 0 ? Math.min(...priceHistory) : currentPrice;
   const range = maxPrice - minPrice || 0.01;
+
+  // Memoizar cálculos do gráfico para evitar re-renderizações desnecessárias
+  const chartPoints = useMemo(() => ({
+    binance: priceHistory.map((price, i) => {
+      const x = (i / Math.max(priceHistory.length - 1, 1)) * 100;
+      const y = 100 - ((price - minPrice) / range) * 95;
+      return `${x}%,${y}%`;
+    }).join(" "),
+    tkb: priceHistory.map((price, i) => {
+      const tkbValue = price * 1.01;
+      const x = (i / Math.max(priceHistory.length - 1, 1)) * 100;
+      const y = 100 - ((tkbValue - minPrice) / range) * 95;
+      return `${x}%,${y}%`;
+    }).join(" "),
+    area: `M 0 100% ${priceHistory.map((price, i) => {
+      const x = (i / Math.max(priceHistory.length - 1, 1)) * 100;
+      const y = 100 - ((price - minPrice) / range) * 95;
+      return `L ${x}% ${y}%`;
+    }).join(" ")} L 100% 100% Z`
+  }), [priceHistory, minPrice, range]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -186,7 +212,7 @@ const QuotePage = () => {
             <CardHeader>
               <CardTitle className="text-xl">Histórico de Cotação</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Últimas {priceHistory.length} atualizações (atualização automática a cada 10s)
+                Últimas {priceHistory.length} atualizações (atualização automática a cada 5s)
               </p>
             </CardHeader>
             <CardContent>
@@ -219,42 +245,31 @@ const QuotePage = () => {
                       
                       {/* Area fill for Binance */}
                       <path
-                        d={`M 0 100% ${priceHistory.map((price, i) => {
-                          const x = (i / Math.max(priceHistory.length - 1, 1)) * 100;
-                          const y = 100 - ((price - minPrice) / range) * 95;
-                          return `L ${x}% ${y}%`;
-                        }).join(" ")} L 100% 100% Z`}
+                        d={chartPoints.area}
                         fill="url(#binanceGradient)"
                       />
                       
                       {/* Line for Binance */}
                       <polyline
-                        points={priceHistory.map((price, i) => {
-                          const x = (i / Math.max(priceHistory.length - 1, 1)) * 100;
-                          const y = 100 - ((price - minPrice) / range) * 95;
-                          return `${x}%,${y}%`;
-                        }).join(" ")}
+                        points={chartPoints.binance}
                         fill="none"
                         stroke="hsl(217 91% 60%)"
                         strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
+                        style={{ transition: 'all 0.3s ease-out' }}
                       />
 
                       {/* Line for TKB */}
                       <polyline
-                        points={priceHistory.map((price, i) => {
-                          const tkbValue = price * 1.01;
-                          const x = (i / Math.max(priceHistory.length - 1, 1)) * 100;
-                          const y = 100 - ((tkbValue - minPrice) / range) * 95;
-                          return `${x}%,${y}%`;
-                        }).join(" ")}
+                        points={chartPoints.tkb}
                         fill="none"
                         stroke="hsl(142 71% 45%)"
                         strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeDasharray="8,4"
+                        style={{ transition: 'all 0.3s ease-out' }}
                       />
 
                       {/* Current price indicator */}
@@ -263,7 +278,7 @@ const QuotePage = () => {
                         cy={`${100 - ((currentPrice - minPrice) / range) * 95}%`}
                         r="5"
                         fill="hsl(217 91% 60%)"
-                        className="animate-pulse"
+                        style={{ transition: 'cy 0.3s ease-out' }}
                       />
                     </svg>
                   </div>
