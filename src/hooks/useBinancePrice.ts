@@ -11,6 +11,10 @@ export const useBinancePrice = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [dailyChangePercent, setDailyChangePercent] = useState<number>(0);
+  const [volumeUSDT, setVolumeUSDT] = useState<number>(0);
+  const [highPrice24h, setHighPrice24h] = useState<number>(0);
+  const [lowPrice24h, setLowPrice24h] = useState<number>(0);
+  const [tradesCount, setTradesCount] = useState<number>(0);
 
   const fetchPrice = async () => {
     try {
@@ -32,6 +36,10 @@ export const useBinancePrice = () => {
       
       setPrice(priceValue);
       setDailyChangePercent(dailyChange);
+      setVolumeUSDT(parseFloat(ticker24hData.volume));
+      setHighPrice24h(parseFloat(ticker24hData.highPrice));
+      setLowPrice24h(parseFloat(ticker24hData.lowPrice));
+      setTradesCount(parseInt(ticker24hData.count));
       setLastUpdate(new Date());
       setError(null);
     } catch (err) {
@@ -68,6 +76,10 @@ export const useBinancePrice = () => {
     error,
     lastUpdate,
     dailyChangePercent,
+    volumeUSDT,
+    highPrice24h,
+    lowPrice24h,
+    tradesCount,
     refetch: fetchPrice,
   };
 };

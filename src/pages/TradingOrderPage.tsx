@@ -14,13 +14,23 @@ import {
 import { ArrowLeft, Coins, Network } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
-import PriceChart from "@/components/PriceChart";
+import MarketInfoCard from "@/components/MarketInfoCard";
 import PriceLockCard from "@/components/PriceLockCard";
 import { supabase } from "@/integrations/supabase/client";
 
 const TradingOrderPage = () => {
   const navigate = useNavigate();
-  const { binancePrice, tkbPrice, isLoading } = useBinancePrice();
+  const { 
+    binancePrice, 
+    tkbPrice, 
+    isLoading,
+    dailyChangePercent,
+    volumeUSDT,
+    highPrice24h,
+    lowPrice24h,
+    tradesCount,
+    lastUpdate,
+  } = useBinancePrice();
   const [amount, setAmount] = useState("");
   const [network, setNetwork] = useState("");
   const [lockedPrice, setLockedPrice] = useState<number | null>(null);
@@ -158,7 +168,15 @@ const TradingOrderPage = () => {
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Left Column - Chart and Price Lock */}
             <div className="space-y-6">
-              <PriceChart currentPrice={binancePrice} isLoading={isLoading} />
+              <MarketInfoCard
+                isLoading={isLoading}
+                dailyChangePercent={dailyChangePercent}
+                volumeUSDT={volumeUSDT}
+                highPrice24h={highPrice24h}
+                lowPrice24h={lowPrice24h}
+                tradesCount={tradesCount}
+                lastUpdate={lastUpdate}
+              />
               <PriceLockCard
                 currentPrice={binancePrice}
                 tkbPrice={tkbPrice}
