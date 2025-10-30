@@ -11,7 +11,7 @@ import { toast } from "@/hooks/use-toast";
 const OrderDetails = () => {
   const navigate = useNavigate();
   const { orderId } = useParams();
-  const [timeRemaining, setTimeRemaining] = useState(15 * 60); // 15 minutos em segundos
+  const [timeRemaining, setTimeRemaining] = useState(5 * 60); // 5 minutos em segundos
   const [receipt, setReceipt] = useState<File | null>(null);
   const [messages, setMessages] = useState([
     { type: "system", content: "Ordem criada - Aguardando pagamento", timestamp: new Date() },
@@ -28,10 +28,11 @@ const OrderDetails = () => {
     createdAt: new Date(),
     bankData: {
       bank: "Banco do Brasil",
-      agency: "1234-5",
-      account: "12345-6",
-      cnpj: "12.345.678/0001-90",
-      name: "TKB Asset LTDA",
+      agency: "6869-1",
+      account: "33826-5",
+      cnpj: "45.933.866/0001-93",
+      name: "Tokenizacao Management Gestao de negocios e Patrimonio e Inv",
+      pix: "45.933.866/0001-93",
     },
   };
 
@@ -56,7 +57,7 @@ const OrderDetails = () => {
   };
 
   const handleCopyBankData = () => {
-    const data = `Banco: ${order.bankData.bank}\nAgência: ${order.bankData.agency}\nConta: ${order.bankData.account}\nCNPJ: ${order.bankData.cnpj}\nFavorecido: ${order.bankData.name}\nValor: R$ ${order.total.toFixed(2)}`;
+    const data = `Banco: ${order.bankData.bank}\nAgência: ${order.bankData.agency}\nConta: ${order.bankData.account}\nCNPJ: ${order.bankData.cnpj}\nPIX: ${order.bankData.pix}\nFavorecido: ${order.bankData.name}\nValor: R$ ${order.total.toFixed(2)}`;
     navigator.clipboard.writeText(data);
     toast({
       title: "Dados copiados!",
@@ -83,7 +84,7 @@ const OrderDetails = () => {
     }
   };
 
-  const isExpiringSoon = timeRemaining > 0 && timeRemaining < 300; // menos de 5 minutos
+  const isExpiringSoon = timeRemaining > 0 && timeRemaining < 120; // últimos 2 minutos
   const isExpired = timeRemaining === 0;
 
   return (
@@ -210,6 +211,10 @@ const OrderDetails = () => {
                     <div>
                       <p className="text-muted-foreground">Favorecido</p>
                       <p className="font-semibold">{order.bankData.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Chave PIX (CNPJ)</p>
+                      <p className="font-semibold font-mono">{order.bankData.pix}</p>
                     </div>
                     <div className="pt-2 border-t">
                       <p className="text-muted-foreground">Valor exato</p>
