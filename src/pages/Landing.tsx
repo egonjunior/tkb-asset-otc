@@ -230,7 +230,8 @@ const Landing = () => {
               © 2025 TKB Asset. Todos os direitos reservados.
             </p>
           </div>
-        </footer>
+        </div>
+      </footer>
       </div>
     </div>
   );

@@ -10,7 +10,9 @@ import { Briefcase, LogOut, Plus, Clock, TrendingUp, Settings, ExternalLink } fr
 import { toast } from "@/hooks/use-toast";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import tkbLogo from "@/assets/tkb-logo.png";
+
 interface Order {
   id: string;
   amount: number;
@@ -19,9 +21,11 @@ interface Order {
   status: "pending" | "paid" | "completed" | "expired";
   createdAt: Date;
 }
+
 const Dashboard = () => {
   const navigate = useNavigate();
-  const userName = localStorage.getItem("userName") || "Usuário";
+  const { user, profile, signOut } = useAuth();
+  const userName = profile?.full_name || user?.email?.split("@")[0] || "Usuário";
   const {
     binancePrice,
     tkbPrice,
@@ -60,14 +64,8 @@ const Dashboard = () => {
     };
     fetchOrders();
   }, []);
-  const handleLogout = () => {
-    localStorage.removeItem("userType");
-    localStorage.removeItem("userName");
-    toast({
-      title: "Logout realizado",
-      description: "Até logo!"
-    });
-    navigate("/login");
+  const handleLogout = async () => {
+    await signOut();
   };
   const getStatusBadge = (status: Order["status"]) => {
     const variants = {
@@ -93,7 +91,15 @@ const Dashboard = () => {
   };
   const totalVolume = orders.reduce((sum, order) => sum + order.total, 0);
   const completedOrders = orders.filter(order => order.status === 'completed').length;
-  return <div className="min-h-screen bg-gradient-to-br from-background via-neutral-50 to-background">
+  return <div className="min-h-screen bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
+      {/* Floating orbs */}
+      <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-40 right-20 w-80 h-80 bg-tkb-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(220,15%,92%)_1px,transparent_1px),linear-gradient(to_bottom,hsl(220,15%,92%)_1px,transparent_1px)] bg-[size:64px_64px] opacity-20 pointer-events-none"></div>
+
+      <div className="relative z-10">
       {/* Header */}
       <header className="bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
         <div className="container mx-auto px-6 py-5">
@@ -101,8 +107,8 @@ const Dashboard = () => {
             <div className="flex items-center gap-4">
               <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
               <div>
-                <h1 className="text-2xl font-playfair font-bold">TKB ASSET</h1>
-                
+                <h1 className="text-2xl font-brand">TKB ASSET</h1>
+                <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Private Banking</p>
               </div>
             </div>
             <div className="flex items-center gap-6">
@@ -130,7 +136,7 @@ const Dashboard = () => {
           
           {/* Stats Overview */}
           <div>
-            <h2 className="text-2xl font-playfair font-bold text-foreground mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-display font-bold text-foreground mb-6 flex items-center gap-2">
               <Briefcase className="h-6 w-6 text-primary" />
               Visão Geral
             </h2>
@@ -148,26 +154,26 @@ const Dashboard = () => {
 
           {/* Cotação Premium */}
           <div>
-            <h2 className="text-2xl font-playfair font-bold text-foreground mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-display font-bold text-foreground mb-6 flex items-center gap-2">
               <TrendingUp className="h-6 w-6 text-primary" />
               Cotação Atual
             </h2>
-            <Card className="shadow-institutional border-primary/20 bg-gradient-to-br from-white to-neutral-50">
+            <Card className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
               <CardContent className="p-8">
                 <div className="grid md:grid-cols-2 gap-8 mb-6">
                   <div className="space-y-3">
                     <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Mercado</p>
-                    <p className="text-5xl font-playfair font-bold text-foreground">
+                    <p className="text-5xl font-display font-bold text-foreground">
                       R$ {(binancePrice || 0).toFixed(2)}
                     </p>
                     <p className="text-sm text-muted-foreground font-inter">Par USDT/BRL</p>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm uppercase tracking-wider text-primary font-semibold">TKB Asset</p>
+                      <p className="text-sm uppercase tracking-wider text-tkb-cyan font-semibold">TKB Asset</p>
                       <Badge className="bg-success/20 text-success border-success/30">AO VIVO</Badge>
                     </div>
-                    <p className="text-5xl font-playfair font-bold text-primary">
+                    <p className="text-5xl font-display font-bold text-tkb-cyan">
                       R$ {(tkbPrice || 0).toFixed(3)}
                     </p>
                     <p className="text-sm text-muted-foreground font-inter">Cotação Institucional</p>
@@ -183,11 +189,11 @@ const Dashboard = () => {
 
           {/* Histórico */}
           <div>
-            <h2 className="text-2xl font-playfair font-bold text-foreground mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-display font-bold text-foreground mb-6 flex items-center gap-2">
               <Clock className="h-6 w-6 text-primary" />
               Histórico de Operações
             </h2>
-            <Card className="shadow-institutional">
+            <Card className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
               <CardContent className="p-0">
                 {orders.length > 0 ? <div className="overflow-x-auto">
                     <Table>
@@ -230,6 +236,8 @@ const Dashboard = () => {
           </div>
         </div>
       </main>
+      </div>
     </div>;
 };
+
 export default Dashboard;
