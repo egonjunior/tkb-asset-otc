@@ -18,7 +18,7 @@ interface Order {
   amount: number;
   network: string;
   total: number;
-  status: "pending" | "paid" | "completed" | "expired";
+  status: "pending" | "paid" | "completed" | "expired" | "cancelled";
   createdAt: Date;
 }
 
@@ -84,12 +84,19 @@ const Dashboard = () => {
       expired: {
         label: "Expirado",
         className: "bg-muted text-muted-foreground"
+      },
+      cancelled: {
+        label: "Cancelado",
+        className: "bg-destructive/80 text-destructive-foreground"
       }
     };
     const variant = variants[status];
     return <Badge className={variant.className}>{variant.label}</Badge>;
   };
-  const totalVolume = orders.reduce((sum, order) => sum + order.total, 0);
+  // Patrimônio operado: apenas ordens concluídas
+  const totalVolume = orders
+    .filter(order => order.status === 'completed')
+    .reduce((sum, order) => sum + order.total, 0);
   const completedOrders = orders.filter(order => order.status === 'completed').length;
   return <div className="min-h-screen bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
       {/* Floating orbs */}
