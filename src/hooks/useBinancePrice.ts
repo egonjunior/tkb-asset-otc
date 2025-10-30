@@ -39,8 +39,12 @@ export const useBinancePrice = () => {
     // Buscar preço inicial
     fetchPrice();
 
-    // Atualizar a cada 5 segundos
-    const interval = setInterval(fetchPrice, 5000);
+    // Atualizar a cada 5 segundos (apenas se tab estiver visível)
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchPrice();
+      }
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);

@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, TrendingUp, RefreshCw, ArrowUpRight, ArrowDownRight, Share2, ArrowRight } from "lucide-react";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import tkbLogo from "@/assets/tkb-logo.png";
+import { useTradingViewChart } from "@/hooks/useTradingViewChart";
+import { LineData } from 'lightweight-charts';
 
 const QuotePage = () => {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ const QuotePage = () => {
   const [priceHistory, setPriceHistory] = useState<number[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
 
   // Construir histórico de preços com debounce
   useEffect(() => {
@@ -60,25 +63,32 @@ const QuotePage = () => {
   const minPrice = priceHistory.length > 0 ? Math.min(...priceHistory) : currentPrice;
   const range = maxPrice - minPrice || 0.01;
 
-  // Memoizar cálculos do gráfico para evitar re-renderizações desnecessárias
-  const chartPoints = useMemo(() => ({
-    binance: priceHistory.map((price, i) => {
-      const x = (i / Math.max(priceHistory.length - 1, 1)) * 100;
-      const y = 100 - ((price - minPrice) / range) * 95;
-      return `${x}%,${y}%`;
-    }).join(" "),
-    tkb: priceHistory.map((price, i) => {
-      const tkbValue = price * 1.01;
-      const x = (i / Math.max(priceHistory.length - 1, 1)) * 100;
-      const y = 100 - ((tkbValue - minPrice) / range) * 95;
-      return `${x}%,${y}%`;
-    }).join(" "),
-    area: `M 0 100% ${priceHistory.map((price, i) => {
-      const x = (i / Math.max(priceHistory.length - 1, 1)) * 100;
-      const y = 100 - ((price - minPrice) / range) * 95;
-      return `L ${x}% ${y}%`;
-    }).join(" ")} L 100% 100% Z`
-  }), [priceHistory, minPrice, range]);
+  // Transformar dados para formato TradingView (garantindo TKB = Binance * 1.01)
+  const chartData = useMemo((): { binance: LineData[], tkb: LineData[] } => {
+    const now = Math.floor(Date.now() / 1000);
+    
+    return {
+      binance: priceHistory.map((price, i) => ({
+        time: (now - (priceHistory.length - i) * 5) as any,
+        value: price,
+      })),
+      tkb: priceHistory.map((price, i) => ({
+        time: (now - (priceHistory.length - i) * 5) as any,
+        value: price * 1.01, // TKB sempre +1% do Binance
+      })),
+    };
+  }, [priceHistory]);
+
+  // Inicializar gráfico TradingView
+  useEffect(() => {
+    if (!chartContainerRef.current || priceHistory.length < 2) return;
+    
+    useTradingViewChart({
+      container: chartContainerRef.current,
+      data: chartData.binance,
+      tkbData: chartData.tkb,
+    });
+  }, [chartContainerRef.current, chartData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900">
@@ -170,7 +180,7 @@ const QuotePage = () => {
                           hour: '2-digit', 
                           minute: '2-digit',
                           second: '2-digit'
-                        })}
+                        })} • Auto-refresh 5s
                       </p>
                     </div>
                   </div>
@@ -230,80 +240,27 @@ const QuotePage = () => {
                     Últimas {priceHistory.length} atualizações • 5s refresh
                   </p>
                 </div>
-                <Badge className="bg-success/20 text-success border-success/30">AO VIVO</Badge>
+                  <Badge className="bg-success/20 text-success border-success/30 animate-pulse">
+                    <span className="relative flex h-2 w-2 mr-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                    </span>
+                    AO VIVO
+                  </Badge>
               </div>
             </CardHeader>
             <CardContent>
               {priceHistory.length > 1 ? (
-                <div className="h-80 relative">
-                  {/* Y-axis labels */}
-                  <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-neutral-400 pr-3">
-                    <span className="font-semibold">R$ {maxPrice.toFixed(2)}</span>
-                    <span>R$ {((maxPrice + minPrice) / 2).toFixed(2)}</span>
-                    <span className="font-semibold">R$ {minPrice.toFixed(2)}</span>
-                  </div>
-
-                  {/* Chart area */}
-                  <div className="ml-20 h-full relative border-l border-b border-neutral-600 rounded-bl-lg">
-                    {/* Grid lines */}
-                    <div className="absolute inset-0 flex flex-col justify-between">
-                      {[0, 1, 2, 3, 4].map(i => (
-                        <div key={i} className="border-t border-neutral-700/50" />
-                      ))}
-                    </div>
-
-                    {/* SVG Chart */}
-                    <svg className="absolute inset-0 w-full h-full overflow-visible">
-                      <defs>
-                        <linearGradient id="binanceGradient" x1="0" x2="0" y1="0" y2="1">
-                          <stop offset="0%" stopColor="hsl(217 91% 60%)" stopOpacity="0.4" />
-                          <stop offset="100%" stopColor="hsl(217 91% 60%)" stopOpacity="0.05" />
-                        </linearGradient>
-                      </defs>
-                      
-                      {/* Area fill for Binance */}
-                      <path
-                        d={chartPoints.area}
-                        fill="url(#binanceGradient)"
-                      />
-                      
-                      {/* Line for Binance */}
-                      <polyline
-                        points={chartPoints.binance}
-                        fill="none"
-                        stroke="hsl(217 91% 60%)"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{ transition: 'all 0.3s ease-out' }}
-                      />
-
-                      {/* Line for TKB */}
-                      <polyline
-                        points={chartPoints.tkb}
-                        fill="none"
-                        stroke="hsl(142 71% 45%)"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeDasharray="8,4"
-                        style={{ transition: 'all 0.3s ease-out' }}
-                      />
-
-                      {/* Current price indicator */}
-                      <circle
-                        cx="100%"
-                        cy={`${100 - ((currentPrice - minPrice) / range) * 95}%`}
-                        r="5"
-                        fill="hsl(217 91% 60%)"
-                        style={{ transition: 'cy 0.3s ease-out' }}
-                      />
-                    </svg>
-                  </div>
+                <div className="h-96">
+                  <div 
+                    ref={chartContainerRef}
+                    className="w-full h-full"
+                  />
                 </div>
               ) : (
-                <div className="h-80 flex items-center justify-center text-muted-foreground">
-                  <p>Coletando dados de cotação...</p>
+                <div className="h-96 flex flex-col items-center justify-center gap-4">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                  <p className="text-neutral-400 font-inter">Carregando cotações em tempo real...</p>
                 </div>
               )}
 
