@@ -7,48 +7,86 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Clock, Upload, Copy, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const OrderDetails = () => {
   const navigate = useNavigate();
   const { orderId } = useParams();
-  const [timeRemaining, setTimeRemaining] = useState(5 * 60); // 5 minutos em segundos
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState(0);
   const [receipt, setReceipt] = useState<File | null>(null);
   const [messages, setMessages] = useState([
     { type: "system", content: "Ordem criada - Aguardando pagamento", timestamp: new Date() },
   ]);
 
-  // Mock order data
-  const order = {
-    id: orderId,
-    amount: 1000,
-    network: "TRC20",
-    total: 5449.00,
-    price: 5.449,
-    status: "pending",
-    createdAt: new Date(),
-    bankData: {
-      bank: "Banco do Brasil",
-      agency: "6869-1",
-      account: "33826-5",
-      cnpj: "45.933.866/0001-93",
-      name: "Tokenizacao Management Gestao de negocios e Patrimonio e Inv",
-      pix: "45.933.866/0001-93",
-    },
+  // Dados bancários fixos (não mudam)
+  const bankData = {
+    bank: "Banco do Brasil",
+    agency: "6869-1",
+    account: "33826-5",
+    cnpj: "45.933.866/0001-93",
+    name: "Tokenizacao Management Gestao de negocios e Patrimonio e Inv",
+    pix: "45.933.866/0001-93",
   };
 
+  // Buscar ordem do banco de dados
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 0) {
-          clearInterval(timer);
-          return 0;
+    const fetchOrder = async () => {
+      if (!orderId) return;
+
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', orderId)
+          .single();
+
+        if (error) throw error;
+        
+        if (!data) {
+          setError('Ordem não encontrada');
+          return;
         }
-        return prev - 1;
-      });
+
+        setOrder(data);
+      } catch (err) {
+        console.error('Error fetching order:', err);
+        setError('Não foi possível carregar a ordem');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [orderId]);
+
+  // Calcular tempo restante baseado em locked_at
+  useEffect(() => {
+    if (!order?.locked_at) return;
+
+    const calculateTimeRemaining = () => {
+      const lockedAt = new Date(order.locked_at).getTime();
+      const now = Date.now();
+      const elapsed = Math.floor((now - lockedAt) / 1000);
+      const remaining = Math.max(0, 300 - elapsed); // 300s = 5 min
+      return remaining;
+    };
+
+    // Calcular inicialmente
+    setTimeRemaining(calculateTimeRemaining());
+
+    // Atualizar a cada segundo
+    const interval = setInterval(() => {
+      const remaining = calculateTimeRemaining();
+      setTimeRemaining(remaining);
+      if (remaining <= 0) clearInterval(interval);
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, []);
+    return () => clearInterval(interval);
+  }, [order?.locked_at]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -57,7 +95,8 @@ const OrderDetails = () => {
   };
 
   const handleCopyBankData = () => {
-    const data = `Banco: ${order.bankData.bank}\nAgência: ${order.bankData.agency}\nConta: ${order.bankData.account}\nCNPJ: ${order.bankData.cnpj}\nPIX: ${order.bankData.pix}\nFavorecido: ${order.bankData.name}\nValor: R$ ${order.total.toFixed(2)}`;
+    if (!order) return;
+    const data = `Banco: ${bankData.bank}\nAgência: ${bankData.agency}\nConta: ${bankData.account}\nCNPJ: ${bankData.cnpj}\nPIX: ${bankData.pix}\nFavorecido: ${bankData.name}\nValor: R$ ${order.total.toFixed(2)}`;
     navigator.clipboard.writeText(data);
     toast({
       title: "Dados copiados!",
@@ -86,6 +125,34 @@ const OrderDetails = () => {
 
   const isExpiringSoon = timeRemaining > 0 && timeRemaining < 120; // últimos 2 minutos
   const isExpired = timeRemaining === 0;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">Carregando ordem...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center space-y-3">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+            <h2 className="text-xl font-bold">Ordem não encontrada</h2>
+            <p className="text-muted-foreground">{error || 'Esta ordem não existe ou você não tem permissão para visualizá-la'}</p>
+            <Button onClick={() => navigate('/dashboard')}>
+              Voltar ao Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -164,7 +231,7 @@ const OrderDetails = () => {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Preço unitário</p>
-                      <p className="font-semibold">R$ {order.price.toFixed(3)}</p>
+                      <p className="font-semibold">R$ {order.locked_price.toFixed(3)}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Total</p>
@@ -174,7 +241,7 @@ const OrderDetails = () => {
                     </div>
                   </div>
                   <div className="text-xs text-muted-foreground pt-2 border-t">
-                    Criada em: {order.createdAt.toLocaleString('pt-BR')}
+                    Criada em: {new Date(order.created_at).toLocaleString('pt-BR')}
                   </div>
                 </CardContent>
               </Card>
@@ -192,29 +259,29 @@ const OrderDetails = () => {
                   <div className="grid gap-3">
                     <div>
                       <p className="text-muted-foreground">Banco</p>
-                      <p className="font-semibold">{order.bankData.bank}</p>
+                      <p className="font-semibold">{bankData.bank}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-muted-foreground">Agência</p>
-                        <p className="font-semibold">{order.bankData.agency}</p>
+                        <p className="font-semibold">{bankData.agency}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Conta</p>
-                        <p className="font-semibold">{order.bankData.account}</p>
+                        <p className="font-semibold">{bankData.account}</p>
                       </div>
                     </div>
                     <div>
                       <p className="text-muted-foreground">CNPJ</p>
-                      <p className="font-semibold">{order.bankData.cnpj}</p>
+                      <p className="font-semibold">{bankData.cnpj}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Favorecido</p>
-                      <p className="font-semibold">{order.bankData.name}</p>
+                      <p className="font-semibold">{bankData.name}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Chave PIX (CNPJ)</p>
-                      <p className="font-semibold font-mono">{order.bankData.pix}</p>
+                      <p className="font-semibold font-mono">{bankData.pix}</p>
                     </div>
                     <div className="pt-2 border-t">
                       <p className="text-muted-foreground">Valor exato</p>

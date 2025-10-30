@@ -26,7 +26,7 @@ interface OrderFormCardProps {
   tkbPrice: number | null;
   binancePrice: number | null;
   isLoading: boolean;
-  onSubmit: (data: { amount: string; network: string; lockedPrice: number; total: number }) => void;
+  onSubmit: (data: { amount: string; network: string; lockedPrice: number; total: number; lockedAt: string }) => void;
   isSubmitting?: boolean;
 }
 
@@ -129,7 +129,8 @@ const OrderFormCard = ({
       amount: usdtAmount,
       network,
       lockedPrice,
-      total
+      total,
+      lockedAt: new Date().toISOString()
     });
   };
 

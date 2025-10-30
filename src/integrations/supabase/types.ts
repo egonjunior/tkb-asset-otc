@@ -19,6 +19,7 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          locked_at: string | null
           locked_price: number
           network: string
           status: string
@@ -30,6 +31,7 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
+          locked_at?: string | null
           locked_price: number
           network: string
           status?: string
@@ -41,6 +43,7 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          locked_at?: string | null
           locked_price?: number
           network?: string
           status?: string

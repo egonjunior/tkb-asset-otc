@@ -27,7 +27,8 @@ const TradingOrderPage = () => {
     amount: string; 
     network: string; 
     lockedPrice: number; 
-    total: number 
+    total: number;
+    lockedAt: string;
   }) => {
     setIsSubmitting(true);
 
@@ -52,6 +53,7 @@ const TradingOrderPage = () => {
           network: orderData.network,
           total: orderData.total,
           locked_price: orderData.lockedPrice,
+          locked_at: orderData.lockedAt,
           status: 'pending',
         })
         .select()
