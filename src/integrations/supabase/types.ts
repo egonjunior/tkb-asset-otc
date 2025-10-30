@@ -22,6 +22,7 @@ export type Database = {
           locked_at: string | null
           locked_price: number
           network: string
+          receipt_url: string | null
           status: string
           total: number
           updated_at: string
@@ -35,6 +36,7 @@ export type Database = {
           locked_at?: string | null
           locked_price: number
           network: string
+          receipt_url?: string | null
           status?: string
           total: number
           updated_at?: string
@@ -48,6 +50,7 @@ export type Database = {
           locked_at?: string | null
           locked_price?: number
           network?: string
+          receipt_url?: string | null
           status?: string
           total?: number
           updated_at?: string

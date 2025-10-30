@@ -1,0 +1,389 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Download, CheckCircle2, AlertCircle, FileText } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+const AdminOrderDetails = () => {
+  const navigate = useNavigate();
+  const { orderId } = useParams();
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    const fetchOrder = async () => {
+      if (!orderId) return;
+
+      try {
+        setLoading(true);
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', orderId)
+          .single();
+
+        if (orderError) throw orderError;
+        
+        if (!orderData) {
+          setError('Ordem não encontrada');
+          return;
+        }
+
+        // Buscar dados do perfil
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, document_number, document_type')
+          .eq('id', orderData.user_id)
+          .single();
+
+        const orderWithProfile = {
+          ...orderData,
+          profiles: profileData || { full_name: 'N/A', document_number: 'N/A', document_type: 'N/A' }
+        };
+
+        setOrder(orderWithProfile);
+
+        // Se tem comprovante, buscar URL assinada
+        if (orderData.receipt_url) {
+          const { data: signedData } = await supabase.storage
+            .from('receipts')
+            .createSignedUrl(orderData.receipt_url, 3600);
+          
+          if (signedData) {
+            setReceiptPreview(signedData.signedUrl);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching order:', err);
+        setError('Não foi possível carregar a ordem');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [orderId]);
+
+  const handleDownloadReceipt = async () => {
+    if (!order.receipt_url) return;
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from('receipts')
+        .download(order.receipt_url);
+      
+      if (error) throw error;
+      
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = order.receipt_url.split('/').pop() || 'comprovante';
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download iniciado",
+        description: "Comprovante baixado com sucesso",
+      });
+    } catch (error) {
+      console.error('Error downloading receipt:', error);
+      toast({
+        title: "Erro ao baixar",
+        description: "Tente novamente",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!order) return;
+    
+    setIsUpdating(true);
+    
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'completed' })
+        .eq('id', order.id);
+      
+      if (error) throw error;
+      
+      setOrder({ ...order, status: 'completed' });
+      
+      toast({
+        title: "Pagamento confirmado!",
+        description: "Ordem marcada como concluída",
+      });
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      toast({
+        title: "Erro ao confirmar",
+        description: "Tente novamente",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleRejectPayment = async () => {
+    if (!order) return;
+    
+    setIsUpdating(true);
+    
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'pending' })
+        .eq('id', order.id);
+      
+      if (error) throw error;
+      
+      setOrder({ ...order, status: 'pending' });
+      
+      toast({
+        title: "Pagamento rejeitado",
+        description: "Ordem retornou para status pendente",
+      });
+    } catch (error) {
+      console.error('Error rejecting payment:', error);
+      toast({
+        title: "Erro ao rejeitar",
+        description: "Tente novamente",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, { label: string; className: string }> = {
+      pending: { label: "Aguardando", className: "bg-warning text-warning-foreground" },
+      paid: { label: "Pago", className: "bg-primary text-primary-foreground" },
+      completed: { label: "Concluído", className: "bg-success text-success-foreground" },
+      expired: { label: "Expirado", className: "bg-muted text-muted-foreground" },
+    };
+    
+    const variant = variants[status] || variants.pending;
+    return <Badge className={variant.className}>{variant.label}</Badge>;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">Carregando ordem...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center space-y-3">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+            <h2 className="text-xl font-bold">Ordem não encontrada</h2>
+            <p className="text-muted-foreground">{error || 'Esta ordem não existe'}</p>
+            <Button onClick={() => navigate('/admin/dashboard')}>
+              Voltar ao Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-card border-b border-border shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/admin/dashboard")}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Gerenciar Ordem {order.id}</h1>
+              <p className="text-xs text-muted-foreground">Painel administrativo</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Coluna Esquerda - Informações da Ordem */}
+            <div className="space-y-6">
+              {/* Status */}
+              <Card className="shadow-lg">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Status da Ordem</p>
+                      {getStatusBadge(order.status)}
+                    </div>
+                    {order.status === 'paid' && (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={handleConfirmPayment}
+                          disabled={isUpdating}
+                        >
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          Confirmar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={handleRejectPayment}
+                          disabled={isUpdating}
+                        >
+                          Rejeitar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Dados do Cliente */}
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg">Dados do Cliente</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Nome</p>
+                    <p className="font-semibold">{order.profiles?.full_name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Documento</p>
+                    <p className="font-semibold">
+                      {order.profiles?.document_type}: {order.profiles?.document_number || 'N/A'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Dados da Ordem */}
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg">Detalhes da Ordem</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Quantidade</p>
+                      <p className="font-semibold">{Number(order.amount).toLocaleString()} USDT</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Rede</p>
+                      <p className="font-semibold">{order.network}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-muted-foreground">Carteira de Destino</p>
+                      <p className="font-mono text-xs break-all">{order.wallet_address || 'Não informado'}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Preço unitário</p>
+                      <p className="font-semibold">R$ {Number(order.locked_price).toFixed(3)}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Total</p>
+                      <p className="font-semibold text-primary text-base">
+                        R$ {Number(order.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground pt-2 border-t">
+                    Criada em: {new Date(order.created_at).toLocaleString('pt-BR')}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Coluna Direita - Comprovante */}
+            <div className="space-y-6">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg">Comprovante de Pagamento</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {order.receipt_url ? (
+                    <>
+                      {/* Preview do comprovante */}
+                      <div className="border rounded-lg overflow-hidden bg-muted">
+                        {receiptPreview ? (
+                          order.receipt_url.toLowerCase().endsWith('.pdf') ? (
+                            <div className="flex flex-col items-center justify-center p-8 space-y-3">
+                              <FileText className="h-16 w-16 text-primary" />
+                              <p className="text-sm text-muted-foreground">Arquivo PDF</p>
+                              <Button size="sm" onClick={handleDownloadReceipt}>
+                                <Download className="h-4 w-4 mr-2" />
+                                Baixar PDF
+                              </Button>
+                            </div>
+                          ) : (
+                            <img 
+                              src={receiptPreview} 
+                              alt="Comprovante" 
+                              className="w-full h-auto"
+                            />
+                          )
+                        ) : (
+                          <div className="flex items-center justify-center p-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Botão de download */}
+                      {receiptPreview && !order.receipt_url.toLowerCase().endsWith('.pdf') && (
+                        <Button 
+                          className="w-full" 
+                          onClick={handleDownloadReceipt}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Baixar Comprovante
+                        </Button>
+                      )}
+
+                      <div className="flex items-center gap-2 p-3 bg-success/10 border border-success/20 rounded-lg">
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                        <span className="text-sm text-success">Comprovante recebido</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-8 text-center space-y-3 border-2 border-dashed rounded-lg">
+                      <AlertCircle className="h-12 w-12 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">Nenhum comprovante enviado</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Aguardando o cliente enviar o comprovante de pagamento
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default AdminOrderDetails;

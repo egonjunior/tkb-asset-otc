@@ -16,7 +16,8 @@ const OrderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [receipt, setReceipt] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [messages, setMessages] = useState([
     { type: "system", content: "Ordem criada - Aguardando pagamento", timestamp: new Date() },
   ]);
@@ -104,22 +105,70 @@ const OrderDetails = () => {
     });
   };
 
-  const handleUploadReceipt = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setReceipt(file);
+      setSelectedFile(file);
+    }
+  };
+
+  const handleSendReceipt = async () => {
+    if (!selectedFile || !order) return;
+    
+    setIsUploading(true);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Não autenticado');
+      
+      // Upload para Supabase Storage
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${user.id}/${order.id}_${Date.now()}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('receipts')
+        .upload(fileName, selectedFile);
+      
+      if (uploadError) throw uploadError;
+      
+      // Atualizar ordem com URL do comprovante
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ 
+          receipt_url: fileName,
+          status: 'paid'
+        })
+        .eq('id', order.id);
+      
+      if (updateError) throw updateError;
+      
+      // Adicionar na timeline
       setMessages([
         ...messages,
         { 
           type: "client", 
-          content: `Comprovante enviado: ${file.name}`, 
+          content: `Comprovante enviado: ${selectedFile.name}`, 
           timestamp: new Date() 
         },
       ]);
+      
       toast({
-        title: "Comprovante enviado!",
+        title: "Comprovante enviado com sucesso!",
         description: "Aguarde a confirmação do pagamento",
       });
+      
+      setSelectedFile(null);
+      setOrder({ ...order, receipt_url: fileName, status: 'paid' });
+      
+    } catch (error) {
+      console.error('Erro ao enviar comprovante:', error);
+      toast({
+        title: "Erro ao enviar",
+        description: "Tente novamente",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -340,19 +389,47 @@ const OrderDetails = () => {
                   </div>
 
                   {/* Upload Area */}
-                  <div className="border-t pt-4">
-                    <Label htmlFor="receipt" className="text-sm font-medium mb-2 block">
-                      Enviar Comprovante
+                  <div className="border-t pt-4 space-y-3">
+                    <Label htmlFor="receipt" className="text-sm font-medium block">
+                      Anexar Comprovante
                     </Label>
+                    
+                    {/* Input de arquivo */}
                     <Input
                       id="receipt"
                       type="file"
                       accept="image/*,.pdf"
-                      onChange={handleUploadReceipt}
-                      disabled={isExpired}
+                      onChange={handleFileSelect}
+                      disabled={isExpired || isUploading || order.receipt_url !== null}
                       className="cursor-pointer"
                     />
-                    <p className="text-xs text-muted-foreground mt-2">
+                    
+                    {/* Preview do arquivo selecionado */}
+                    {selectedFile && !order.receipt_url && (
+                      <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Upload className="h-4 w-4 text-primary" />
+                          <span className="text-sm">{selectedFile.name}</span>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          onClick={handleSendReceipt}
+                          disabled={isUploading}
+                        >
+                          {isUploading ? "Enviando..." : "Enviar Comprovante"}
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {/* Confirmação visual após envio */}
+                    {order.receipt_url && (
+                      <div className="flex items-center gap-2 p-3 bg-success/10 border border-success/20 rounded-lg">
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                        <span className="text-sm text-success">Comprovante enviado com sucesso</span>
+                      </div>
+                    )}
+                    
+                    <p className="text-xs text-muted-foreground">
                       Aceita imagens (JPG, PNG) e PDFs
                     </p>
                   </div>

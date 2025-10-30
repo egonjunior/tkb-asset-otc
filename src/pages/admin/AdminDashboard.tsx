@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,53 +13,80 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Order {
   id: string;
-  clientName: string;
+  user_id: string;
   amount: number;
   network: string;
   total: number;
   status: "pending" | "paid" | "completed" | "expired";
-  createdAt: Date;
-  hasReceipt: boolean;
+  created_at: string;
+  receipt_url: string | null;
+  full_name?: string;
 }
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  
-  const orders: Order[] = [
-    {
-      id: "OTC-2025-003",
-      clientName: "cliente1",
-      amount: 2000,
-      network: "TRC20",
-      total: 10898.00,
-      status: "paid",
-      createdAt: new Date(),
-      hasReceipt: true,
-    },
-    {
-      id: "OTC-2025-002",
-      clientName: "cliente2",
-      amount: 500,
-      network: "ERC20",
-      total: 2724.50,
-      status: "pending",
-      createdAt: new Date(Date.now() - 300000),
-      hasReceipt: false,
-    },
-    {
-      id: "OTC-2025-001",
-      clientName: "cliente3",
-      amount: 1000,
-      network: "TRC20",
-      total: 5449.00,
-      status: "completed",
-      createdAt: new Date(Date.now() - 86400000),
-      hasReceipt: true,
-    },
-  ];
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (ordersError) {
+        console.error('Erro ao buscar ordens:', ordersError);
+        toast({
+          title: "Erro ao carregar ordens",
+          description: "Tente recarregar a página",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Buscar os perfis dos usuários
+      if (ordersData && ordersData.length > 0) {
+        const userIds = [...new Set(ordersData.map(o => o.user_id))];
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', userIds);
+        
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p.full_name]));
+        
+        const ordersWithNames = ordersData.map(order => ({
+          ...order,
+          full_name: profilesMap.get(order.user_id) || 'N/A'
+        }));
+        
+        setOrders(ordersWithNames as Order[]);
+      } else {
+        setOrders([]);
+      }
+      
+      setLoading(false);
+    };
+    
+    fetchOrders();
+    
+    // Realtime subscription
+    const channel = supabase
+      .channel('admin-orders')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'orders' },
+        () => fetchOrders()
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const metrics = {
     openOrders: orders.filter(o => o.status === "pending").length,
@@ -66,7 +94,7 @@ const AdminDashboard = () => {
     completedToday: orders.filter(o => o.status === "completed").length,
     volumeToday: orders
       .filter(o => o.status === "completed")
-      .reduce((sum, o) => sum + o.total, 0),
+      .reduce((sum, o) => sum + Number(o.total), 0),
   };
 
   const handleLogout = () => {
@@ -168,54 +196,69 @@ const AdminDashboard = () => {
               <CardTitle>Todas as Ordens</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Rede</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Comprovante</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.id}</TableCell>
-                        <TableCell>{order.clientName}</TableCell>
-                        <TableCell>{order.amount.toLocaleString()} USDT</TableCell>
-                        <TableCell>{order.network}</TableCell>
-                        <TableCell>R$ {order.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell>{getStatusBadge(order.status)}</TableCell>
-                        <TableCell>
-                          {order.hasReceipt ? (
-                            <CheckCircle2 className="h-4 w-4 text-success" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {order.createdAt.toLocaleDateString('pt-BR')}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/admin/order/${order.id}`)}
-                          >
-                            Gerenciar
-                          </Button>
-                        </TableCell>
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+                  <p className="text-muted-foreground mt-3">Carregando ordens...</p>
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhuma ordem encontrada
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Rede</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Comprovante</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Ações</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {orders.map((order) => (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-medium">{order.id}</TableCell>
+                          <TableCell>{order.full_name || 'N/A'}</TableCell>
+                          <TableCell>{Number(order.amount).toLocaleString()} USDT</TableCell>
+                          <TableCell>{order.network}</TableCell>
+                          <TableCell>R$ {Number(order.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                          <TableCell>{getStatusBadge(order.status)}</TableCell>
+                          <TableCell>
+                            {order.receipt_url ? (
+                              <Badge className="bg-success/10 text-success border-success">
+                                Enviado
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-muted-foreground">
+                                Pendente
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(order.created_at).toLocaleDateString('pt-BR')}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/admin/order/${order.id}`)}
+                            >
+                              Gerenciar
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
