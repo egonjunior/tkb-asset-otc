@@ -17,7 +17,7 @@ export const useBinanceCandles = () => {
   const fetchCandles = async () => {
     try {
       const response = await fetch(
-        'https://api.binance.com/api/v3/klines?symbol=USDTBRL&interval=1m&limit=60'
+        'https://api.binance.com/api/v3/klines?symbol=USDTBRL&interval=15m&limit=96'
       );
       
       if (!response.ok) {
@@ -47,12 +47,12 @@ export const useBinanceCandles = () => {
   useEffect(() => {
     fetchCandles();
     
-    // Atualizar a cada 60 segundos
+    // Atualizar a cada 15 minutos (quando um novo candle fecha)
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         fetchCandles();
       }
-    }, 60000);
+    }, 900000);
 
     return () => clearInterval(interval);
   }, []);

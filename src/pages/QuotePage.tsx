@@ -198,7 +198,7 @@ const QuotePage = () => {
                 <div>
                   <CardTitle className="text-2xl font-playfair text-white">Histórico de Cotação</CardTitle>
                   <p className="text-sm text-neutral-300 font-inter mt-1">
-                    Últimos 60 minutos • Candles de 1 minuto
+                    Últimas 24 horas • Candles de 15 minutos
                   </p>
                 </div>
                   <Badge className="bg-success/20 text-success border-success/30 animate-pulse">
