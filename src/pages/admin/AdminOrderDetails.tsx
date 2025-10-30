@@ -17,7 +17,34 @@ const AdminOrderDetails = () => {
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    const fetchOrder = async () => {
+  const checkAdminAndFetchOrder = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      navigate('/admin/login');
+      return;
+    }
+
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (!roles) {
+      toast({
+        title: "Acesso negado",
+        description: "Você não tem permissão de administrador",
+        variant: "destructive",
+      });
+      navigate('/admin/dashboard');
+      return;
+    }
+
+    fetchOrder();
+  };
+
+  const fetchOrder = async () => {
       if (!orderId) return;
 
       try {

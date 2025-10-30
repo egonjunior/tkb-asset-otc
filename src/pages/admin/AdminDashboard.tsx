@@ -11,9 +11,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { VolumeCard } from "@/components/admin/VolumeCard";
+
+type VolumePeriod = 'day' | 'week' | 'month' | 'all';
 
 interface Order {
   id: string;
@@ -31,8 +34,36 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [volumePeriod, setVolumePeriod] = useState<VolumePeriod>('day');
 
   useEffect(() => {
+    const checkAdminAndFetchOrders = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/admin/login');
+        return;
+      }
+
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (!roles) {
+        toast({
+          title: "Acesso negado",
+          description: "Você não tem permissão de administrador",
+          variant: "destructive",
+        });
+        navigate('/dashboard');
+        return;
+      }
+
+      fetchOrders();
+    };
+
     const fetchOrders = async () => {
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
@@ -72,29 +103,50 @@ const AdminDashboard = () => {
       setLoading(false);
     };
     
-    fetchOrders();
+    checkAdminAndFetchOrders();
     
     // Realtime subscription
     const channel = supabase
       .channel('admin-orders')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'orders' },
-        () => fetchOrders()
+        () => {
+          const fetchOrders = async () => {
+            const { data: ordersData } = await supabase
+              .from('orders')
+              .select('*')
+              .order('created_at', { ascending: false });
+            
+            if (ordersData && ordersData.length > 0) {
+              const userIds = [...new Set(ordersData.map(o => o.user_id))];
+              const { data: profilesData } = await supabase
+                .from('profiles')
+                .select('id, full_name')
+                .in('id', userIds);
+              
+              const profilesMap = new Map(profilesData?.map(p => [p.id, p.full_name]));
+              const ordersWithNames = ordersData.map(order => ({
+                ...order,
+                full_name: profilesMap.get(order.user_id) || 'N/A'
+              }));
+              
+              setOrders(ordersWithNames as Order[]);
+            }
+          };
+          fetchOrders();
+        }
       )
       .subscribe();
     
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [navigate]);
 
   const metrics = {
     openOrders: orders.filter(o => o.status === "pending").length,
     awaitingConfirmation: orders.filter(o => o.status === "paid").length,
     completedToday: orders.filter(o => o.status === "completed").length,
-    volumeToday: orders
-      .filter(o => o.status === "completed")
-      .reduce((sum, o) => sum + Number(o.total), 0),
   };
 
   const handleLogout = () => {
@@ -170,25 +222,33 @@ const AdminDashboard = () => {
             <Card className="shadow-md">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">Concluídas Hoje</p>
+                  <p className="text-sm text-muted-foreground">Concluídas</p>
                   <CheckCircle2 className="h-5 w-5 text-success" />
                 </div>
                 <p className="text-3xl font-bold text-foreground">{metrics.completedToday}</p>
               </CardContent>
             </Card>
 
-            <Card className="shadow-md">
+            <Card 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow" 
+              onClick={() => navigate('/admin/users')}
+            >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">Volume do Dia</p>
-                  <TrendingUp className="h-5 w-5 text-success" />
+                  <p className="text-sm text-muted-foreground">Gestão de Usuários</p>
+                  <Users className="h-5 w-5 text-primary" />
                 </div>
-                <p className="text-2xl font-bold text-primary">
-                  R$ {metrics.volumeToday.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
+                <p className="text-xl font-bold text-primary">Ver Todos →</p>
               </CardContent>
             </Card>
           </div>
+
+          {/* Volume Card */}
+          <VolumeCard
+            orders={orders}
+            period={volumePeriod}
+            onPeriodChange={setVolumePeriod}
+          />
 
           {/* Tabela de Ordens */}
           <Card className="shadow-lg">

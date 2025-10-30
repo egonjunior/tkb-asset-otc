@@ -16,6 +16,8 @@ import TradingOrderPage from "./pages/TradingOrderPage";
 import OrderDetails from "./pages/OrderDetails";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrderDetails from "./pages/admin/AdminOrderDetails";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminUserDetails from "./pages/admin/AdminUserDetails";
 import QuotePage from "./pages/QuotePage";
 
 const queryClient = new QueryClient();
@@ -51,6 +53,8 @@ const App = () => (
             } />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/order/:orderId" element={<AdminOrderDetails />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/users/:userId" element={<AdminUserDetails />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
