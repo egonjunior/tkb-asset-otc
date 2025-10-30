@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { createChart, IChartApi, LineData, LineSeries } from 'lightweight-charts';
 
 interface ChartConfig {
-  container: HTMLDivElement;
+  container: HTMLDivElement | null;
   data: LineData[];
   tkbData: LineData[];
 }
@@ -13,7 +13,7 @@ export const useTradingViewChart = ({ container, data, tkbData }: ChartConfig) =
   const tkbSeriesRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!container) return;
+    if (!container || data.length === 0) return;
 
     // Criar gráfico com tema dark
     const chart = createChart(container, {

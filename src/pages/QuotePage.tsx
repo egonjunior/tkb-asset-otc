@@ -79,16 +79,12 @@ const QuotePage = () => {
     };
   }, [priceHistory]);
 
-  // Inicializar gráfico TradingView
-  useEffect(() => {
-    if (!chartContainerRef.current || priceHistory.length < 2) return;
-    
-    useTradingViewChart({
-      container: chartContainerRef.current,
-      data: chartData.binance,
-      tkbData: chartData.tkb,
-    });
-  }, [chartContainerRef.current, chartData]);
+  // Inicializar gráfico TradingView (hook no nível superior)
+  useTradingViewChart({
+    container: chartContainerRef.current,
+    data: chartData.binance,
+    tkbData: chartData.tkb,
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900">
