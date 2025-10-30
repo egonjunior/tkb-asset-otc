@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Clock, Upload, Copy, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Clock, Upload, Copy, CheckCircle2, AlertCircle, Package, Send, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -18,9 +18,7 @@ const OrderDetails = () => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [messages, setMessages] = useState([
-    { type: "system", content: "Ordem criada - Aguardando pagamento", timestamp: new Date() },
-  ]);
+  const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
 
   // Dados bancários fixos (não mudam)
   const bankData = {
@@ -32,7 +30,7 @@ const OrderDetails = () => {
     pix: "45.933.866/0001-93",
   };
 
-  // Buscar ordem do banco de dados
+  // Buscar ordem e eventos da timeline
   useEffect(() => {
     const fetchOrder = async () => {
       if (!orderId) return;
@@ -53,6 +51,17 @@ const OrderDetails = () => {
         }
 
         setOrder(data);
+
+        // Buscar eventos da timeline
+        const { data: timelineData } = await supabase
+          .from('order_timeline')
+          .select('*')
+          .eq('order_id', orderId)
+          .order('created_at', { ascending: true });
+
+        if (timelineData) {
+          setTimelineEvents(timelineData);
+        }
       } catch (err) {
         console.error('Error fetching order:', err);
         setError('Não foi possível carregar a ordem');
@@ -62,6 +71,39 @@ const OrderDetails = () => {
     };
 
     fetchOrder();
+
+    // Realtime subscription para atualizações da ordem e timeline
+    const orderChannel = supabase
+      .channel('order-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${orderId}`,
+        },
+        (payload) => {
+          setOrder(payload.new);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'order_timeline',
+          filter: `order_id=eq.${orderId}`,
+        },
+        (payload) => {
+          setTimelineEvents((prev) => [...prev, payload.new]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(orderChannel);
+    };
   }, [orderId]);
 
   // Calcular tempo restante baseado em locked_at
@@ -141,16 +183,6 @@ const OrderDetails = () => {
         .eq('id', order.id);
       
       if (updateError) throw updateError;
-      
-      // Adicionar na timeline
-      setMessages([
-        ...messages,
-        { 
-          type: "client", 
-          content: `Comprovante enviado: ${selectedFile.name}`, 
-          timestamp: new Date() 
-        },
-      ]);
       
       toast({
         title: "Comprovante enviado com sucesso!",
@@ -360,32 +392,90 @@ const OrderDetails = () => {
                   <CardTitle className="text-lg">Timeline da Ordem</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Messages */}
+                  {/* Timeline Events */}
                   <div className="space-y-4 max-h-96 overflow-y-auto">
-                    {messages.map((msg, idx) => (
-                      <div key={idx} className={`flex gap-3 ${
-                        msg.type === "system" ? "items-start" : "items-start"
-                      }`}>
+                    {/* Evento: Ordem criada */}
+                    <div className="flex gap-3 items-start">
+                      <div className="h-8 w-8 rounded-full flex items-center justify-center shrink-0 bg-primary/10">
+                        <Package className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Sistema</p>
+                        <p className="text-sm text-muted-foreground mt-1">Ordem criada - Aguardando pagamento</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(order.created_at).toLocaleString('pt-BR')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Evento: Comprovante enviado */}
+                    {order.receipt_url && (
+                      <div className="flex gap-3 items-start">
+                        <div className="h-8 w-8 rounded-full flex items-center justify-center shrink-0 bg-success/10">
+                          <Upload className="h-4 w-4 text-success" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Você</p>
+                          <p className="text-sm text-muted-foreground mt-1">Comprovante de pagamento enviado</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(order.updated_at).toLocaleString('pt-BR')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Eventos da timeline */}
+                    {timelineEvents.map((event) => (
+                      <div key={event.id} className="flex gap-3 items-start">
                         <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
-                          msg.type === "system" ? "bg-muted" : "bg-primary/10"
+                          event.event_type === 'payment_confirmed' ? 'bg-success/10' :
+                          event.event_type === 'usdt_sent' ? 'bg-primary/10' : 'bg-muted'
                         }`}>
-                          {msg.type === "system" ? (
-                            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                          {event.event_type === 'payment_confirmed' ? (
+                            <CheckCircle2 className="h-4 w-4 text-success" />
+                          ) : event.event_type === 'usdt_sent' ? (
+                            <Send className="h-4 w-4 text-primary" />
                           ) : (
-                            <Upload className="h-4 w-4 text-primary" />
+                            <AlertCircle className="h-4 w-4 text-muted-foreground" />
                           )}
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium">
-                            {msg.type === "system" ? "Sistema" : "Você"}
+                            {event.actor_type === 'admin' ? 'OTC' : event.actor_type === 'system' ? 'Sistema' : 'Você'}
                           </p>
-                          <p className="text-sm text-muted-foreground mt-1">{msg.content}</p>
+                          <p className="text-sm text-muted-foreground mt-1">{event.message}</p>
+                          {event.metadata?.transaction_hash && (
+                            <a
+                              href={`https://tronscan.org/#/transaction/${event.metadata.transaction_hash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-2"
+                            >
+                              Ver transação <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
                           <p className="text-xs text-muted-foreground mt-1">
-                            {msg.timestamp.toLocaleTimeString('pt-BR')}
+                            {new Date(event.created_at).toLocaleString('pt-BR')}
                           </p>
                         </div>
                       </div>
                     ))}
+
+                    {/* Status final */}
+                    {order.status === 'completed' && !timelineEvents.some(e => e.event_type === 'usdt_sent') && (
+                      <div className="flex gap-3 items-start">
+                        <div className="h-8 w-8 rounded-full flex items-center justify-center shrink-0 bg-success/10">
+                          <CheckCircle2 className="h-4 w-4 text-success" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Sistema</p>
+                          <p className="text-sm text-muted-foreground mt-1">Ordem concluída</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(order.updated_at).toLocaleString('pt-BR')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Upload Area */}

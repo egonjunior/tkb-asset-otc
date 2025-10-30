@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      order_timeline: {
+        Row: {
+          actor_type: string
+          created_at: string
+          event_type: string
+          id: string
+          message: string
+          metadata: Json | null
+          order_id: string
+        }
+        Insert: {
+          actor_type: string
+          created_at?: string
+          event_type: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          order_id: string
+        }
+        Update: {
+          actor_type?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_timeline_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           amount: number
@@ -22,9 +60,11 @@ export type Database = {
           locked_at: string | null
           locked_price: number
           network: string
+          payment_confirmed_at: string | null
           receipt_url: string | null
           status: string
           total: number
+          transaction_hash: string | null
           updated_at: string
           user_id: string
           wallet_address: string | null
@@ -36,9 +76,11 @@ export type Database = {
           locked_at?: string | null
           locked_price: number
           network: string
+          payment_confirmed_at?: string | null
           receipt_url?: string | null
           status?: string
           total: number
+          transaction_hash?: string | null
           updated_at?: string
           user_id: string
           wallet_address?: string | null
@@ -50,9 +92,11 @@ export type Database = {
           locked_at?: string | null
           locked_price?: number
           network?: string
+          payment_confirmed_at?: string | null
           receipt_url?: string | null
           status?: string
           total?: number
+          transaction_hash?: string | null
           updated_at?: string
           user_id?: string
           wallet_address?: string | null

@@ -3,7 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, CheckCircle2, AlertCircle, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Download, CheckCircle2, AlertCircle, FileText, Send } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,6 +17,8 @@ const AdminOrderDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [transactionHash, setTransactionHash] = useState("");
+  const [isSendingHash, setIsSendingHash] = useState(false);
 
   useEffect(() => {
   const checkAdminAndFetchOrder = async () => {
@@ -134,18 +138,34 @@ const AdminOrderDetails = () => {
     setIsUpdating(true);
     
     try {
-      const { error } = await supabase
+      // Atualizar status e payment_confirmed_at
+      const { error: updateError } = await supabase
         .from('orders')
-        .update({ status: 'completed' })
+        .update({ 
+          status: 'completed',
+          payment_confirmed_at: new Date().toISOString()
+        })
         .eq('id', order.id);
       
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Adicionar evento na timeline
+      const { error: timelineError } = await supabase
+        .from('order_timeline')
+        .insert({
+          order_id: order.id,
+          event_type: 'payment_confirmed',
+          actor_type: 'admin',
+          message: 'OTC confirmou recebimento do PIX'
+        });
+
+      if (timelineError) throw timelineError;
       
-      setOrder({ ...order, status: 'completed' });
+      setOrder({ ...order, status: 'completed', payment_confirmed_at: new Date().toISOString() });
       
       toast({
         title: "Pagamento confirmado!",
-        description: "Ordem marcada como concluída",
+        description: "Cliente foi notificado",
       });
     } catch (error) {
       console.error('Error confirming payment:', error);
@@ -156,6 +176,52 @@ const AdminOrderDetails = () => {
       });
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleSendHash = async () => {
+    if (!order || !transactionHash.trim()) return;
+    
+    setIsSendingHash(true);
+    
+    try {
+      // Atualizar ordem com hash
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ transaction_hash: transactionHash.trim() })
+        .eq('id', order.id);
+      
+      if (updateError) throw updateError;
+
+      // Adicionar evento na timeline
+      const { error: timelineError } = await supabase
+        .from('order_timeline')
+        .insert({
+          order_id: order.id,
+          event_type: 'usdt_sent',
+          actor_type: 'admin',
+          message: 'USDT enviado para sua carteira',
+          metadata: { transaction_hash: transactionHash.trim() }
+        });
+
+      if (timelineError) throw timelineError;
+      
+      setOrder({ ...order, transaction_hash: transactionHash.trim() });
+      setTransactionHash("");
+      
+      toast({
+        title: "Hash enviado!",
+        description: "Cliente pode verificar a transação",
+      });
+    } catch (error) {
+      console.error('Error sending hash:', error);
+      toast({
+        title: "Erro ao enviar hash",
+        description: "Tente novamente",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingHash(false);
     }
   };
 
@@ -341,7 +407,7 @@ const AdminOrderDetails = () => {
               </Card>
             </div>
 
-            {/* Coluna Direita - Comprovante */}
+            {/* Coluna Direita - Comprovante e Hash */}
             <div className="space-y-6">
               <Card className="shadow-lg">
                 <CardHeader>
@@ -405,6 +471,53 @@ const AdminOrderDetails = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Card para enviar hash da transação */}
+              {order.payment_confirmed_at && (
+                <Card className="shadow-lg border-primary/20">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Hash da Transação</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {order.transaction_hash ? (
+                      <div className="space-y-3">
+                        <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
+                          <p className="text-xs text-muted-foreground mb-1">Hash enviado:</p>
+                          <p className="text-sm font-mono break-all">{order.transaction_hash}</p>
+                        </div>
+                        <div className="flex items-center gap-2 p-3 bg-success/10 border border-success/20 rounded-lg">
+                          <CheckCircle2 className="h-4 w-4 text-success" />
+                          <span className="text-sm text-success">Cliente pode verificar a transação</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="hash">Hash da transação USDT</Label>
+                          <Input
+                            id="hash"
+                            placeholder="Cole o hash da transação aqui"
+                            value={transactionHash}
+                            onChange={(e) => setTransactionHash(e.target.value)}
+                            disabled={isSendingHash}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Após enviar o USDT, cole aqui o hash da transação para o cliente verificar
+                          </p>
+                        </div>
+                        <Button
+                          className="w-full"
+                          onClick={handleSendHash}
+                          disabled={!transactionHash.trim() || isSendingHash}
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          {isSendingHash ? "Enviando..." : "Enviar Hash"}
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>
