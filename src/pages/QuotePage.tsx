@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, TrendingUp, RefreshCw, ArrowUpRight, ArrowDownRight, Share2, ArrowRight } from "lucide-react";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useBinanceCandles } from "@/hooks/useBinanceCandles";
+import { useMemo, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import tkbLogo from "@/assets/tkb-logo.png";
 import { useTradingViewChart } from "@/hooks/useTradingViewChart";
@@ -12,36 +13,16 @@ import { LineData } from 'lightweight-charts';
 
 const QuotePage = () => {
   const navigate = useNavigate();
-  const { binancePrice, tkbPrice, isLoading, error, lastUpdate, refetch } = useBinancePrice();
-  const [priceHistory, setPriceHistory] = useState<number[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const { binancePrice, tkbPrice, isLoading, error, lastUpdate, dailyChangePercent, refetch } = useBinancePrice();
+  const { candles } = useBinanceCandles();
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
-  // Construir histórico de preços com debounce
-  useEffect(() => {
-    if (binancePrice) {
-      setIsUpdating(true);
-      const timeout = setTimeout(() => {
-        setPriceHistory(prev => {
-          const newHistory = [...prev, binancePrice];
-          // Manter apenas últimas 30 atualizações para melhor performance
-          return newHistory.slice(-30);
-        });
-        setIsUpdating(false);
-      }, 100);
-      return () => clearTimeout(timeout);
-    }
-  }, [binancePrice]);
-
   const handleRefresh = async () => {
-    setIsRefreshing(true);
     await refetch();
-    setTimeout(() => setIsRefreshing(false), 500);
-      toast({
-        title: "Cotação atualizada!",
-        description: "Dados mais recentes do mercado",
-      });
+    toast({
+      title: "Cotação atualizada!",
+      description: "Dados mais recentes do mercado",
+    });
   };
 
   const handleShare = () => {
@@ -54,36 +35,21 @@ const QuotePage = () => {
   };
 
   const currentPrice = binancePrice || 0;
-  const previousPrice = priceHistory[priceHistory.length - 2] || currentPrice;
-  const priceChange = currentPrice - previousPrice;
-  const priceChangePercent = previousPrice > 0 ? ((priceChange / previousPrice) * 100).toFixed(2) : "0.00";
-  const isPositive = priceChange >= 0;
+  const isPositive = dailyChangePercent >= 0;
 
-  const maxPrice = priceHistory.length > 0 ? Math.max(...priceHistory) : currentPrice;
-  const minPrice = priceHistory.length > 0 ? Math.min(...priceHistory) : currentPrice;
-  const range = maxPrice - minPrice || 0.01;
+  // Transformar candles em linha TKB (+1% do close)
+  const tkbLineData = useMemo((): LineData[] => {
+    return candles.map(candle => ({
+      time: candle.time as any,
+      value: candle.close * 1.01,
+    }));
+  }, [candles]);
 
-  // Transformar dados para formato TradingView (garantindo TKB = Binance * 1.01)
-  const chartData = useMemo((): { binance: LineData[], tkb: LineData[] } => {
-    const now = Math.floor(Date.now() / 1000);
-    
-    return {
-      binance: priceHistory.map((price, i) => ({
-        time: (now - (priceHistory.length - i) * 5) as any,
-        value: price,
-      })),
-      tkb: priceHistory.map((price, i) => ({
-        time: (now - (priceHistory.length - i) * 5) as any,
-        value: price * 1.01, // TKB sempre +1% do Binance
-      })),
-    };
-  }, [priceHistory]);
-
-  // Inicializar gráfico TradingView (hook no nível superior)
+  // Inicializar gráfico TradingView
   useTradingViewChart({
     container: chartContainerRef.current,
-    data: chartData.binance,
-    tkbData: chartData.tkb,
+    candleData: candles,
+    tkbData: tkbLineData,
   });
 
   return (
@@ -112,14 +78,13 @@ const QuotePage = () => {
                 <Share2 className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Compartilhar</span>
               </Button>
-              <Button 
+                <Button 
                 variant="default" 
                 size="sm" 
                 onClick={handleRefresh}
-                disabled={isRefreshing}
                 className="bg-primary hover:bg-primary-hover text-white"
               >
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -166,7 +131,7 @@ const QuotePage = () => {
                         ) : (
                           <ArrowDownRight className="h-6 w-6" />
                         )}
-                        <span>{priceChangePercent}%</span>
+                        <span>{Math.abs(dailyChangePercent).toFixed(2)}%</span>
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -233,7 +198,7 @@ const QuotePage = () => {
                 <div>
                   <CardTitle className="text-2xl font-playfair text-white">Histórico de Cotação</CardTitle>
                   <p className="text-sm text-neutral-300 font-inter mt-1">
-                    Últimas {priceHistory.length} atualizações • 5s refresh
+                    Últimos 60 minutos • Candles de 1 minuto
                   </p>
                 </div>
                   <Badge className="bg-success/20 text-success border-success/30 animate-pulse">
@@ -246,7 +211,7 @@ const QuotePage = () => {
               </div>
             </CardHeader>
             <CardContent>
-              {priceHistory.length > 1 ? (
+              {candles.length > 1 ? (
                 <div className="h-96">
                   <div 
                     ref={chartContainerRef}
@@ -263,12 +228,15 @@ const QuotePage = () => {
               {/* Legend */}
               <div className="flex items-center justify-center gap-8 mt-6 text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-1 bg-primary rounded shadow-sm" />
-                  <span className="text-neutral-300 font-inter">Mercado</span>
+                  <div className="flex gap-1">
+                    <div className="w-3 h-6 bg-success rounded-sm" />
+                    <div className="w-3 h-6 bg-danger rounded-sm" />
+                  </div>
+                  <span className="text-neutral-300 font-inter">Mercado (Candles)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-1 bg-success rounded shadow-sm" style={{ backgroundImage: 'repeating-linear-gradient(90deg, hsl(158 45% 38%) 0, hsl(158 45% 38%) 8px, transparent 8px, transparent 12px)' }} />
-                  <span className="text-neutral-300 font-inter">TKB Asset</span>
+                  <span className="text-neutral-300 font-inter">TKB Asset (+1%)</span>
                 </div>
               </div>
             </CardContent>

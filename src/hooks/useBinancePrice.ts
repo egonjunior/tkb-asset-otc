@@ -10,19 +10,28 @@ export const useBinancePrice = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [dailyChangePercent, setDailyChangePercent] = useState<number>(0);
 
   const fetchPrice = async () => {
     try {
-      const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
+      // Buscar preço e variação de 24h em paralelo
+      const [priceResponse, ticker24hResponse] = await Promise.all([
+        fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'),
+        fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL')
+      ]);
       
-      if (!response.ok) {
+      if (!priceResponse.ok || !ticker24hResponse.ok) {
         throw new Error('Erro ao buscar cotação da Binance');
       }
       
-      const data: BinanceTickerResponse = await response.json();
-      const priceValue = parseFloat(data.price);
+      const priceData: BinanceTickerResponse = await priceResponse.json();
+      const ticker24hData: any = await ticker24hResponse.json();
+      
+      const priceValue = parseFloat(priceData.price);
+      const dailyChange = parseFloat(ticker24hData.priceChangePercent);
       
       setPrice(priceValue);
+      setDailyChangePercent(dailyChange);
       setLastUpdate(new Date());
       setError(null);
     } catch (err) {
@@ -30,6 +39,7 @@ export const useBinancePrice = () => {
       setError('Não foi possível buscar a cotação. Usando valor de referência.');
       // Fallback para um valor de referência
       setPrice(5.40);
+      setDailyChangePercent(0);
     } finally {
       setIsLoading(false);
     }
@@ -57,6 +67,7 @@ export const useBinancePrice = () => {
     isLoading,
     error,
     lastUpdate,
+    dailyChangePercent,
     refetch: fetchPrice,
   };
 };

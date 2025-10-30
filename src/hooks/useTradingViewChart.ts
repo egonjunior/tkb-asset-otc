@@ -1,19 +1,20 @@
 import { useEffect, useRef } from 'react';
-import { createChart, IChartApi, LineData, LineSeries } from 'lightweight-charts';
+import { createChart, IChartApi, LineData } from 'lightweight-charts';
+import { CandleData } from './useBinanceCandles';
 
 interface ChartConfig {
   container: HTMLDivElement | null;
-  data: LineData[];
+  candleData: CandleData[];
   tkbData: LineData[];
 }
 
-export const useTradingViewChart = ({ container, data, tkbData }: ChartConfig) => {
+export const useTradingViewChart = ({ container, candleData, tkbData }: ChartConfig) => {
   const chartRef = useRef<IChartApi | null>(null);
-  const binanceSeriesRef = useRef<any>(null);
+  const candleSeriesRef = useRef<any>(null);
   const tkbSeriesRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!container || data.length === 0) return;
+    if (!container || candleData.length === 0) return;
 
     // Criar gráfico com tema dark
     const chart = createChart(container, {
@@ -30,33 +31,36 @@ export const useTradingViewChart = ({ container, data, tkbData }: ChartConfig) =
       timeScale: {
         borderColor: '#374151',
         timeVisible: true,
-        secondsVisible: true,
+        secondsVisible: false,
       },
       rightPriceScale: {
         borderColor: '#374151',
       },
     });
 
-    // Série Binance (linha azul sólida)
-    const binanceSeries = chart.addSeries(LineSeries, {
-      color: '#3B82F6',
-      lineWidth: 3,
-      title: 'Mercado',
+    // Série Candlestick (velas verde/vermelho)
+    const candleSeries = (chart as any).addCandlestickSeries({
+      upColor: '#10B981',
+      downColor: '#EF4444',
+      borderVisible: false,
+      wickUpColor: '#10B981',
+      wickDownColor: '#EF4444',
     });
 
     // Série TKB (linha verde tracejada)
-    const tkbSeries = chart.addSeries(LineSeries, {
+    const tkbSeries = (chart as any).addLineSeries({
       color: '#10B981',
-      lineWidth: 3,
+      lineWidth: 2,
       lineStyle: 2,
-      title: 'TKB Asset (+1%)',
+      priceLineVisible: false,
+      lastValueVisible: true,
     });
 
-    binanceSeries.setData(data);
+    candleSeries.setData(candleData);
     tkbSeries.setData(tkbData);
 
     chartRef.current = chart;
-    binanceSeriesRef.current = binanceSeries;
+    candleSeriesRef.current = candleSeries;
     tkbSeriesRef.current = tkbSeries;
 
     // Responsive resize
@@ -73,15 +77,15 @@ export const useTradingViewChart = ({ container, data, tkbData }: ChartConfig) =
 
   // Update data em tempo real
   useEffect(() => {
-    if (!binanceSeriesRef.current || !tkbSeriesRef.current) return;
+    if (!candleSeriesRef.current || !tkbSeriesRef.current) return;
     
-    if (data.length > 0) {
-      binanceSeriesRef.current.setData(data);
+    if (candleData.length > 0) {
+      candleSeriesRef.current.setData(candleData);
     }
     if (tkbData.length > 0) {
       tkbSeriesRef.current.setData(tkbData);
     }
-  }, [data, tkbData]);
+  }, [candleData, tkbData]);
 
   return { chart: chartRef.current };
 };
