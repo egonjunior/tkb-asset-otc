@@ -75,7 +75,7 @@ const Login = () => {
       <Card className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)] relative z-10">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
-            <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
+            <div className="h-16 w-16 rounded-2xl bg-black flex items-center justify-center shadow-lg">
               <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
             </div>
           </div>
