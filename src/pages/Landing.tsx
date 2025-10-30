@@ -54,7 +54,7 @@ const Landing = () => {
                 <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
                 <div>
                   <h1 className="text-xl font-brand text-foreground">TKB ASSET</h1>
-                  <p className="text-xs text-muted-foreground font-inter uppercase tracking-wider">Private Banking</p>
+                  <p className="text-xs text-muted-foreground font-inter uppercase tracking-wider">Mesa OTC</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -223,7 +223,7 @@ const Landing = () => {
               <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
               <div>
                 <h3 className="text-xl font-playfair font-bold text-white">TKB ASSET</h3>
-                <p className="text-xs text-neutral-400 font-inter uppercase tracking-wider">Private Banking</p>
+                <p className="text-xs text-neutral-400 font-inter uppercase tracking-wider">Mesa OTC</p>
               </div>
             </div>
             <p className="text-sm text-neutral-400 font-inter">

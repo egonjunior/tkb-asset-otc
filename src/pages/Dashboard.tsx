@@ -108,7 +108,7 @@ const Dashboard = () => {
               <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
               <div>
                 <h1 className="text-2xl font-brand">TKB ASSET</h1>
-                <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Private Banking</p>
+                <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Mesa OTC</p>
               </div>
             </div>
             <div className="flex items-center gap-6">
