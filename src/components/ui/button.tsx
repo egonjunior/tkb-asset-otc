@@ -17,6 +17,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         premium: "btn-premium bg-gradient-to-r from-primary to-primary-hover text-primary-foreground shadow-xl hover:shadow-2xl hover:-translate-y-0.5",
         gold: "border-2 border-gold text-gold hover:bg-gold/10 shadow-md hover:shadow-lg",
+        tkb: "bg-gradient-to-r from-tkb-cyan to-tkb-cyan-dark text-white shadow-lg hover:shadow-xl hover:from-tkb-cyan-dark hover:to-tkb-cyan",
       },
       size: {
         default: "h-11 px-6 py-3",

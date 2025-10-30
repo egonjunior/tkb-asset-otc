@@ -37,31 +37,39 @@ const Landing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-neutral-50 to-background">
-      {/* Header */}
-      <header className="bg-glass backdrop-blur-lg border-b border-glass sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
-              <div>
-                <h1 className="text-xl font-playfair font-bold text-foreground">TKB ASSET</h1>
-                <p className="text-xs text-muted-foreground font-inter uppercase tracking-wider">Private Banking</p>
+    <div className="min-h-screen bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
+      {/* Mesh gradient overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_hsl(195,100%,92%),transparent_50%),radial-gradient(ellipse_at_bottom_left,_hsl(220,60%,95%),transparent_50%)] opacity-40 pointer-events-none"></div>
+      
+      {/* Subtle noise texture */}
+      <div className="absolute inset-0 opacity-[0.015] bg-noise pointer-events-none"></div>
+
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 sticky top-0 z-50 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
+                <div>
+                  <h1 className="text-xl font-brand text-foreground">TKB ASSET</h1>
+                  <p className="text-xs text-muted-foreground font-inter uppercase tracking-wider">Private Banking</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:inline-flex">
+                  Login
+                </Button>
+                <PremiumButton onClick={() => navigate("/login")}>
+                  Começar
+                </PremiumButton>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:inline-flex">
-                Login
-              </Button>
-              <PremiumButton onClick={() => navigate("/login")}>
-                Começar
-              </PremiumButton>
-            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Hero Section */}
+        {/* Hero Section */}
       <section className="container mx-auto px-6 py-16 lg:py-24">
         <div className="max-w-5xl mx-auto text-center space-y-10">
           <div className="space-y-6 animate-fade-in">
@@ -69,7 +77,7 @@ const Landing = () => {
               Instituição OTC Brasileira
             </Badge>
             
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-playfair font-bold text-foreground leading-[1.1]">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-foreground leading-[1.1]">
               Segurança Institucional
               <br />
               <span className="text-primary">para Operações Digitais</span>
@@ -86,7 +94,7 @@ const Landing = () => {
             </PremiumButton>
             <Button 
               size="lg" 
-              variant="gold"
+              variant="tkb"
               onClick={() => navigate("/cotacao")}
             >
               <LineChart className="mr-2 h-5 w-5" />
@@ -96,8 +104,9 @@ const Landing = () => {
 
           {/* Live Price Cards */}
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '300ms' }}>
-            <Card className="bg-glass backdrop-blur-md border-glass shadow-institutional hover:shadow-elevated transition-premium hover:-translate-y-1">
+            <Card className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)] hover:shadow-[0_12px_48px_rgba(0,0,0,0.1)] transition-apple hover:-translate-y-1">
               <CardContent className="pt-8 pb-8 text-center">
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-50"></div>
                 <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold mb-2">Mercado</p>
                 <p className="text-5xl font-playfair font-bold text-foreground">
                   {isLoading ? "..." : `R$ ${binancePrice?.toFixed(2)}`}
@@ -221,8 +230,8 @@ const Landing = () => {
               © 2025 TKB Asset. Todos os direitos reservados.
             </p>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 };

@@ -25,6 +25,11 @@ export default {
           hover: "hsl(var(--primary-hover))",
           glow: "hsl(var(--primary-glow))",
         },
+        "tkb-cyan": {
+          DEFAULT: "hsl(var(--tkb-cyan))",
+          light: "hsl(var(--tkb-cyan-light))",
+          dark: "hsl(var(--tkb-cyan-dark))",
+        },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
