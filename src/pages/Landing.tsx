@@ -47,18 +47,18 @@ const Landing = () => {
       {/* Content */}
       <div className="relative z-10">
         {/* Header */}
-        <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 sticky top-0 z-50 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
+        <header className="bg-black border-b border-neutral-800 sticky top-0 z-50">
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
                 <div>
-                  <h1 className="text-xl font-brand text-foreground">TKB ASSET</h1>
-                  <p className="text-xs text-muted-foreground font-inter uppercase tracking-wider">Mesa OTC</p>
+                  <h1 className="text-xl font-brand text-white">TKB ASSET</h1>
+                  <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Mesa OTC</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:inline-flex">
+                <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:inline-flex text-white hover:bg-neutral-800">
                   Login
                 </Button>
                 <PremiumButton onClick={() => navigate("/login")}>

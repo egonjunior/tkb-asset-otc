@@ -89,11 +89,11 @@ const QuotePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900">
       {/* Header */}
-      <header className="border-b border-neutral-700 bg-glass backdrop-blur-lg sticky top-0 z-50">
+      <header className="border-b border-neutral-800 bg-black sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/home")} className="text-white hover:bg-white/10">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/home")} className="text-white hover:bg-neutral-800">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
@@ -104,20 +104,20 @@ const QuotePage = () => {
             </div>
             <div className="flex items-center gap-2">
               <Button 
-                variant="outline" 
+                variant="default" 
                 size="sm"
                 onClick={handleShare}
-                className="border-neutral-600 text-white hover:bg-white/10"
+                className="bg-primary hover:bg-primary-hover text-white"
               >
                 <Share2 className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Compartilhar</span>
               </Button>
               <Button 
-                variant="outline" 
+                variant="default" 
                 size="sm" 
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="border-neutral-600 text-white hover:bg-white/10"
+                className="bg-primary hover:bg-primary-hover text-white"
               >
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               </Button>
