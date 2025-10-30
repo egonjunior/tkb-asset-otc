@@ -29,6 +29,7 @@ const TradingOrderPage = () => {
     lockedPrice: number; 
     total: number;
     lockedAt: string;
+    walletAddress: string;
   }) => {
     setIsSubmitting(true);
 
@@ -51,6 +52,7 @@ const TradingOrderPage = () => {
           user_id: user.id,
           amount: parseFloat(orderData.amount),
           network: orderData.network,
+          wallet_address: orderData.walletAddress,
           total: orderData.total,
           locked_price: orderData.lockedPrice,
           locked_at: orderData.lockedAt,

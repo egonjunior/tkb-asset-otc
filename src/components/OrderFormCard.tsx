@@ -19,14 +19,15 @@ import {
   ArrowDownUp, 
   Network,
   CheckCircle2,
-  Coins
+  Coins,
+  Wallet
 } from "lucide-react";
 
 interface OrderFormCardProps {
   tkbPrice: number | null;
   binancePrice: number | null;
   isLoading: boolean;
-  onSubmit: (data: { amount: string; network: string; lockedPrice: number; total: number; lockedAt: string }) => void;
+  onSubmit: (data: { amount: string; network: string; lockedPrice: number; total: number; lockedAt: string; walletAddress: string }) => void;
   isSubmitting?: boolean;
 }
 
@@ -42,6 +43,7 @@ const OrderFormCard = ({
   const [usdtAmount, setUsdtAmount] = useState("");
   const [brlAmount, setBrlAmount] = useState("");
   const [network, setNetwork] = useState("");
+  const [walletAddress, setWalletAddress] = useState("");
   const [isLocked, setIsLocked] = useState(false);
   const [lockedPrice, setLockedPrice] = useState<number | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(LOCK_DURATION);
@@ -121,7 +123,7 @@ const OrderFormCard = ({
   const handleSubmitOrder = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!lockedPrice || !usdtAmount || !network) return;
+    if (!lockedPrice || !usdtAmount || !network || !walletAddress) return;
 
     const total = parseFloat(usdtAmount) * lockedPrice;
     
@@ -130,7 +132,8 @@ const OrderFormCard = ({
       network,
       lockedPrice,
       total,
-      lockedAt: new Date().toISOString()
+      lockedAt: new Date().toISOString(),
+      walletAddress
     });
   };
 
@@ -140,7 +143,7 @@ const OrderFormCard = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const isFormValid = usdtAmount && parseFloat(usdtAmount) >= 100 && network;
+  const isFormValid = usdtAmount && parseFloat(usdtAmount) >= 100 && network && walletAddress.trim().length > 0;
   const canLock = isFormValid && !isLocked && tkbPrice;
   const isExpired = timeRemaining === LOCK_DURATION && !isLocked && usdtAmount && network;
 
@@ -232,6 +235,32 @@ const OrderFormCard = ({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Endereço da Wallet */}
+          {network && (
+            <>
+              <div className="h-px bg-border" />
+              
+              <div className="space-y-2">
+                <Label htmlFor="wallet" className="flex items-center gap-2">
+                  <Wallet className="h-4 w-4" />
+                  Endereço da Carteira ({network})
+                </Label>
+                <Input
+                  id="wallet"
+                  type="text"
+                  placeholder={`Digite seu endereço ${network}`}
+                  value={walletAddress}
+                  onChange={(e) => setWalletAddress(e.target.value)}
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Confira com atenção. USDT será enviado para este endereço.
+                </p>
+              </div>
+            </>
+          )}
 
           <div className="h-px bg-border" />
 

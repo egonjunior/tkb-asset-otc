@@ -229,6 +229,10 @@ const OrderDetails = () => {
                       <p className="text-muted-foreground">Rede</p>
                       <p className="font-semibold">{order.network}</p>
                     </div>
+                    <div className="col-span-2">
+                      <p className="text-muted-foreground">Carteira de Recebimento</p>
+                      <p className="font-mono text-xs break-all">{order.wallet_address || 'Não informado'}</p>
+                    </div>
                     <div>
                       <p className="text-muted-foreground">Preço unitário</p>
                       <p className="font-semibold">R$ {order.locked_price.toFixed(3)}</p>
