@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { Time } from "lightweight-charts";
 
 export interface CandleData {
-  time: number;
+  time: Time;
   open: number;
   high: number;
   low: number;
@@ -26,7 +27,7 @@ export const useBinanceCandles = () => {
       const data = await response.json();
       
       const formattedCandles: CandleData[] = data.map((candle: any[]) => ({
-        time: candle[0] / 1000, // timestamp em segundos
+        time: (candle[0] / 1000) as Time, // timestamp em segundos
         open: parseFloat(candle[1]),
         high: parseFloat(candle[2]),
         low: parseFloat(candle[3]),

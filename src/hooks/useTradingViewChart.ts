@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { createChart, IChartApi, LineData } from 'lightweight-charts';
+import { createChart, IChartApi, LineData, CandlestickSeries, LineSeries } from 'lightweight-charts';
 import { CandleData } from './useBinanceCandles';
 
 interface ChartConfig {
@@ -39,7 +39,7 @@ export const useTradingViewChart = ({ container, candleData, tkbData }: ChartCon
     });
 
     // Série Candlestick (velas verde/vermelho)
-    const candleSeries = (chart as any).addCandlestickSeries({
+    const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#10B981',
       downColor: '#EF4444',
       borderVisible: false,
@@ -48,7 +48,7 @@ export const useTradingViewChart = ({ container, candleData, tkbData }: ChartCon
     });
 
     // Série TKB (linha verde tracejada)
-    const tkbSeries = (chart as any).addLineSeries({
+    const tkbSeries = chart.addSeries(LineSeries, {
       color: '#10B981',
       lineWidth: 2,
       lineStyle: 2,
