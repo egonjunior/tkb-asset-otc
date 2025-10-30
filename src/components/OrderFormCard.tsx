@@ -145,7 +145,6 @@ const OrderFormCard = ({
 
   const isFormValid = usdtAmount && parseFloat(usdtAmount) >= 100 && network && walletAddress.trim().length > 0;
   const canLock = isFormValid && !isLocked && tkbPrice;
-  const isExpired = timeRemaining === LOCK_DURATION && !isLocked && usdtAmount && network;
 
   return (
     <Card className="shadow-lg">
@@ -358,17 +357,6 @@ const OrderFormCard = ({
                 </Card>
               </div>
             </>
-          )}
-
-          {/* Warning se expirado */}
-          {isExpired && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Preço expirado</AlertTitle>
-              <AlertDescription>
-                Trave o preço novamente para continuar com a ordem
-              </AlertDescription>
-            </Alert>
           )}
 
           {/* Action Buttons */}
