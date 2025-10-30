@@ -236,7 +236,7 @@ const QuotePage = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-1 bg-success rounded shadow-sm" style={{ backgroundImage: 'repeating-linear-gradient(90deg, hsl(158 45% 38%) 0, hsl(158 45% 38%) 8px, transparent 8px, transparent 12px)' }} />
-                  <span className="text-neutral-300 font-inter">TKB Asset (+1%)</span>
+                  <span className="text-neutral-300 font-inter">TKB Asset</span>
                 </div>
               </div>
             </CardContent>

@@ -280,7 +280,7 @@ const OrderFormCard = ({
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Cotação TKB:</span>
                 <span className="font-semibold text-primary">
-                  {tkbPrice ? `R$ ${tkbPrice.toFixed(3)} (+1%)` : "Carregando..."}
+                  {tkbPrice ? `R$ ${tkbPrice.toFixed(3)}` : "Carregando..."}
                 </span>
               </div>
 
