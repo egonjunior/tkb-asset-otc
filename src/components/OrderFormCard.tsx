@@ -22,6 +22,7 @@ import {
   Coins,
   Wallet
 } from "lucide-react";
+import { validateWalletAddress, type NetworkType } from "@/lib/walletValidation";
 
 interface OrderFormCardProps {
   tkbPrice: number | null;
@@ -44,6 +45,7 @@ const OrderFormCard = ({
   const [brlAmount, setBrlAmount] = useState("");
   const [network, setNetwork] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
+  const [walletError, setWalletError] = useState<string | null>(null);
   const [isLocked, setIsLocked] = useState(false);
   const [lockedPrice, setLockedPrice] = useState<number | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(LOCK_DURATION);
@@ -112,6 +114,23 @@ const OrderFormCard = ({
     }
   };
 
+  const handleWalletAddressChange = (value: string) => {
+    setWalletAddress(value);
+    
+    // Clear error when user starts typing
+    if (walletError) {
+      setWalletError(null);
+    }
+    
+    // Validate on change if network is selected and value is not empty
+    if (network && value.trim()) {
+      const validation = validateWalletAddress(value, network as NetworkType);
+      if (!validation.isValid) {
+        setWalletError(validation.error || null);
+      }
+    }
+  };
+
   const handleLockPrice = () => {
     if (tkbPrice && parseFloat(usdtAmount) >= 100) {
       setIsLocked(true);
@@ -125,6 +144,13 @@ const OrderFormCard = ({
     
     if (!lockedPrice || !usdtAmount || !network || !walletAddress) return;
 
+    // Final validation before submit
+    const validation = validateWalletAddress(walletAddress, network as NetworkType);
+    if (!validation.isValid) {
+      setWalletError(validation.error || "Endereço inválido");
+      return;
+    }
+
     const total = parseFloat(usdtAmount) * lockedPrice;
     
     onSubmit({
@@ -133,7 +159,7 @@ const OrderFormCard = ({
       lockedPrice,
       total,
       lockedAt: new Date().toISOString(),
-      walletAddress
+      walletAddress: walletAddress.trim()
     });
   };
 
@@ -143,7 +169,8 @@ const OrderFormCard = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const isFormValid = usdtAmount && parseFloat(usdtAmount) >= 100 && network && walletAddress.trim().length > 0;
+  const isWalletValid = walletAddress.trim().length > 0 && !walletError && network;
+  const isFormValid = usdtAmount && parseFloat(usdtAmount) >= 100 && network && isWalletValid;
   const canLock = isFormValid && !isLocked && tkbPrice;
 
   return (
@@ -250,13 +277,26 @@ const OrderFormCard = ({
                   type="text"
                   placeholder={`Digite seu endereço ${network}`}
                   value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                  className="font-mono text-sm"
+                  onChange={(e) => handleWalletAddressChange(e.target.value)}
+                  className={`font-mono text-sm ${walletError ? 'border-destructive' : ''}`}
                 />
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  Confira com atenção. USDT será enviado para este endereço.
-                </p>
+                {walletError ? (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {walletError}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Confira com atenção. USDT será enviado para este endereço.
+                  </p>
+                )}
+                {walletAddress.trim() && !walletError && network && (
+                  <div className="flex items-center gap-1 text-xs text-green-600">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Endereço válido para {network}
+                  </div>
+                )}
               </div>
             </>
           )}
