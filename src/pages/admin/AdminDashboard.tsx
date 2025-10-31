@@ -198,7 +198,7 @@ const AdminDashboard = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Métricas */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card className="shadow-md">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
@@ -228,17 +228,39 @@ const AdminDashboard = () => {
                 <p className="text-3xl font-bold text-foreground">{metrics.completedToday}</p>
               </CardContent>
             </Card>
+          </div>
 
+          {/* Ações Rápidas */}
+          <div className="grid sm:grid-cols-2 gap-4">
             <Card 
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow" 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-primary" 
               onClick={() => navigate('/admin/users')}
             >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">Gestão de Usuários</p>
-                  <Users className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Gestão de Usuários</p>
+                    <p className="text-xl font-bold text-primary">Ver Todos →</p>
+                  </div>
+                  <Users className="h-8 w-8 text-primary" />
                 </div>
-                <p className="text-xl font-bold text-primary">Ver Todos →</p>
+                <p className="text-xs text-muted-foreground mt-2">Visualizar e gerenciar todos os usuários</p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-tkb-cyan" 
+              onClick={() => navigate('/admin/documents')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Validação de Contratos</p>
+                    <p className="text-xl font-bold text-tkb-cyan">Gerenciar →</p>
+                  </div>
+                  <span className="text-3xl">📄</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Aprovar e reprovar documentos dos clientes</p>
               </CardContent>
             </Card>
           </div>
