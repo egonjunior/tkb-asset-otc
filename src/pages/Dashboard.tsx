@@ -140,7 +140,7 @@ const Dashboard = () => {
       </header>
 
       {/* Layout com Sidebar e Conteúdo */}
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={true} style={{ ["--sidebar-width" as any]: "12rem" }}>
         <div className="flex w-full min-h-[calc(100vh-80px)]">
           {/* Sidebar */}
           <AppSidebar />
