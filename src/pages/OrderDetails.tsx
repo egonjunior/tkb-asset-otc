@@ -20,6 +20,16 @@ const OrderDetails = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
 
+  const getStatusBadge = (status: string) => {
+    const statusMap = {
+      pending: { label: "Aguardando Pagamento", className: "bg-warning text-warning-foreground" },
+      paid: { label: "Pagamento Recebido", className: "bg-blue-500 text-white" },
+      completed: { label: "Concluída", className: "bg-success text-white" },
+      expired: { label: "Expirada", className: "bg-destructive text-white" },
+    };
+    return statusMap[status as keyof typeof statusMap] || statusMap.pending;
+  };
+
   // Dados bancários fixos (não mudam)
   const bankData = {
     bank: "Banco do Brasil",
@@ -262,18 +272,23 @@ const OrderDetails = () => {
               <Card className="shadow-lg">
                 <CardContent className="pt-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <Badge className="bg-warning text-warning-foreground">
-                      Aguardando Pagamento
+                    <Badge className={getStatusBadge(order.status).className}>
+                      {getStatusBadge(order.status).label}
                     </Badge>
-                    <div className={`flex items-center gap-2 font-mono text-lg font-bold ${
-                      isExpired ? "text-danger" : isExpiringSoon ? "text-warning" : "text-foreground"
-                    }`}>
-                      <Clock className="h-5 w-5" />
-                      {formatTime(timeRemaining)}
-                    </div>
+                    
+                    {/* Mostrar timer APENAS se status for 'pending' */}
+                    {order.status === 'pending' && (
+                      <div className={`flex items-center gap-2 font-mono text-lg font-bold ${
+                        isExpired ? "text-danger" : isExpiringSoon ? "text-warning" : "text-foreground"
+                      }`}>
+                        <Clock className="h-5 w-5" />
+                        {formatTime(timeRemaining)}
+                      </div>
+                    )}
                   </div>
                   
-                  {isExpiringSoon && !isExpired && (
+                  {/* Alertas condicionais baseados no status */}
+                  {order.status === 'pending' && isExpiringSoon && !isExpired && (
                     <div className="flex items-start gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg">
                       <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
                       <div className="text-sm">
@@ -283,12 +298,32 @@ const OrderDetails = () => {
                     </div>
                   )}
 
-                  {isExpired && (
+                  {order.status === 'expired' && (
                     <div className="flex items-start gap-2 p-3 bg-danger/10 border border-danger/20 rounded-lg">
                       <AlertCircle className="h-5 w-5 text-danger shrink-0 mt-0.5" />
                       <div className="text-sm">
                         <p className="font-medium text-danger">Ordem expirada</p>
                         <p className="text-muted-foreground">Esta ordem foi cancelada automaticamente</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {order.status === 'completed' && (
+                    <div className="flex items-start gap-2 p-3 bg-success/10 border border-success/20 rounded-lg">
+                      <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium text-success">Ordem concluída com sucesso!</p>
+                        <p className="text-muted-foreground">Os USDT foram enviados para sua carteira</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {order.status === 'paid' && (
+                    <div className="flex items-start gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                      <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium text-blue-500">Pagamento confirmado</p>
+                        <p className="text-muted-foreground">Estamos processando o envio dos USDT</p>
                       </div>
                     </div>
                   )}
@@ -331,7 +366,8 @@ const OrderDetails = () => {
                 </CardContent>
               </Card>
 
-              {/* Dados Bancários */}
+              {/* Dados Bancários - mostrar apenas se pendente */}
+              {order.status === 'pending' && (
               <Card className="shadow-lg border-primary/20">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">Dados Bancários</CardTitle>
@@ -383,6 +419,7 @@ const OrderDetails = () => {
                   </div>
                 </CardContent>
               </Card>
+              )}
             </div>
 
             {/* Coluna Direita - Chat/Timeline */}
@@ -490,7 +527,7 @@ const OrderDetails = () => {
                       type="file"
                       accept="image/*,.pdf"
                       onChange={handleFileSelect}
-                      disabled={isExpired || isUploading || order.receipt_url !== null}
+                      disabled={['completed', 'expired'].includes(order.status) || isUploading || order.receipt_url !== null}
                       className="cursor-pointer"
                     />
                     
