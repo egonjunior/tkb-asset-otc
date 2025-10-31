@@ -499,7 +499,7 @@ const OrderDetails = () => {
                           <p className="text-sm text-muted-foreground mt-1">{event.message}</p>
                           {event.metadata?.transaction_hash && (
                             <a
-                              href={`https://tronscan.org/#/transaction/${event.metadata.transaction_hash}`}
+                              href={event.metadata.transaction_hash}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-2"
