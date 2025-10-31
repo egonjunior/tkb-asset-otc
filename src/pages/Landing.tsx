@@ -237,8 +237,7 @@ const Landing = () => {
             </div>
             
             {/* CNPJ */}
-            <p className="text-neutral-400 text-sm">CNPJ: 45.933.866/0001-
-93</p>
+            <p className="text-neutral-400 text-sm">CNPJ: 45.933.866/0001-93</p>
             
             {/* Social Media */}
             <div className="flex items-center gap-4">
