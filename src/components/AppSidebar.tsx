@@ -27,9 +27,7 @@ export function AppSidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <Sidebar collapsible="icon" className="border-r" style={{ width: '200px' }}>
-      <SidebarTrigger className="m-2" />
-      
+    <Sidebar collapsible="icon" className="border-r mt-0">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Ações Rápidas</SidebarGroupLabel>

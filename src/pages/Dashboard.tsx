@@ -141,13 +141,13 @@ const Dashboard = () => {
 
       {/* Layout com Sidebar e Conteúdo */}
       <SidebarProvider defaultOpen={true}>
-        <div className="flex w-full">
+        <div className="flex w-full min-h-[calc(100vh-80px)]">
           {/* Sidebar */}
           <AppSidebar />
 
           {/* Main Content */}
-          <main className="flex-1 container mx-auto px-6 py-10">
-        <div className="max-w-6xl mx-auto space-y-10">
+          <main className="flex-1 px-6 py-10">
+            <div className="max-w-6xl mx-auto space-y-10">
           
           {/* Stats Overview */}
           <div>
@@ -250,7 +250,7 @@ const Dashboard = () => {
             </Card>
           </div>
           </div>
-        </main>
+          </main>
         </div>
       </SidebarProvider>
       </div>
