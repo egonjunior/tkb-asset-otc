@@ -104,8 +104,23 @@ const AdminDashboard = () => {
       
       setLoading(false);
     };
+
+    const fetchMetrics = async () => {
+      const { count: partnersCount } = await supabase
+        .from('partner_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      setPendingPartnersCount(partnersCount || 0);
+
+      const { count: ticketsCount } = await supabase
+        .from('support_tickets')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['open', 'in_progress']);
+      setOpenTicketsCount(ticketsCount || 0);
+    };
     
     checkAdminAndFetchOrders();
+    fetchMetrics();
     
     // Realtime subscription
     const channel = supabase

@@ -100,8 +100,7 @@ const Dashboard = () => {
     .filter(order => order.status === 'completed')
     .reduce((sum, order) => sum + order.total, 0);
   const completedOrders = orders.filter(order => order.status === 'completed').length;
-  return <SidebarProvider defaultOpen={true}>
-    <div className="min-h-screen flex w-full bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
+  return <div className="min-h-screen bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
       {/* Floating orbs */}
       <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-40 right-20 w-80 h-80 bg-tkb-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -109,11 +108,7 @@ const Dashboard = () => {
       {/* Subtle grid pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(220,15%,92%)_1px,transparent_1px),linear-gradient(to_bottom,hsl(220,15%,92%)_1px,transparent_1px)] bg-[size:64px_64px] opacity-20 pointer-events-none"></div>
 
-      {/* Sidebar */}
-      <AppSidebar />
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col relative z-10">
+      <div className="relative z-10">
       {/* Header */}
       <header className="bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
         <div className="container mx-auto px-6 py-5">
@@ -144,8 +139,14 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-10">
+      {/* Layout com Sidebar e Conteúdo */}
+      <SidebarProvider defaultOpen={true}>
+        <div className="flex w-full">
+          {/* Sidebar */}
+          <AppSidebar />
+
+          {/* Main Content */}
+          <main className="flex-1 container mx-auto px-6 py-10">
         <div className="max-w-6xl mx-auto space-y-10">
           
           {/* Stats Overview */}
@@ -248,11 +249,12 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </div>
+          </div>
+        </main>
         </div>
-      </main>
+      </SidebarProvider>
       </div>
-    </div>
-  </SidebarProvider>;
+    </div>;
 };
 
 export default Dashboard;
