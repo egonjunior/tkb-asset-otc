@@ -14,10 +14,12 @@ import AdminLogin from "./pages/AdminLogin";
 import Dashboard from "./pages/Dashboard";
 import TradingOrderPage from "./pages/TradingOrderPage";
 import OrderDetails from "./pages/OrderDetails";
+import Documents from "./pages/Documents";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrderDetails from "./pages/admin/AdminOrderDetails";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUserDetails from "./pages/admin/AdminUserDetails";
+import AdminDocuments from "./pages/admin/AdminDocuments";
 import QuotePage from "./pages/QuotePage";
 
 const queryClient = new QueryClient();
@@ -51,7 +53,13 @@ const App = () => (
                 <OrderDetails />
               </ProtectedRoute>
             } />
+            <Route path="/documents" element={
+              <ProtectedRoute>
+                <Documents />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/documents" element={<AdminDocuments />} />
             <Route path="/admin/order/:orderId" element={<AdminOrderDetails />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/users/:userId" element={<AdminUserDetails />} />

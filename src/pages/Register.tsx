@@ -217,14 +217,7 @@ const Register = () => {
                 htmlFor="terms"
                 className="text-sm font-normal leading-relaxed cursor-pointer"
               >
-                Li e aceito os{" "}
-                <a href="#" className="text-primary hover:underline">
-                  Termos de Uso
-                </a>{" "}
-                e{" "}
-                <a href="#" className="text-primary hover:underline">
-                  Política de Privacidade
-                </a>
+                Li e aceito os Termos de Uso e Política de Privacidade
               </Label>
             </div>
             {errors.acceptTerms && (

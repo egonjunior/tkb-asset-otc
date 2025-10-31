@@ -14,6 +14,135 @@ export type Database = {
   }
   public: {
     Tables: {
+      document_audit_log: {
+        Row: {
+          action: string
+          document_id: string
+          id: string
+          metadata: Json | null
+          performed_by: string
+          timestamp: string
+        }
+        Insert: {
+          action: string
+          document_id: string
+          id?: string
+          metadata?: Json | null
+          performed_by: string
+          timestamp?: string
+        }
+        Update: {
+          action?: string
+          document_id?: string
+          id?: string
+          metadata?: Json | null
+          performed_by?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_audit_log_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_audit_log_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_audit_log_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "user_stats"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          client_file_url: string | null
+          created_at: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          id: string
+          pld_acknowledged: boolean | null
+          pld_acknowledged_at: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["document_status"]
+          tkb_file_url: string | null
+          updated_at: string
+          uploaded_at: string | null
+          user_id: string
+        }
+        Insert: {
+          client_file_url?: string | null
+          created_at?: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          id?: string
+          pld_acknowledged?: boolean | null
+          pld_acknowledged_at?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["document_status"]
+          tkb_file_url?: string | null
+          updated_at?: string
+          uploaded_at?: string | null
+          user_id: string
+        }
+        Update: {
+          client_file_url?: string | null
+          created_at?: string
+          document_type?: Database["public"]["Enums"]["document_type"]
+          id?: string
+          pld_acknowledged?: boolean | null
+          pld_acknowledged_at?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["document_status"]
+          tkb_file_url?: string | null
+          updated_at?: string
+          uploaded_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "user_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_stats"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       order_timeline: {
         Row: {
           actor_type: string
@@ -110,6 +239,7 @@ export type Database = {
           document_type: string
           full_name: string
           id: string
+          terms_accepted_at: string | null
           updated_at: string
         }
         Insert: {
@@ -118,6 +248,7 @@ export type Database = {
           document_type: string
           full_name: string
           id: string
+          terms_accepted_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -126,6 +257,7 @@ export type Database = {
           document_type?: string
           full_name?: string
           id?: string
+          terms_accepted_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -181,6 +313,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      document_status: "pending" | "under_review" | "approved" | "rejected"
+      document_type: "contrato-quadro" | "dossie-kyc" | "politica-pld"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -309,6 +443,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      document_status: ["pending", "under_review", "approved", "rejected"],
+      document_type: ["contrato-quadro", "dossie-kyc", "politica-pld"],
     },
   },
 } as const

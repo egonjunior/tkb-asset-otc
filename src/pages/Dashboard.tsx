@@ -147,7 +147,17 @@ const Dashboard = () => {
               <Briefcase className="h-6 w-6 text-primary" />
               Visão Geral
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/documents')}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-2xl">📄</span>
+                    <Badge variant="outline">Documentos</Badge>
+                  </div>
+                  <h3 className="font-semibold text-lg mb-1">Meus Documentos</h3>
+                  <p className="text-sm text-muted-foreground">Gerencie seus contratos</p>
+                </CardContent>
+              </Card>
               <StatCard icon={Briefcase} label="Patrimônio Operado" value={`R$ ${totalVolume.toLocaleString('pt-BR', {
               minimumFractionDigits: 2
             })}`} trend={completedOrders > 0 ? `${completedOrders} operações concluídas` : 'Nenhuma operação'} trendDirection="up" />
@@ -156,7 +166,7 @@ const Dashboard = () => {
               month: 'short'
             }) : 'Nenhuma'} trend={orders.length > 0 ? getStatusBadge(orders[0].status).props.children : ''} />
               <StatCard icon={TrendingUp} label="Total de Ordens" value={orders.length.toString()} trend={`${orders.length} ${orders.length === 1 ? 'ordem' : 'ordens'} criada${orders.length === 1 ? '' : 's'}`} />
-            </div>
+              </div>
           </div>
 
           {/* Cotação Premium */}

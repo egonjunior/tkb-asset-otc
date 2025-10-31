@@ -1,0 +1,357 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { DocumentCard } from "@/components/documents/DocumentCard";
+import { DocumentStatusBadge } from "@/components/documents/DocumentStatusBadge";
+import { DocumentViewerModal } from "@/components/documents/DocumentViewerModal";
+import { TermsModal } from "@/components/documents/TermsModal";
+import { toast } from "sonner";
+import { Eye, CheckCircle2 } from "lucide-react";
+import { getTemplatePath, type DocumentStatus } from "@/lib/documentHelpers";
+
+interface Document {
+  id: string;
+  document_type: string;
+  status: DocumentStatus;
+  client_file_url: string | null;
+  tkb_file_url: string | null;
+  rejection_reason: string | null;
+  pld_acknowledged: boolean;
+  pld_acknowledged_at: string | null;
+}
+
+export default function Documents() {
+  const { user, profile } = useAuth();
+  const [documents, setDocuments] = useState<Record<string, Document>>({});
+  const [loading, setLoading] = useState(true);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [pldModalOpen, setPldModalOpen] = useState(false);
+  const [viewerModal, setViewerModal] = useState<{ open: boolean; url: string; title: string }>({
+    open: false,
+    url: '',
+    title: ''
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    fetchDocuments();
+    subscribeToDocuments();
+  }, [user]);
+
+  const fetchDocuments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      const documentsMap: Record<string, Document> = {};
+      data?.forEach(doc => {
+        documentsMap[doc.document_type] = doc as Document;
+      });
+      setDocuments(documentsMap);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      toast.error('Erro ao carregar documentos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const subscribeToDocuments = () => {
+    const channel = supabase
+      .channel('user-documents')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'documents',
+        filter: `user_id=eq.${user?.id}`
+      }, () => {
+        fetchDocuments();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const handlePLDAcknowledge = async () => {
+    try {
+      let docId = documents['politica-pld']?.id;
+
+      if (!docId) {
+        const { data, error } = await supabase
+          .from('documents')
+          .insert([{
+            user_id: user?.id,
+            document_type: 'politica-pld' as const,
+            pld_acknowledged: true,
+            pld_acknowledged_at: new Date().toISOString()
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+        docId = data.id;
+      } else {
+        const { error } = await supabase
+          .from('documents')
+          .update({
+            pld_acknowledged: true,
+            pld_acknowledged_at: new Date().toISOString()
+          })
+          .eq('id', docId);
+
+        if (error) throw error;
+      }
+
+      toast.success('Leitura da Política de PLD/FTP confirmada');
+      setPldModalOpen(false);
+      fetchDocuments();
+    } catch (error) {
+      console.error('Error acknowledging PLD:', error);
+      toast.error('Erro ao confirmar leitura');
+    }
+  };
+
+  const handleUpload = async (type: string, file: File) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${type}-${Date.now()}.${fileExt}`;
+      const filePath = `client/${user?.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      let docId = documents[type]?.id;
+
+      if (!docId) {
+        const { data, error } = await supabase
+          .from('documents')
+          .insert([{
+            user_id: user?.id,
+            document_type: type as 'contrato-quadro' | 'dossie-kyc',
+            client_file_url: filePath,
+            status: 'under_review' as const,
+            uploaded_at: new Date().toISOString()
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('documents')
+          .update({
+            client_file_url: filePath,
+            status: 'under_review',
+            uploaded_at: new Date().toISOString(),
+            rejection_reason: null
+          })
+          .eq('id', docId);
+
+        if (error) throw error;
+      }
+
+      toast.success('Documento enviado para análise');
+      fetchDocuments();
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      throw error;
+    }
+  };
+
+  const handleDownloadTemplate = (type: string) => {
+    const path = getTemplatePath(type as any);
+    window.open(path, '_blank');
+  };
+
+  const handleView = async (filePath: string, title: string) => {
+    try {
+      const { data } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      setViewerModal({ open: true, url: data.publicUrl, title });
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      toast.error('Erro ao visualizar documento');
+    }
+  };
+
+  const completedCount = Object.values(documents).filter(
+    doc => doc.status === 'approved' || (doc.document_type === 'politica-pld' && doc.pld_acknowledged)
+  ).length + 1; // Terms always accepted at registration
+
+  const totalCount = 4;
+  const progressPercentage = (completedCount / totalCount) * 100;
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-1/3" />
+          <div className="h-4 bg-muted rounded w-1/4" />
+          <div className="grid md:grid-cols-2 gap-6 mt-6">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-64 bg-muted rounded" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-6 max-w-6xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">📄 Documentos Contratuais</h1>
+        <p className="text-muted-foreground">
+          Gerencie seus documentos contratuais com a TKB Asset
+        </p>
+      </div>
+
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Status Geral dos Documentos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span>{completedCount} de {totalCount} documentos completos</span>
+              <span className="font-semibold">{Math.round(progressPercentage)}%</span>
+            </div>
+            <Progress value={progressPercentage} className="h-3" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Termos de Uso */}
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <span className="text-2xl">📜</span>
+                Termos de Uso e Política de Privacidade
+              </CardTitle>
+              <DocumentStatusBadge status="approved" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              Aceito ao criar sua conta
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setTermsModalOpen(true)}
+              className="w-full justify-start"
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Visualizar Documento
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Política de PLD */}
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <span className="text-2xl">🛡️</span>
+                Política de PLD/FTP
+              </CardTitle>
+              {documents['politica-pld']?.pld_acknowledged ? (
+                <DocumentStatusBadge status="approved" />
+              ) : (
+                <DocumentStatusBadge status="pending" />
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {documents['politica-pld']?.pld_acknowledged ? (
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                Confirmado em {new Date(documents['politica-pld'].pld_acknowledged_at!).toLocaleDateString('pt-BR')}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Leia a política e confirme que compreendeu o conteúdo
+              </p>
+            )}
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setPldModalOpen(true)}
+                className="w-full justify-start"
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Ler Política
+              </Button>
+              {!documents['politica-pld']?.pld_acknowledged && (
+                <Button
+                  onClick={handlePLDAcknowledge}
+                  className="w-full"
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Confirmo que li e compreendi
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contrato-Quadro */}
+        <DocumentCard
+          title="Contrato-Quadro"
+          icon="📄"
+          type="contrato-quadro"
+          status={documents['contrato-quadro']?.status || 'pending'}
+          clientFileUrl={documents['contrato-quadro']?.client_file_url}
+          tkbFileUrl={documents['contrato-quadro']?.tkb_file_url}
+          rejectionReason={documents['contrato-quadro']?.rejection_reason}
+          onDownloadTemplate={() => handleDownloadTemplate('contrato-quadro')}
+          onUpload={(file) => handleUpload('contrato-quadro', file)}
+          onView={handleView}
+        />
+
+        {/* Dossiê KYC/CDD */}
+        <DocumentCard
+          title="Dossiê KYC/CDD"
+          icon="🔍"
+          type="dossie-kyc"
+          status={documents['dossie-kyc']?.status || 'pending'}
+          clientFileUrl={documents['dossie-kyc']?.client_file_url}
+          tkbFileUrl={documents['dossie-kyc']?.tkb_file_url}
+          rejectionReason={documents['dossie-kyc']?.rejection_reason}
+          onDownloadTemplate={() => handleDownloadTemplate('dossie-kyc')}
+          onUpload={(file) => handleUpload('dossie-kyc', file)}
+          onView={handleView}
+        />
+      </div>
+
+      <TermsModal isOpen={termsModalOpen} onClose={() => setTermsModalOpen(false)} />
+      <TermsModal isOpen={pldModalOpen} onClose={() => setPldModalOpen(false)} />
+      <DocumentViewerModal
+        isOpen={viewerModal.open}
+        onClose={() => setViewerModal({ open: false, url: '', title: '' })}
+        fileUrl={viewerModal.url}
+        title={viewerModal.title}
+      />
+    </div>
+  );
+}
