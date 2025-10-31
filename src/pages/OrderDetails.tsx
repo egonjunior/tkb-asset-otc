@@ -187,20 +187,32 @@ const OrderDetails = () => {
       const { error: updateError } = await supabase
         .from('orders')
         .update({ 
-          receipt_url: fileName,
-          status: 'paid'
+          receipt_url: fileName
         })
         .eq('id', order.id);
       
       if (updateError) throw updateError;
+
+      // Registrar evento na timeline
+      await supabase
+        .from('order_timeline')
+        .insert({
+          order_id: order.id,
+          event_type: 'receipt_uploaded',
+          message: 'Comprovante de pagamento enviado',
+          actor_type: 'user',
+          metadata: {
+            file_name: fileName
+          }
+        });
       
       toast({
         title: "Comprovante enviado com sucesso!",
-        description: "Aguarde a confirmação do pagamento",
+        description: "Aguarde a análise do admin para confirmação do pagamento",
       });
       
       setSelectedFile(null);
-      setOrder({ ...order, receipt_url: fileName, status: 'paid' });
+      setOrder({ ...order, receipt_url: fileName });
       
     } catch (error) {
       console.error('Erro ao enviar comprovante:', error);
