@@ -110,8 +110,8 @@ const Dashboard = () => {
 
       <div className="relative z-10">
       {/* Header */}
-      <header className="bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
-        <div className="container mx-auto px-6 py-5">
+      <header className="h-20 bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
