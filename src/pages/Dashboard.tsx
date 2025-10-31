@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import QuoteCard from "@/components/QuoteCard";
 import { StatCard } from "@/components/StatCard";
 import { Briefcase, LogOut, Plus, Clock, TrendingUp, Settings, ExternalLink } from "lucide-react";
@@ -98,7 +100,8 @@ const Dashboard = () => {
     .filter(order => order.status === 'completed')
     .reduce((sum, order) => sum + order.total, 0);
   const completedOrders = orders.filter(order => order.status === 'completed').length;
-  return <div className="min-h-screen bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
+  return <SidebarProvider defaultOpen={true}>
+    <div className="min-h-screen flex w-full bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
       {/* Floating orbs */}
       <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-40 right-20 w-80 h-80 bg-tkb-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -106,7 +109,11 @@ const Dashboard = () => {
       {/* Subtle grid pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(220,15%,92%)_1px,transparent_1px),linear-gradient(to_bottom,hsl(220,15%,92%)_1px,transparent_1px)] bg-[size:64px_64px] opacity-20 pointer-events-none"></div>
 
-      <div className="relative z-10">
+      {/* Sidebar */}
+      <AppSidebar />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col relative z-10">
       {/* Header */}
       <header className="bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
         <div className="container mx-auto px-6 py-5">
@@ -147,17 +154,7 @@ const Dashboard = () => {
               <Briefcase className="h-6 w-6 text-primary" />
               Visão Geral
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/documents')}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-2xl">📄</span>
-                    <Badge variant="outline">Documentos</Badge>
-                  </div>
-                  <h3 className="font-semibold text-lg mb-1">Meus Documentos</h3>
-                  <p className="text-sm text-muted-foreground">Gerencie seus contratos</p>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <StatCard icon={Briefcase} label="Patrimônio Operado" value={`R$ ${totalVolume.toLocaleString('pt-BR', {
               minimumFractionDigits: 2
             })}`} trend={completedOrders > 0 ? `${completedOrders} operações concluídas` : 'Nenhuma operação'} trendDirection="up" />
@@ -254,7 +251,8 @@ const Dashboard = () => {
         </div>
       </main>
       </div>
-    </div>;
+    </div>
+  </SidebarProvider>;
 };
 
 export default Dashboard;

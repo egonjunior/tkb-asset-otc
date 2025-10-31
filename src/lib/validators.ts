@@ -109,3 +109,32 @@ export const registerSchema = z.object({
 });
 
 export type RegisterFormData = z.infer<typeof registerSchema>;
+
+export const partnerRequestSchema = z.object({
+  name: z.string()
+    .min(3, "Nome deve ter pelo menos 3 caracteres")
+    .max(100, "Nome muito longo"),
+  phone: z.string()
+    .regex(/^\(\d{2}\) \d{5}-\d{4}$/, "Telefone inválido"),
+  linkedin: z.string().optional(),
+  instagram: z.string().optional(),
+});
+
+export const supportTicketSchema = z.object({
+  subject: z.string().min(1, "Selecione um assunto"),
+  message: z.string()
+    .min(20, "Mensagem deve ter pelo menos 20 caracteres")
+    .max(1000, "Mensagem muito longa"),
+  email: z.string().email("Email inválido"),
+  whatsapp: z.string()
+    .regex(/^\(\d{2}\) \d{5}-\d{4}$/, "WhatsApp inválido"),
+});
+
+export const formatPhone = (value: string): string => {
+  const cleaned = value.replace(/\D/g, '');
+  const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/);
+  if (match) {
+    return `(${match[1]}) ${match[2]}-${match[3]}`;
+  }
+  return value;
+};

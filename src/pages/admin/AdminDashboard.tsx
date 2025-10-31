@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users } from "lucide-react";
+import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users, Handshake, MessageCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VolumeCard } from "@/components/admin/VolumeCard";
@@ -35,6 +35,8 @@ const AdminDashboard = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [volumePeriod, setVolumePeriod] = useState<VolumePeriod>('day');
+  const [pendingPartnersCount, setPendingPartnersCount] = useState(0);
+  const [openTicketsCount, setOpenTicketsCount] = useState(0);
 
   useEffect(() => {
     const checkAdminAndFetchOrders = async () => {
@@ -231,7 +233,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Ações Rápidas */}
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card 
               className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-primary" 
               onClick={() => navigate('/admin/users')}
@@ -261,6 +263,38 @@ const AdminDashboard = () => {
                   <span className="text-3xl">📄</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">Aprovar e reprovar documentos dos clientes</p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-green-500" 
+              onClick={() => navigate('/admin/partners')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Solicitações de Parceria</p>
+                    <p className="text-xl font-bold text-green-600">{pendingPartnersCount} Pendentes →</p>
+                  </div>
+                  <Handshake className="h-8 w-8 text-green-600" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Novos interessados em ser assessores</p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-orange-500" 
+              onClick={() => navigate('/admin/support')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Chamados de Suporte</p>
+                    <p className="text-xl font-bold text-orange-600">{openTicketsCount} Abertos →</p>
+                  </div>
+                  <MessageCircle className="h-8 w-8 text-orange-600" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Tickets aguardando resposta</p>
               </CardContent>
             </Card>
           </div>
