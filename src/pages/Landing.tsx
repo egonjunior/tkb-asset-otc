@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shield, TrendingUp, Zap, ArrowRight, LineChart, Lock, Clock, CheckCircle2 } from "lucide-react";
+import { Shield, TrendingUp, Zap, ArrowRight, LineChart, Lock, Clock, CheckCircle2, Instagram, Linkedin } from "lucide-react";
 import tkbLogo from "@/assets/tkb-logo.png";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
 import { TrustBadge } from "@/components/TrustBadge";
@@ -30,7 +30,7 @@ const Landing = () => {
     {
       icon: Zap,
       title: "Agilidade",
-      description: "Processamento rápido e eficiente. Receba seus USDT em minutos após confirmação do pagamento.",
+      description: "Processamento rápido e eficiente. Receba seus USDT em até 30 minutos após confirmação do pagamento.",
       color: "text-warning",
       bgColor: "bg-warning/10",
     },
@@ -133,6 +133,28 @@ const Landing = () => {
             <TrustBadge icon={CheckCircle2} label="Transparência Total" />
             <TrustBadge icon={Shield} label="100% Seguro" />
           </div>
+
+          {/* Credibility Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+            <div className="text-center animate-fade-in">
+              <p className="text-4xl md:text-5xl font-playfair font-bold text-primary mb-2">
+                +1.000
+              </p>
+              <p className="text-neutral-600 font-medium">Transações Realizadas</p>
+            </div>
+            <div className="text-center animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              <p className="text-4xl md:text-5xl font-playfair font-bold text-primary mb-2">
+                +R$ 50M
+              </p>
+              <p className="text-neutral-600 font-medium">Negociados</p>
+            </div>
+            <div className="text-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <p className="text-4xl md:text-5xl font-playfair font-bold text-primary mb-2">
+                98%
+              </p>
+              <p className="text-neutral-600 font-medium">Concluídas em menos de 1h</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -216,17 +238,42 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-neutral-900 py-12">
+      <footer className="bg-neutral-900 text-white py-12">
         <div className="container mx-auto px-6">
-          <div className="max-w-4xl mx-auto text-center space-y-6">
-            <div className="flex items-center justify-center gap-3">
+          <div className="flex flex-col items-center gap-4">
+            {/* Logo */}
+            <div className="flex items-center gap-3">
               <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
-              <div>
-                <h3 className="text-xl font-playfair font-bold text-white">TKB ASSET</h3>
-                <p className="text-xs text-neutral-400 font-inter uppercase tracking-wider">Mesa OTC</p>
-              </div>
+              <span className="text-xl font-playfair font-bold">TKB ASSET</span>
             </div>
-            <p className="text-sm text-neutral-400 font-inter">
+            
+            {/* CNPJ */}
+            <p className="text-neutral-400 text-sm">CNPJ: 57.837.785/0001-30</p>
+            
+            {/* Social Media */}
+            <div className="flex items-center gap-4">
+              <a 
+                href="https://www.instagram.com/tkb.assetoficial/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-neutral-400 hover:text-white transition-colors"
+                aria-label="Instagram TKB Asset"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a 
+                href="https://www.linkedin.com/company/tkb-asset/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-neutral-400 hover:text-white transition-colors"
+                aria-label="LinkedIn TKB Asset"
+              >
+                <Linkedin className="h-5 w-5" />
+              </a>
+            </div>
+            
+            {/* Copyright */}
+            <p className="text-neutral-400 text-sm text-center mt-2">
               © 2025 TKB Asset. Todos os direitos reservados.
             </p>
           </div>
