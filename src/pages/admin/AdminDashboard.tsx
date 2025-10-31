@@ -166,9 +166,8 @@ const AdminDashboard = () => {
     completedToday: orders.filter(o => o.status === "completed").length,
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("userType");
-    localStorage.removeItem("userName");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     toast({
       title: "Logout realizado",
       description: "Até logo!",
