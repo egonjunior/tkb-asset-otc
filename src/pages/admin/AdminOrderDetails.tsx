@@ -16,6 +16,7 @@ const AdminOrderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [receiptError, setReceiptError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [transactionHash, setTransactionHash] = useState("");
   const [isSendingHash, setIsSendingHash] = useState(false);
@@ -82,12 +83,17 @@ const AdminOrderDetails = () => {
 
         // Se tem comprovante, buscar URL assinada
         if (orderData.receipt_url) {
-          const { data: signedData } = await supabase.storage
+          const { data: signedData, error: storageError } = await supabase.storage
             .from('receipts')
             .createSignedUrl(orderData.receipt_url, 3600);
           
-          if (signedData) {
+          if (storageError) {
+            console.error('Erro ao buscar comprovante:', storageError);
+            setReceiptPreview(null);
+            setReceiptError('Arquivo não encontrado no storage. Solicite reenvio ao cliente.');
+          } else if (signedData) {
             setReceiptPreview(signedData.signedUrl);
+            setReceiptError(null);
           }
         }
       } catch (err) {
@@ -417,30 +423,42 @@ const AdminOrderDetails = () => {
                   {order.receipt_url ? (
                     <>
                       {/* Preview do comprovante */}
-                      <div className="border rounded-lg overflow-hidden bg-muted">
-                        {receiptPreview ? (
-                          order.receipt_url.toLowerCase().endsWith('.pdf') ? (
-                            <div className="flex flex-col items-center justify-center p-8 space-y-3">
-                              <FileText className="h-16 w-16 text-primary" />
-                              <p className="text-sm text-muted-foreground">Arquivo PDF</p>
-                              <Button size="sm" onClick={handleDownloadReceipt}>
-                                <Download className="h-4 w-4 mr-2" />
-                                Baixar PDF
-                              </Button>
-                            </div>
-                          ) : (
-                            <img 
-                              src={receiptPreview} 
-                              alt="Comprovante" 
-                              className="w-full h-auto"
-                            />
-                          )
-                        ) : (
-                          <div className="flex items-center justify-center p-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                      {receiptError ? (
+                        <div className="flex flex-col items-center justify-center p-8 text-center space-y-3 border-2 border-dashed border-destructive rounded-lg bg-destructive/5">
+                          <AlertCircle className="h-12 w-12 text-destructive" />
+                          <div>
+                            <p className="font-medium text-destructive">Erro ao carregar comprovante</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {receiptError}
+                            </p>
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <div className="border rounded-lg overflow-hidden bg-muted">
+                          {receiptPreview ? (
+                            order.receipt_url.toLowerCase().endsWith('.pdf') ? (
+                              <div className="flex flex-col items-center justify-center p-8 space-y-3">
+                                <FileText className="h-16 w-16 text-primary" />
+                                <p className="text-sm text-muted-foreground">Arquivo PDF</p>
+                                <Button size="sm" onClick={handleDownloadReceipt}>
+                                  <Download className="h-4 w-4 mr-2" />
+                                  Baixar PDF
+                                </Button>
+                              </div>
+                            ) : (
+                              <img 
+                                src={receiptPreview} 
+                                alt="Comprovante" 
+                                className="w-full h-auto"
+                              />
+                            )
+                          ) : (
+                            <div className="flex items-center justify-center p-8">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Botão de download */}
                       {receiptPreview && !order.receipt_url.toLowerCase().endsWith('.pdf') && (
@@ -453,10 +471,12 @@ const AdminOrderDetails = () => {
                         </Button>
                       )}
 
-                      <div className="flex items-center gap-2 p-3 bg-success/10 border border-success/20 rounded-lg">
-                        <CheckCircle2 className="h-4 w-4 text-success" />
-                        <span className="text-sm text-success">Comprovante recebido</span>
-                      </div>
+                      {!receiptError && (
+                        <div className="flex items-center gap-2 p-3 bg-success/10 border border-success/20 rounded-lg">
+                          <CheckCircle2 className="h-4 w-4 text-success" />
+                          <span className="text-sm text-success">Comprovante recebido</span>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <div className="flex flex-col items-center justify-center p-8 text-center space-y-3 border-2 border-dashed rounded-lg">

@@ -173,17 +173,17 @@ const OrderDetails = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Não autenticado');
       
-      // Upload para Supabase Storage
+      // 1. PRIMEIRO: Upload para Supabase Storage
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${user.id}/${order.id}_${Date.now()}.${fileExt}`;
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('receipts')
         .upload(fileName, selectedFile);
       
       if (uploadError) throw uploadError;
       
-      // Atualizar ordem com URL do comprovante
+      // 2. DEPOIS: Atualizar ordem com URL do comprovante (só se upload funcionou)
       const { error: updateError } = await supabase
         .from('orders')
         .update({ 
@@ -191,9 +191,13 @@ const OrderDetails = () => {
         })
         .eq('id', order.id);
       
-      if (updateError) throw updateError;
+      if (updateError) {
+        // Rollback: deletar arquivo se falhar ao salvar no banco
+        await supabase.storage.from('receipts').remove([fileName]);
+        throw updateError;
+      }
 
-      // Registrar evento na timeline
+      // 3. Registrar evento na timeline
       await supabase
         .from('order_timeline')
         .insert({
@@ -214,11 +218,11 @@ const OrderDetails = () => {
       setSelectedFile(null);
       setOrder({ ...order, receipt_url: fileName });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao enviar comprovante:', error);
       toast({
         title: "Erro ao enviar",
-        description: "Tente novamente",
+        description: error.message || "Tente novamente",
         variant: "destructive",
       });
     } finally {
