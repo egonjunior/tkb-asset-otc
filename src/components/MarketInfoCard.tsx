@@ -1,7 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, BarChart3, Activity, Clock, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { TrendingUp, TrendingDown, BarChart3, Activity, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -24,7 +22,6 @@ const MarketInfoCard = ({
   tradesCount,
   lastUpdate,
 }: MarketInfoCardProps) => {
-  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -136,16 +133,6 @@ const MarketInfoCard = ({
           </div>
         </div>
 
-        {/* Botão para Gráfico Completo */}
-        <Button
-          variant="outline"
-          className="w-full mt-4"
-          onClick={() => navigate('/quote')}
-        >
-          <BarChart3 className="h-4 w-4 mr-2" />
-          Ver Gráfico Completo
-          <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
       </CardContent>
     </Card>
   );
