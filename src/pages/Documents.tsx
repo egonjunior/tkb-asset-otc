@@ -248,6 +248,40 @@ export default function Documents() {
         </CardContent>
       </Card>
 
+      {/* Card de Instruções */}
+      <Card className="mb-8 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            📋 Como Preencher os Documentos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="text-sm">
+              <p className="font-semibold text-foreground mb-2">
+                Para documentos que requerem preenchimento (Contrato-Quadro e Dossiê KYC):
+              </p>
+              <div className="space-y-1 text-muted-foreground ml-2">
+                <p>1️⃣ Baixe a minuta do documento</p>
+                <p>2️⃣ Preencha com seus dados</p>
+                <p>3️⃣ Assine digitalmente via Gov.br ou Certificado Digital</p>
+                <p>4️⃣ Anexe o documento assinado</p>
+              </div>
+            </div>
+            
+            <div className="text-sm pt-2 border-t border-primary/20">
+              <p className="font-semibold text-foreground mb-2">
+                Para documentos que requerem apenas confirmação (Termos de Uso e Política PLD):
+              </p>
+              <div className="space-y-1 text-muted-foreground ml-2">
+                <p>✅ Leia o conteúdo completo</p>
+                <p>✅ Clique em "Confirmo que li e compreendi"</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid md:grid-cols-2 gap-6">
         {/* Termos de Uso */}
         <Card className="hover:shadow-lg transition-shadow">
@@ -298,9 +332,10 @@ export default function Documents() {
                 Confirmado em {new Date(documents['politica-pld'].pld_acknowledged_at!).toLocaleDateString('pt-BR')}
               </p>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Leia a política e confirme que compreendeu o conteúdo
-              </p>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>📖 <strong>Passo 1:</strong> Clique em "Ler Política"</p>
+                <p>✅ <strong>Passo 2:</strong> Após ler, clique em "Confirmo que li e compreendi"</p>
+              </div>
             )}
             <div className="flex flex-col gap-2">
               <Button

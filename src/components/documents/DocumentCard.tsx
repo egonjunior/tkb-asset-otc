@@ -5,6 +5,7 @@ import { DocumentStatusBadge } from "./DocumentStatusBadge";
 import { DocumentUploader } from "./DocumentUploader";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { DocumentStatus } from "@/lib/documentHelpers";
 
 interface DocumentCardProps {
@@ -60,9 +61,12 @@ export function DocumentCard({
         )}
 
         {status === 'pending' && (
-          <p className="text-sm text-muted-foreground">
-            Faça o download da minuta, preencha e assine o documento, depois anexe o arquivo assinado.
-          </p>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p>📥 <strong>Passo 1:</strong> Baixe a minuta</p>
+            <p>✍️ <strong>Passo 2:</strong> Preencha seus dados</p>
+            <p>🔏 <strong>Passo 3:</strong> Assine digitalmente (Gov.br ou Certificado Digital)</p>
+            <p>📤 <strong>Passo 4:</strong> Anexe o documento assinado</p>
+          </div>
         )}
 
         {isUnderReview && (
@@ -77,26 +81,42 @@ export function DocumentCard({
           </p>
         )}
 
-        <div className="flex flex-col gap-2">
-          {canUpload && !showUploader && (
-            <>
-              <Button
-                variant="outline"
-                onClick={onDownloadTemplate}
-                className="w-full justify-start"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Baixar Minuta
-              </Button>
-              <Button
-                onClick={() => setShowUploader(true)}
-                className="w-full justify-start"
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                Anexar Documento Assinado
-              </Button>
-            </>
-          )}
+        <TooltipProvider>
+          <div className="flex flex-col gap-2">
+            {canUpload && !showUploader && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      onClick={onDownloadTemplate}
+                      className="w-full justify-start"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Baixar Minuta
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Download do documento em branco para preencher</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => setShowUploader(true)}
+                      className="w-full justify-start"
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Anexar Documento Assinado
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Envie o documento preenchido e assinado</p>
+                  </TooltipContent>
+                </Tooltip>
+              </>
+            )}
 
           {canUpload && showUploader && (
             <div className="space-y-2">
@@ -117,27 +137,42 @@ export function DocumentCard({
             </div>
           )}
 
-          {isUnderReview && clientFileUrl && (
-            <Button
-              variant="outline"
-              onClick={() => onView(clientFileUrl, title)}
-              className="w-full justify-start"
-            >
-              <Eye className="mr-2 h-4 w-4" />
-              Visualizar Documento Enviado
-            </Button>
-          )}
+            {isUnderReview && clientFileUrl && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => onView(clientFileUrl, title)}
+                    className="w-full justify-start"
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    Visualizar Documento Enviado
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Ver o documento que você enviou</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
 
-          {isApproved && tkbFileUrl && (
-            <Button
-              onClick={() => onView(tkbFileUrl, `${title} - Completo`)}
-              className="w-full justify-start"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Baixar Documento Completo
-            </Button>
-          )}
-        </div>
+            {isApproved && tkbFileUrl && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => onView(tkbFileUrl, `${title} - Completo`)}
+                    className="w-full justify-start"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Baixar Documento Completo
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Download da versão final assinada pela TKB Asset</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </TooltipProvider>
       </CardContent>
     </Card>
   );
