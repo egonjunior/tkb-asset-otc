@@ -18,7 +18,7 @@ let priceCache: {
 } | null = null;
 
 const CACHE_DURATION_MS = 5000; // 5 segundos
-const TKB_MARKUP = 1.0015; // 0.15% markup
+const TKB_MARKUP = 1.01; // 1% markup - CRÍTICO: NÃO ALTERAR!
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -57,6 +57,10 @@ serve(async (req) => {
 
     const binancePrice = parseFloat(priceData.price);
     const tkbPrice = binancePrice * TKB_MARKUP;
+    
+    // Log para validação de markup
+    const markupPercent = ((tkbPrice / binancePrice - 1) * 100).toFixed(2);
+    console.log(`✅ Markup validado: Binance=${binancePrice.toFixed(4)} | TKB=${tkbPrice.toFixed(4)} | Markup=${markupPercent}%`);
 
     // Atualizar cache
     priceCache = {

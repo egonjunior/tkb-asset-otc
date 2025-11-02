@@ -14,6 +14,7 @@ interface PriceResponse {
 
 export const useBinancePrice = () => {
   const [price, setPrice] = useState<number | null>(null);
+  const [tkbPrice, setTkbPrice] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -44,6 +45,7 @@ export const useBinancePrice = () => {
       }
 
       setPrice(data.binancePrice);
+      setTkbPrice(data.tkbPrice); // ✅ Usar preço JÁ calculado pela Edge Function
       setDailyChangePercent(data.dailyChangePercent);
       setVolumeUSDT(data.volumeUSDT);
       setHighPrice24h(data.highPrice24h);
@@ -57,6 +59,7 @@ export const useBinancePrice = () => {
       setError('Não foi possível buscar a cotação. Usando valor de referência.');
       // Fallback para um valor de referência
       setPrice(5.40);
+      setTkbPrice(5.40 * 1.01); // Aplicar 1% no fallback
       setDailyChangePercent(0);
       setIsLoading(false);
     }
@@ -76,11 +79,9 @@ export const useBinancePrice = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const tkbPrice = price ? price * 1.0015 : null;
-
   return {
     binancePrice: price,
-    tkbPrice,
+    tkbPrice, // ✅ Retornar preço da Edge Function (sem cálculo local)
     isLoading,
     error,
     lastUpdate,
