@@ -105,7 +105,7 @@ const Landing = () => {
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-50"></div>
                 <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold mb-2">Mercado</p>
                 <p className="text-5xl font-playfair font-bold text-foreground">
-                  {isLoading ? "..." : `R$ ${binancePrice?.toFixed(2)}`}
+                  {isLoading ? "..." : `R$ ${binancePrice?.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`}
                 </p>
                 <p className="text-xs text-muted-foreground mt-2 font-inter">Cotação Base</p>
               </CardContent>
@@ -115,7 +115,7 @@ const Landing = () => {
               <CardContent className="pt-8 pb-8 text-center">
                 <p className="text-sm uppercase tracking-wider text-primary font-semibold mb-2">TKB Asset</p>
                 <p className="text-5xl font-playfair font-bold text-primary">
-                  {isLoading ? "..." : `R$ ${tkbPrice?.toFixed(3)}`}
+                  {isLoading ? "..." : `R$ ${tkbPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`}
                 </p>
                 <p className="text-xs text-muted-foreground mt-2 font-inter">Cotação Institucional</p>
               </CardContent>
