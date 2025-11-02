@@ -43,6 +43,7 @@ const OrderFormCard = ({
 }: OrderFormCardProps) => {
   const [usdtAmount, setUsdtAmount] = useState("");
   const [brlAmount, setBrlAmount] = useState("");
+  const [brlAmountFormatted, setBrlAmountFormatted] = useState(""); // Valor visual formatado
   const [network, setNetwork] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   const [walletError, setWalletError] = useState<string | null>(null);
@@ -50,6 +51,30 @@ const OrderFormCard = ({
   const [lockedPrice, setLockedPrice] = useState<number | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(LOCK_DURATION);
   const [isEditingUSDT, setIsEditingUSDT] = useState(true);
+
+  // Função para formatar valor no padrão brasileiro
+  const formatBRL = (value: string): string => {
+    // Remove tudo exceto dígitos
+    const numericValue = value.replace(/\D/g, '');
+    
+    if (!numericValue) return '';
+    
+    // Converte para número e divide por 100 (para ter 2 decimais)
+    const number = parseFloat(numericValue) / 100;
+    
+    // Formata no padrão brasileiro
+    return number.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  // Função para extrair valor numérico
+  const unformatBRL = (value: string): number => {
+    // Remove pontos (separadores de milhares) e troca vírgula por ponto
+    const cleaned = value.replace(/\./g, '').replace(',', '.');
+    return parseFloat(cleaned) || 0;
+  };
 
   const networks = [
     { value: "TRC20", label: "TRC20 (Tron)", icon: "🟢" },
@@ -83,8 +108,16 @@ const OrderFormCard = ({
     if (value && tkbPrice) {
       const brl = parseFloat(value) * tkbPrice;
       setBrlAmount(brl.toFixed(2));
+      
+      // Formatar visualmente
+      const formatted = brl.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      setBrlAmountFormatted(formatted);
     } else {
       setBrlAmount("");
+      setBrlAmountFormatted("");
     }
 
     // Reset lock if amount changes
@@ -96,11 +129,19 @@ const OrderFormCard = ({
   };
 
   const handleBRLChange = (value: string) => {
-    setBrlAmount(value);
+    // Atualiza valor formatado visualmente
+    const formatted = formatBRL(value);
+    setBrlAmountFormatted(formatted);
+    
+    // Extrai valor numérico puro
+    const numericValue = unformatBRL(formatted);
+    setBrlAmount(numericValue.toString());
+    
     setIsEditingUSDT(false);
     
-    if (value && tkbPrice) {
-      const usdt = parseFloat(value) / tkbPrice;
+    // Calcula USDT baseado no valor numérico
+    if (numericValue > 0 && tkbPrice) {
+      const usdt = numericValue / tkbPrice;
       setUsdtAmount(usdt.toFixed(2));
     } else {
       setUsdtAmount("");
@@ -217,11 +258,10 @@ const OrderFormCard = ({
             <div className="relative">
               <Input
                 id="brl"
-                type="number"
-                placeholder="Ex: 53973.00"
-                value={brlAmount}
+                type="text"
+                placeholder="Ex: 53.973,00"
+                value={brlAmountFormatted}
                 onChange={(e) => handleBRLChange(e.target.value)}
-                step="0.01"
                 className={!isEditingUSDT ? "border-primary" : ""}
                 disabled={isLoading}
               />
