@@ -8,9 +8,12 @@ import { DocumentCard } from "@/components/documents/DocumentCard";
 import { DocumentStatusBadge } from "@/components/documents/DocumentStatusBadge";
 import { DocumentViewerModal } from "@/components/documents/DocumentViewerModal";
 import { TermsModal } from "@/components/documents/TermsModal";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { toast } from "sonner";
-import { Eye, CheckCircle2 } from "lucide-react";
+import { Eye, CheckCircle2, LogOut, Settings, ExternalLink } from "lucide-react";
 import { getTemplatePath, type DocumentStatus } from "@/lib/documentHelpers";
+import tkbLogo from "@/assets/tkb-logo.png";
 
 interface Document {
   id: string;
@@ -201,6 +204,11 @@ export default function Documents() {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/login';
+  };
+
   const completedCount = Object.values(documents).filter(
     doc => doc.status === 'approved' || (doc.document_type === 'politica-pld' && doc.pld_acknowledged)
   ).length + 1; // Terms always accepted at registration
@@ -225,7 +233,54 @@ export default function Documents() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
+    <div className="min-h-screen bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
+      {/* Floating orbs */}
+      <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-40 right-20 w-80 h-80 bg-tkb-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(220,15%,92%)_1px,transparent_1px),linear-gradient(to_bottom,hsl(220,15%,92%)_1px,transparent_1px)] bg-[size:64px_64px] opacity-20 pointer-events-none"></div>
+
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="h-20 bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
+                <div>
+                  <h1 className="text-2xl font-brand">TKB ASSET</h1>
+                  <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Mesa OTC</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <span className="text-sm font-inter hidden sm:inline">
+                  Olá, <strong className="font-semibold">{profile?.full_name || user?.email?.split("@")[0] || "Usuário"}</strong>
+                </span>
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                  <Settings className="h-5 w-5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                  <ExternalLink className="h-5 w-5" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleLogout} className="border-neutral-600 text-white hover:bg-white/10">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Layout com Sidebar e Conteúdo */}
+        <SidebarProvider defaultOpen={true} style={{ ["--sidebar-width" as any]: "12rem" }}>
+          <div className="flex w-full min-h-[calc(100vh-80px)]">
+            {/* Sidebar */}
+            <AppSidebar />
+
+            {/* Main Content */}
+            <main className="flex-1 px-6 py-10">
+              <div className="max-w-6xl mx-auto space-y-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">📄 Documentos Contratuais</h1>
         <p className="text-muted-foreground">
@@ -388,14 +443,19 @@ export default function Documents() {
         />
       </div>
 
-      <TermsModal isOpen={termsModalOpen} onClose={() => setTermsModalOpen(false)} />
-      <TermsModal isOpen={pldModalOpen} onClose={() => setPldModalOpen(false)} />
-      <DocumentViewerModal
-        isOpen={viewerModal.open}
-        onClose={() => setViewerModal({ open: false, url: '', title: '' })}
-        fileUrl={viewerModal.url}
-        title={viewerModal.title}
-      />
+                <TermsModal isOpen={termsModalOpen} onClose={() => setTermsModalOpen(false)} />
+                <TermsModal isOpen={pldModalOpen} onClose={() => setPldModalOpen(false)} />
+                <DocumentViewerModal
+                  isOpen={viewerModal.open}
+                  onClose={() => setViewerModal({ open: false, url: '', title: '' })}
+                  fileUrl={viewerModal.url}
+                  title={viewerModal.title}
+                />
+              </div>
+            </main>
+          </div>
+        </SidebarProvider>
+      </div>
     </div>
   );
 }
