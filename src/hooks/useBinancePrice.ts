@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-interface BinanceTickerResponse {
-  symbol: string;
-  price: string;
+interface PriceResponse {
+  binancePrice: number;
+  tkbPrice: number;
+  dailyChangePercent: number;
+  volumeUSDT: number;
+  highPrice24h: number;
+  lowPrice24h: number;
+  tradesCount: number;
+  cached: boolean;
 }
 
 export const useBinancePrice = () => {
@@ -18,37 +25,39 @@ export const useBinancePrice = () => {
 
   const fetchPrice = async () => {
     try {
-      // Buscar preço e variação de 24h em paralelo
-      const [priceResponse, ticker24hResponse] = await Promise.all([
-        fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'),
-        fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL')
-      ]);
-      
-      if (!priceResponse.ok || !ticker24hResponse.ok) {
-        throw new Error('Erro ao buscar cotação da Binance');
-      }
-      
-      const priceData: BinanceTickerResponse = await priceResponse.json();
-      const ticker24hData: any = await ticker24hResponse.json();
-      
-      const priceValue = parseFloat(priceData.price);
-      const dailyChange = parseFloat(ticker24hData.priceChangePercent);
-      
-      setPrice(priceValue);
-      setDailyChangePercent(dailyChange);
-      setVolumeUSDT(parseFloat(ticker24hData.volume));
-      setHighPrice24h(parseFloat(ticker24hData.highPrice));
-      setLowPrice24h(parseFloat(ticker24hData.lowPrice));
-      setTradesCount(parseInt(ticker24hData.count));
-      setLastUpdate(new Date());
       setError(null);
+      
+      // Usar Edge Function centralizada ao invés de chamar Binance diretamente
+      const { data, error: functionError } = await supabase.functions.invoke<PriceResponse>(
+        'get-current-price',
+        {
+          method: 'GET'
+        }
+      );
+
+      if (functionError) {
+        throw new Error(functionError.message || "Failed to fetch price");
+      }
+
+      if (!data) {
+        throw new Error("No data received from price service");
+      }
+
+      setPrice(data.binancePrice);
+      setDailyChangePercent(data.dailyChangePercent);
+      setVolumeUSDT(data.volumeUSDT);
+      setHighPrice24h(data.highPrice24h);
+      setLowPrice24h(data.lowPrice24h);
+      setTradesCount(data.tradesCount);
+      setLastUpdate(new Date());
+      
+      setIsLoading(false);
     } catch (err) {
       console.error('Erro ao buscar preço:', err);
       setError('Não foi possível buscar a cotação. Usando valor de referência.');
       // Fallback para um valor de referência
       setPrice(5.40);
       setDailyChangePercent(0);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -67,7 +76,7 @@ export const useBinancePrice = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const tkbPrice = price ? price * 1.01 : null;
+  const tkbPrice = price ? price * 1.0015 : null;
 
   return {
     binancePrice: price,

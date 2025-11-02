@@ -8,16 +8,12 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Find orders that are pending and have expired (2 scenarios)
-    // 1. locked_at < 5 minutes ago OR
-    // 2. locked_at IS NULL and created_at < 5 minutes ago
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-    
+    // Usar função otimizada com índices ao invés de query manual
     const { data: expiredOrders, error: fetchError } = await supabase
-      .from('orders')
-      .select('id, locked_at, created_at')
-      .eq('status', 'pending')
-      .or(`locked_at.lt.${fiveMinutesAgo},and(locked_at.is.null,created_at.lt.${fiveMinutesAgo})`);
+      .rpc('get_expired_orders') as { 
+        data: Array<{ order_id: string; locked_at: string | null; created_at: string }> | null; 
+        error: any 
+      };
 
     if (fetchError) {
       console.error('Error fetching expired orders:', fetchError);
@@ -28,7 +24,7 @@ Deno.serve(async (req) => {
 
     if (expiredOrders && expiredOrders.length > 0) {
       // Update expired orders to cancelled status
-      const orderIds = expiredOrders.map(order => order.id);
+      const orderIds = expiredOrders.map((order: { order_id: string }) => order.order_id);
       
       const { data: updatedOrders, error: updateError } = await supabase
         .from('orders')
