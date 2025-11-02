@@ -176,19 +176,28 @@ export default function Documents() {
 
   const handleDownloadTemplate = (type: string) => {
     const path = getTemplatePath(type as any);
-    window.open(path, '_blank');
+    const link = document.createElement('a');
+    link.href = path;
+    link.download = `${type}-tkb-asset.pdf`;
+    link.click();
   };
 
   const handleView = async (filePath: string, title: string) => {
     try {
-      const { data } = supabase.storage
+      const { data, error } = await supabase.storage
         .from('documents')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 3600);
 
-      setViewerModal({ open: true, url: data.publicUrl, title });
+      if (error) throw error;
+
+      // Forçar download ao invés de abrir no navegador
+      const link = document.createElement('a');
+      link.href = data.signedUrl;
+      link.download = title;
+      link.click();
     } catch (error) {
       console.error('Error viewing document:', error);
-      toast.error('Erro ao visualizar documento');
+      toast.error('Erro ao baixar documento');
     }
   };
 

@@ -82,9 +82,7 @@ export default function AdminUsers() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('user_stats')
-        .select('*')
-        .order('total_volume', { ascending: false });
+        .rpc('get_user_stats');
 
       if (error) throw error;
       setUsers(data || []);

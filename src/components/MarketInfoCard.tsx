@@ -89,7 +89,7 @@ const MarketInfoCard = ({
                 {isPositiveChange ? '+' : ''}{dailyChangePercent.toFixed(2)}%
               </p>
               <span className={`text-sm ${isPositiveChange ? 'text-success' : 'text-destructive'}`}>
-                (R$ {priceChange.toFixed(3)})
+                (R$ {priceChange.toFixed(4)})
               </span>
             </div>
           </div>
@@ -100,14 +100,14 @@ const MarketInfoCard = ({
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">📈 Máxima 24h</p>
             <p className="text-xl font-semibold text-success">
-              R$ {highPrice24h.toFixed(3)}
+              R$ {highPrice24h.toFixed(4)}
             </p>
           </div>
 
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">📉 Mínima 24h</p>
             <p className="text-xl font-semibold text-destructive">
-              R$ {lowPrice24h.toFixed(3)}
+              R$ {lowPrice24h.toFixed(4)}
             </p>
           </div>
         </div>

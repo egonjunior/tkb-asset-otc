@@ -179,7 +179,7 @@ const Dashboard = () => {
                   <div className="space-y-3">
                     <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Mercado</p>
                     <p className="text-5xl font-display font-bold text-foreground">
-                      R$ {(binancePrice || 0).toFixed(2)}
+                      R$ {(binancePrice || 0).toFixed(4)}
                     </p>
                     <p className="text-sm text-muted-foreground font-inter">Par USDT/BRL</p>
                   </div>
@@ -189,7 +189,7 @@ const Dashboard = () => {
                       <Badge className="bg-success/20 text-success border-success/30">AO VIVO</Badge>
                     </div>
                     <p className="text-5xl font-display font-bold text-tkb-cyan">
-                      R$ {(tkbPrice || 0).toFixed(3)}
+                      R$ {(tkbPrice || 0).toFixed(4)}
                     </p>
                     <p className="text-sm text-muted-foreground font-inter">Cotação Institucional</p>
                   </div>

@@ -437,6 +437,28 @@ export type Database = {
       }
     }
     Functions: {
+      get_user_stats: {
+        Args: never
+        Returns: {
+          avg_ticket: number | null
+          completed_orders: number | null
+          document_number: string | null
+          document_type: string | null
+          full_name: string | null
+          last_order_date: string | null
+          paid_orders: number | null
+          pending_orders: number | null
+          registered_at: string | null
+          total_volume: number | null
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "user_stats"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

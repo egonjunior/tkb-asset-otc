@@ -314,13 +314,13 @@ const OrderFormCard = ({
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Cotação Base:</span>
                 <span className="font-medium">
-                  {binancePrice ? `R$ ${binancePrice.toFixed(3)}` : "Carregando..."}
+                  {binancePrice ? `R$ ${binancePrice.toFixed(4)}` : "Carregando..."}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Cotação TKB:</span>
                 <span className="font-semibold text-primary">
-                  {tkbPrice ? `R$ ${tkbPrice.toFixed(3)}` : "Carregando..."}
+                  {tkbPrice ? `R$ ${tkbPrice.toFixed(4)}` : "Carregando..."}
                 </span>
               </div>
 
@@ -379,7 +379,7 @@ const OrderFormCard = ({
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Preço Travado:</span>
-                        <span className="font-medium text-primary">R$ {lockedPrice.toFixed(3)}</span>
+                        <span className="font-medium text-primary">R$ {lockedPrice.toFixed(4)}</span>
                       </div>
                       <div className="h-px bg-border my-2" />
                       <div className="flex justify-between text-base">

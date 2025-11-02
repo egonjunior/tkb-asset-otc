@@ -19,7 +19,7 @@ const QuoteCard = ({ binancePrice, otcPrice, lastUpdate }: QuoteCardProps) => {
             </h3>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold text-foreground">
-                R$ {binancePrice.toFixed(2)}
+                R$ {binancePrice.toFixed(4)}
               </span>
               <Badge variant="secondary" className="text-xs">
                 Mercado
@@ -38,7 +38,7 @@ const QuoteCard = ({ binancePrice, otcPrice, lastUpdate }: QuoteCardProps) => {
             </span>
           </div>
           <span className="text-2xl font-bold text-primary">
-            R$ {otcPrice.toFixed(3)}
+            R$ {otcPrice.toFixed(4)}
           </span>
         </div>
 
