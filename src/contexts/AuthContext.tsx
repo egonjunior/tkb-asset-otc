@@ -8,6 +8,12 @@ interface Profile {
   full_name: string;
   document_type: string;
   document_number: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  linkedin?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
   created_at: string;
   updated_at: string;
 }

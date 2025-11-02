@@ -1,4 +1,4 @@
-import { FileText, Handshake, MessageCircle } from "lucide-react";
+import { FileText, Handshake, MessageCircle, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -15,6 +15,7 @@ import {
 
 const items = [
   { title: "Meus Documentos", url: "/documents", icon: FileText },
+  { title: "Configurações", url: "/settings", icon: Settings },
   { title: "Seja um Parceiro", url: "/parceiro", icon: Handshake },
   { title: "Suporte", url: "/suporte", icon: MessageCircle },
 ];

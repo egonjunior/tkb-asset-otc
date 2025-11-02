@@ -25,6 +25,7 @@ import AdminSupport from "./pages/admin/AdminSupport";
 import Partner from "./pages/Partner";
 import Support from "./pages/Support";
 import QuotePage from "./pages/QuotePage";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,11 @@ const App = () => (
             <Route path="/documents" element={
               <ProtectedRoute>
                 <Documents />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             } />
             <Route path="/parceiro" element={

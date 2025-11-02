@@ -113,7 +113,10 @@ const Dashboard = () => {
       <header className="h-20 bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div 
+              className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" 
+              onClick={() => navigate('/dashboard')}
+            >
               <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
               <div>
                 <h1 className="text-2xl font-brand">TKB ASSET</h1>
@@ -124,7 +127,12 @@ const Dashboard = () => {
               <span className="text-sm font-inter hidden sm:inline">
                 Olá, <strong className="font-semibold">{userName}</strong>
               </span>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-white hover:bg-white/10"
+                onClick={() => navigate('/settings')}
+              >
                 <Settings className="h-5 w-5" />
               </Button>
               <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">

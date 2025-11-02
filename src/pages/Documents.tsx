@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,7 @@ interface Document {
 
 export default function Documents() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [documents, setDocuments] = useState<Record<string, Document>>({});
   const [loading, setLoading] = useState(true);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
@@ -246,20 +248,28 @@ export default function Documents() {
         <header className="h-20 bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
-                <div>
-                  <h1 className="text-2xl font-brand">TKB ASSET</h1>
-                  <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Mesa OTC</p>
-                </div>
+            <div 
+              className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" 
+              onClick={() => navigate('/dashboard')}
+            >
+              <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
+              <div>
+                <h1 className="text-2xl font-brand">TKB ASSET</h1>
+                <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Mesa OTC</p>
               </div>
+            </div>
               <div className="flex items-center gap-6">
                 <span className="text-sm font-inter hidden sm:inline">
                   Olá, <strong className="font-semibold">{profile?.full_name || user?.email?.split("@")[0] || "Usuário"}</strong>
                 </span>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                  <Settings className="h-5 w-5" />
-                </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-white hover:bg-white/10"
+                onClick={() => navigate('/settings')}
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
                 <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
                   <ExternalLink className="h-5 w-5" />
                 </Button>
