@@ -122,7 +122,9 @@ const QuotePage = () => {
                 ) : (
                   <div className="space-y-4">
                     <div className="flex items-baseline gap-4">
-                      <span className="text-6xl font-playfair font-bold text-foreground">R$ {currentPrice.toFixed(2)}</span>
+                      <span className="text-6xl font-playfair font-bold text-foreground">
+                        R$ {currentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+                      </span>
                       <div className={`flex items-center gap-1.5 text-lg font-semibold ${
                         isPositive ? "text-success" : "text-danger"
                       }`}>
@@ -168,7 +170,7 @@ const QuotePage = () => {
                   <div className="space-y-5">
                     <div className="flex items-baseline gap-4">
                       <span className="text-6xl font-playfair font-bold text-white">
-                        R$ {tkbPrice?.toFixed(3)}
+                        R$ {tkbPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
                       </span>
                       <TrendingUp className="h-8 w-8 text-white" strokeWidth={2} />
                     </div>
