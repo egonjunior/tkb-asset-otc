@@ -8,7 +8,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import QuoteCard from "@/components/QuoteCard";
 import { StatCard } from "@/components/StatCard";
-import { Briefcase, LogOut, Plus, Clock, TrendingUp, Settings, ExternalLink } from "lucide-react";
+import { Briefcase, LogOut, Plus, Clock, TrendingUp, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
 import { supabase } from "@/integrations/supabase/client";
@@ -134,9 +134,6 @@ const Dashboard = () => {
                 onClick={() => navigate('/settings')}
               >
                 <Settings className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                <ExternalLink className="h-5 w-5" />
               </Button>
               <Button variant="outline" size="sm" onClick={handleLogout} className="border-neutral-600 text-white hover:bg-white/10">
                 <LogOut className="h-4 w-4 mr-2" />

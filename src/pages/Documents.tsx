@@ -12,7 +12,7 @@ import { TermsModal } from "@/components/documents/TermsModal";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { toast } from "sonner";
-import { Eye, CheckCircle2, LogOut, Settings, ExternalLink } from "lucide-react";
+import { Eye, CheckCircle2, LogOut, Settings } from "lucide-react";
 import { getTemplatePath, type DocumentStatus } from "@/lib/documentHelpers";
 import tkbLogo from "@/assets/tkb-logo.png";
 
@@ -270,10 +270,7 @@ export default function Documents() {
               >
                 <Settings className="h-5 w-5" />
               </Button>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                  <ExternalLink className="h-5 w-5" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleLogout} className="border-neutral-600 text-white hover:bg-white/10">
+              <Button variant="outline" size="sm" onClick={handleLogout} className="border-neutral-600 text-white hover:bg-white/10">
                   <LogOut className="h-4 w-4 mr-2" />
                   Sair
                 </Button>
