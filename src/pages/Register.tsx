@@ -62,6 +62,18 @@ const Register = () => {
 
       if (error) throw error;
 
+      // Enviar email de boas-vindas
+      await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'welcome',
+          to: data.email,
+          data: {
+            nome_cliente: data.fullName,
+            link_kyc: `${window.location.origin}/documents`
+          }
+        }
+      }).catch(err => console.error('Error sending welcome email:', err));
+
       toast({
         title: "Conta criada com sucesso!",
         description: "Você será redirecionado para fazer login.",

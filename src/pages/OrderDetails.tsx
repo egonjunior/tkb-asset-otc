@@ -214,6 +214,26 @@ const OrderDetails = () => {
         title: "Comprovante enviado com sucesso!",
         description: "Aguarde a análise do admin para confirmação do pagamento",
       });
+
+      // 🚨 NOTIFICAÇÃO CRÍTICA: Comprovante enviado
+      await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'receipt-uploaded',
+          to: 'tkb.assetgestao@gmail.com',
+          internal: true,
+          data: {
+            ordem_id: order.id,
+            nome_cliente: order.profiles?.full_name || 'Cliente',
+            valor_brl: order.total.toFixed(2),
+            quantidade_usdt: order.amount,
+            rede: order.network,
+            carteira_destino: order.wallet_address,
+            hora_envio_comprovante: new Date().toLocaleTimeString('pt-BR'),
+            link_comprovante: `${window.location.origin}/admin/order/${order.id}`,
+            link_admin_ordem: `${window.location.origin}/admin/order/${order.id}`
+          }
+        }
+      }).catch(err => console.error('Error sending critical notification:', err));
       
       setSelectedFile(null);
       setOrder({ ...order, receipt_url: fileName });

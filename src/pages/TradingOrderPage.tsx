@@ -63,6 +63,28 @@ const TradingOrderPage = () => {
 
       if (error) throw error;
 
+      // Enviar email com dados da ordem
+      await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'order-created',
+          to: user.email,
+          data: {
+            nome_cliente: user.user_metadata?.full_name || 'Cliente',
+            ordem_id: data.id,
+            valor_brl: orderData.total.toFixed(2),
+            quantidade_usdt: orderData.amount,
+            cotacao: orderData.lockedPrice.toFixed(3),
+            rede: orderData.network,
+            tempo_validade: 30,
+            banco: 'Banco do Brasil',
+            titular_conta: 'TKB ASSET LTDA',
+            cnpj_conta: '45.933.866/0001-93',
+            pix_cnpj: '45933866000193',
+            link_enviar_comprovante: `${window.location.origin}/order/${data.id}`
+          }
+        }
+      }).catch(err => console.error('Error sending order email:', err));
+
       toast({
         title: "Ordem criada com sucesso!",
         description: `Ordem ${data.id} aguardando pagamento`,

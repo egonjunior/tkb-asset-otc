@@ -168,6 +168,32 @@ const AdminOrderDetails = () => {
       if (timelineError) throw timelineError;
       
       setOrder({ ...order, status: 'completed', payment_confirmed_at: new Date().toISOString() });
+
+      // Buscar email do cliente
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', order.user_id)
+        .single();
+
+      if (profileData) {
+        const { data: { user: userData } } = await supabase.auth.admin.getUserById(order.user_id);
+        
+        if (userData?.email) {
+          await supabase.functions.invoke('send-email', {
+            body: {
+              type: 'payment-confirmed',
+              to: userData.email,
+              data: {
+                nome_cliente: profileData.full_name,
+                valor_brl: order.total.toFixed(2),
+                quantidade_usdt: order.amount,
+                carteira_destino: order.wallet_address
+              }
+            }
+          }).catch(err => console.error('Error sending payment confirmed email:', err));
+        }
+      }
       
       toast({
         title: "Pagamento confirmado!",
@@ -214,6 +240,45 @@ const AdminOrderDetails = () => {
       
       setOrder({ ...order, transaction_hash: transactionHash.trim() });
       setTransactionHash("");
+
+      // Buscar email do cliente
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', order.user_id)
+        .single();
+
+      if (profileData) {
+        const { data: { user: userData } } = await supabase.auth.admin.getUserById(order.user_id);
+        
+        if (userData?.email) {
+          const explorerLinks: Record<string, string> = {
+            'TRC20': `https://tronscan.org/#/transaction/${transactionHash.trim()}`,
+            'ERC20': `https://etherscan.io/tx/${transactionHash.trim()}`,
+            'BEP20': `https://bscscan.com/tx/${transactionHash.trim()}`
+          };
+          
+          await supabase.functions.invoke('send-email', {
+            body: {
+              type: 'usdt-sent',
+              to: userData.email,
+              data: {
+                nome_cliente: profileData.full_name,
+                ordem_id: order.id,
+                quantidade_usdt: order.amount,
+                carteira_destino: order.wallet_address,
+                transaction_hash: transactionHash.trim(),
+                link_explorer: explorerLinks[order.network] || '#',
+                valor_brl: order.total.toFixed(2),
+                rede: order.network,
+                data_hora: new Date().toLocaleString('pt-BR'),
+                link_plataforma: `${window.location.origin}/trading-order`,
+                whatsapp: '(11) 9XXXX-XXXX'
+              }
+            }
+          }).catch(err => console.error('Error sending USDT sent email:', err));
+        }
+      }
       
       toast({
         title: "Hash enviado!",

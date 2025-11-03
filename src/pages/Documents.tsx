@@ -172,6 +172,35 @@ export default function Documents() {
       }
 
       toast.success('Documento enviado para análise');
+
+      // Email ao cliente
+      await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'documents-received',
+          to: user?.email,
+          data: {
+            nome_cliente: profile?.full_name,
+            link_plataforma: window.location.origin
+          }
+        }
+      }).catch(err => console.error('Error sending client email:', err));
+
+      // Notificação interna para gestão
+      await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'new-signup',
+          to: 'tkb.assetgestao@gmail.com',
+          internal: true,
+          data: {
+            nome_cliente: profile?.full_name,
+            email_cliente: user?.email,
+            documento: `${profile?.document_type}: ${profile?.document_number}`,
+            data_hora_cadastro: new Date().toLocaleString('pt-BR'),
+            link_admin_kyc: `${window.location.origin}/admin/documents`
+          }
+        }
+      }).catch(err => console.error('Error sending internal notification:', err));
+
       fetchDocuments();
     } catch (error) {
       console.error('Error uploading document:', error);
