@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shield, TrendingUp, Zap, ArrowRight, LineChart, Lock, Clock, CheckCircle2, Instagram, Linkedin } from "lucide-react";
+import { Shield, TrendingUp, Zap, ArrowRight, LineChart, Lock, Clock, CheckCircle2, Instagram, Linkedin, UserPlus, FileCheck, Handshake } from "lucide-react";
 import tkbLogo from "@/assets/tkb-logo.png";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
 import { TrustBadge } from "@/components/TrustBadge";
@@ -194,6 +194,123 @@ const Landing = () => {
                     </div>
                   </CardContent>
                 </Card>)}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-16 space-y-4">
+              <Badge variant="secondary" className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider">
+                Simples e Rápido
+              </Badge>
+              <h2 className="text-4xl sm:text-5xl font-playfair font-bold text-foreground">
+                Como Funciona
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-inter">
+                Três passos simples para começar a negociar com segurança e transparência
+              </p>
+            </div>
+
+            {/* Steps Grid */}
+            <div className="grid md:grid-cols-3 gap-8 relative">
+              {/* Connecting Line (desktop only) */}
+              <div className="hidden md:block absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20 -z-10" />
+              
+              {/* Step 1: Cadastro */}
+              <div className="relative animate-fade-in">
+                <Card className="bg-gradient-to-br from-neutral-900 to-neutral-800 text-white border-none shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2">
+                  <CardContent className="pt-12 pb-10 px-8 text-center space-y-6">
+                    {/* Icon */}
+                    <div className="h-24 w-24 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center mx-auto shadow-2xl border-4 border-white/20">
+                      <UserPlus className="h-12 w-12 text-white" strokeWidth={1.5} />
+                    </div>
+                    
+                    {/* Step Number */}
+                    <div className="inline-block px-4 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold uppercase tracking-wider">
+                      Passo 1
+                    </div>
+                    
+                    {/* Title */}
+                    <h3 className="text-2xl font-playfair font-bold">
+                      Cadastro
+                    </h3>
+                    
+                    {/* Description */}
+                    <p className="text-white/80 font-inter leading-relaxed">
+                      Crie sua conta em minutos com CPF ou CNPJ. Processo 100% digital e seguro.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Step 2: Validação */}
+              <div className="relative animate-fade-in" style={{ animationDelay: '150ms' }}>
+                <Card className="bg-gradient-to-br from-neutral-900 to-neutral-800 text-white border-none shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2">
+                  <CardContent className="pt-12 pb-10 px-8 text-center space-y-6">
+                    {/* Icon */}
+                    <div className="h-24 w-24 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center mx-auto shadow-2xl border-4 border-white/20">
+                      <FileCheck className="h-12 w-12 text-white" strokeWidth={1.5} />
+                    </div>
+                    
+                    {/* Step Number */}
+                    <div className="inline-block px-4 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold uppercase tracking-wider">
+                      Passo 2
+                    </div>
+                    
+                    {/* Title */}
+                    <h3 className="text-2xl font-playfair font-bold">
+                      Validação
+                    </h3>
+                    
+                    {/* Description */}
+                    <p className="text-white/80 font-inter leading-relaxed">
+                      Envie seus documentos para análise. Nossa equipe valida em até 24 horas.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Step 3: Negociação */}
+              <div className="relative animate-fade-in" style={{ animationDelay: '300ms' }}>
+                <Card className="bg-gradient-to-br from-primary via-primary-hover to-primary border-none shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2">
+                  <CardContent className="pt-12 pb-10 px-8 text-center space-y-6">
+                    {/* Icon */}
+                    <div className="h-24 w-24 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center mx-auto shadow-2xl border-4 border-white/20">
+                      <Handshake className="h-12 w-12 text-white" strokeWidth={1.5} />
+                    </div>
+                    
+                    {/* Step Number */}
+                    <div className="inline-block px-4 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold uppercase tracking-wider">
+                      Passo 3
+                    </div>
+                    
+                    {/* Title */}
+                    <h3 className="text-2xl font-playfair font-bold">
+                      Negociação
+                    </h3>
+                    
+                    {/* Description */}
+                    <p className="text-white/80 font-inter leading-relaxed">
+                      Negocie USDT com segurança, transparência e liquidação rápida.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Bottom CTA */}
+            <div className="mt-16 text-center animate-fade-in" style={{ animationDelay: '450ms' }}>
+              <p className="text-muted-foreground mb-6 font-inter text-lg">
+                Comece agora mesmo e faça parte da maior mesa OTC do Brasil
+              </p>
+              <PremiumButton onClick={() => navigate("/register")}>
+                Criar Minha Conta Grátis
+              </PremiumButton>
             </div>
           </div>
         </div>
