@@ -13,10 +13,12 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { registerSchema, type RegisterFormData, formatCPF, formatCNPJ } from "@/lib/validators";
 import tkbLogo from "@/assets/tkb-logo.png";
+import { TermsModal } from "@/components/documents/TermsModal";
 
 const Register = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const {
     register,
@@ -213,11 +215,18 @@ const Register = () => {
                 onCheckedChange={(checked) => setValue("acceptTerms", checked as boolean)}
                 disabled={isLoading}
               />
-              <Label
-                htmlFor="terms"
-                className="text-sm font-normal leading-relaxed cursor-pointer"
-              >
-                Li e aceito os Termos de Uso e Política de Privacidade
+              <Label className="text-sm font-normal leading-relaxed">
+                Li e aceito os{" "}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowTermsModal(true);
+                  }}
+                  className="text-primary hover:underline font-medium"
+                >
+                  Termos de Uso e Política de Privacidade
+                </button>
               </Label>
             </div>
             {errors.acceptTerms && (
@@ -242,6 +251,11 @@ const Register = () => {
           </form>
         </CardContent>
       </Card>
+
+      <TermsModal 
+        isOpen={showTermsModal} 
+        onClose={() => setShowTermsModal(false)} 
+      />
     </div>
   );
 };
