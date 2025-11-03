@@ -127,7 +127,7 @@ const Landing = () => {
             animationDelay: '450ms'
           }}>
             <TrustBadge icon={Lock} label="Criptografia Bancária" />
-            <TrustBadge icon={Clock} label="Liquidação em 24h" />
+            <TrustBadge icon={Clock} label="Liquidação Rápida" />
             <TrustBadge icon={CheckCircle2} label="Transparência Total" />
             <TrustBadge icon={Shield} label="100% Seguro" />
           </div>
