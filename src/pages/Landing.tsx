@@ -57,8 +57,8 @@ const Landing = () => {
                 <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:inline-flex text-white hover:bg-neutral-800">
                   Login
                 </Button>
-                <PremiumButton onClick={() => navigate("/login")}>
-                  Começar
+                <PremiumButton onClick={() => navigate("/register")}>
+                  Criar Conta
                 </PremiumButton>
               </div>
             </div>
