@@ -70,7 +70,7 @@ const AdminOrderDetails = () => {
         // Buscar dados do perfil
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('full_name, document_number, document_type')
+          .select('full_name, document_number, document_type, email')
           .eq('id', orderData.user_id)
           .single();
 
@@ -176,23 +176,32 @@ const AdminOrderDetails = () => {
         .eq('id', order.user_id)
         .single();
 
-      if (profileData) {
-        const { data: { user: userData } } = await supabase.auth.admin.getUserById(order.user_id);
-        
-        if (userData?.email) {
-          await supabase.functions.invoke('send-email', {
-            body: {
-              type: 'payment-confirmed',
-              to: userData.email,
-              data: {
-                nome_cliente: profileData.full_name,
-                valor_brl: order.total.toFixed(2),
-                quantidade_usdt: order.amount,
-                carteira_destino: order.wallet_address
-              }
+      if (profileData?.email) {
+        const { data: emailData, error: emailError } = await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'payment-confirmed',
+            to: profileData.email,
+            data: {
+              nome_cliente: profileData.full_name,
+              valor_brl: order.total.toFixed(2),
+              quantidade_usdt: order.amount,
+              carteira_destino: order.wallet_address
             }
-          }).catch(err => console.error('Error sending payment confirmed email:', err));
+          }
+        });
+
+        if (emailError) {
+          console.error('Erro ao enviar email payment-confirmed:', emailError);
+        } else {
+          console.log('Email payment-confirmed enviado com sucesso:', emailData);
         }
+      } else {
+        console.warn('Perfil sem email; não foi possível enviar payment-confirmed', { user_id: order.user_id, order_id: order.id });
+        toast({
+          title: "Pagamento confirmado",
+          description: "Email do cliente não cadastrado. Atualize o perfil para enviar notificações.",
+          variant: "destructive",
+        });
       }
       
       toast({
@@ -248,49 +257,52 @@ const AdminOrderDetails = () => {
         .eq('id', order.user_id)
         .single();
 
-      if (profileData) {
-        const { data: { user: userData } } = await supabase.auth.admin.getUserById(order.user_id);
+      if (!profileData?.email) {
+        console.warn('Perfil sem email; não foi possível enviar usdt-sent', { user_id: order.user_id, order_id: order.id });
+        toast({
+          title: "⚠️ Hash enviada",
+          description: "Email do cliente não cadastrado. Atualize o perfil para enviar notificações.",
+          variant: "destructive",
+        });
+      } else {
+        const explorerLinks: Record<string, string> = {
+          'TRC20': `https://tronscan.org/#/transaction/${transactionHash.trim()}`,
+          'ERC20': `https://etherscan.io/tx/${transactionHash.trim()}`,
+          'BEP20': `https://bscscan.com/tx/${transactionHash.trim()}`
+        };
         
-        if (userData?.email) {
-          const explorerLinks: Record<string, string> = {
-            'TRC20': `https://tronscan.org/#/transaction/${transactionHash.trim()}`,
-            'ERC20': `https://etherscan.io/tx/${transactionHash.trim()}`,
-            'BEP20': `https://bscscan.com/tx/${transactionHash.trim()}`
-          };
-          
-          console.log('Enviando email usdt-sent para:', userData.email);
-          
-          const { data: emailData, error: emailError } = await supabase.functions.invoke('send-email', {
-            body: {
-              type: 'usdt-sent',
-              to: userData.email,
-              data: {
-                nome_cliente: profileData.full_name,
-                ordem_id: order.id,
-                quantidade_usdt: order.amount,
-                carteira_destino: order.wallet_address,
-                transaction_hash: transactionHash.trim(),
-                link_explorer: explorerLinks[order.network] || '#',
-                link_ordem: `${window.location.origin}/order/${order.id}`,
-                valor_brl: order.total.toFixed(2),
-                rede: order.network,
-                data_hora: new Date().toLocaleString('pt-BR'),
-                link_plataforma: `${window.location.origin}/trading-order`,
-                whatsapp: '(11) 9XXXX-XXXX'
-              }
+        console.log('Enviando email usdt-sent para:', profileData.email);
+        
+        const { data: emailData, error: emailError } = await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'usdt-sent',
+            to: profileData.email,
+            data: {
+              nome_cliente: profileData.full_name,
+              ordem_id: order.id,
+              quantidade_usdt: order.amount,
+              carteira_destino: order.wallet_address,
+              transaction_hash: transactionHash.trim(),
+              link_explorer: explorerLinks[order.network] || '#',
+              link_ordem: `${window.location.origin}/order/${order.id}`,
+              valor_brl: order.total.toFixed(2),
+              rede: order.network,
+              data_hora: new Date().toLocaleString('pt-BR'),
+              link_plataforma: `${window.location.origin}/trading-order`,
+              whatsapp: '(11) 9XXXX-XXXX'
             }
-          });
-
-          if (emailError) {
-            console.error('Erro ao enviar email usdt-sent:', emailError);
-            toast({
-              title: "⚠️ Hash enviado",
-              description: "Hash salvo, mas houve erro ao enviar email ao cliente",
-              variant: "destructive",
-            });
-          } else {
-            console.log('Email usdt-sent enviado com sucesso:', emailData);
           }
+        });
+
+        if (emailError) {
+          console.error('Erro ao enviar email usdt-sent:', emailError);
+          toast({
+            title: "⚠️ Hash enviada",
+            description: "Hash salva, mas houve erro ao enviar email ao cliente",
+            variant: "destructive",
+          });
+        } else {
+          console.log('Email usdt-sent enviado com sucesso:', emailData);
         }
       }
       
