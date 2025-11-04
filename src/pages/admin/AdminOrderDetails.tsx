@@ -398,7 +398,7 @@ const AdminOrderDetails = () => {
                       <p className="text-sm text-muted-foreground mb-2">Status da Ordem</p>
                       {getStatusBadge(order.status)}
                     </div>
-                    {order.status === 'paid' && (
+                    {(order.status === 'paid' || (order.receipt_url && order.status === 'pending')) && (
                       <div className="flex gap-2">
                         <Button
                           size="sm"
