@@ -212,7 +212,8 @@ const OrderDetails = () => {
       const { error: updateError } = await supabase
         .from('orders')
         .update({ 
-          receipt_url: fileName
+          receipt_url: fileName,
+          status: 'paid'
         })
         .eq('id', order.id);
       
