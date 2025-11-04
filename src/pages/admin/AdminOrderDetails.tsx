@@ -258,26 +258,39 @@ const AdminOrderDetails = () => {
             'BEP20': `https://bscscan.com/tx/${transactionHash.trim()}`
           };
           
-          await supabase.functions.invoke('send-email', {
+          console.log('Enviando email usdt-sent para:', userData.email);
+          
+          const { data: emailData, error: emailError } = await supabase.functions.invoke('send-email', {
             body: {
               type: 'usdt-sent',
               to: userData.email,
-            data: {
-              nome_cliente: profileData.full_name,
-              ordem_id: order.id,
-              quantidade_usdt: order.amount,
-              carteira_destino: order.wallet_address,
-              transaction_hash: transactionHash.trim(),
-              link_explorer: explorerLinks[order.network] || '#',
-              link_ordem: `${window.location.origin}/order/${order.id}`,
-              valor_brl: order.total.toFixed(2),
-              rede: order.network,
-              data_hora: new Date().toLocaleString('pt-BR'),
-              link_plataforma: `${window.location.origin}/trading-order`,
-              whatsapp: '(11) 9XXXX-XXXX'
+              data: {
+                nome_cliente: profileData.full_name,
+                ordem_id: order.id,
+                quantidade_usdt: order.amount,
+                carteira_destino: order.wallet_address,
+                transaction_hash: transactionHash.trim(),
+                link_explorer: explorerLinks[order.network] || '#',
+                link_ordem: `${window.location.origin}/order/${order.id}`,
+                valor_brl: order.total.toFixed(2),
+                rede: order.network,
+                data_hora: new Date().toLocaleString('pt-BR'),
+                link_plataforma: `${window.location.origin}/trading-order`,
+                whatsapp: '(11) 9XXXX-XXXX'
+              }
             }
-            }
-          }).catch(err => console.error('Error sending USDT sent email:', err));
+          });
+
+          if (emailError) {
+            console.error('Erro ao enviar email usdt-sent:', emailError);
+            toast({
+              title: "⚠️ Hash enviado",
+              description: "Hash salvo, mas houve erro ao enviar email ao cliente",
+              variant: "destructive",
+            });
+          } else {
+            console.log('Email usdt-sent enviado com sucesso:', emailData);
+          }
         }
       }
       
