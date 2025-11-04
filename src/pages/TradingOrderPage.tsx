@@ -75,7 +75,7 @@ const TradingOrderPage = () => {
             quantidade_usdt: orderData.amount,
             cotacao: orderData.lockedPrice.toFixed(3),
             rede: orderData.network,
-            tempo_validade: 30,
+            tempo_validade: 5,
             banco: 'Banco do Brasil',
             titular_conta: 'TKB ASSET LTDA',
             cnpj_conta: '45.933.866/0001-93',
