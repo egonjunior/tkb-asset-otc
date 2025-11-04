@@ -484,6 +484,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_document_available: { Args: { doc: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"

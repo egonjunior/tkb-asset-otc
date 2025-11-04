@@ -47,6 +47,28 @@ const Register = () => {
     setIsLoading(true);
 
     try {
+      // Pre-check if document is already registered
+      const normalizedDocument = data.documentNumber.replace(/\D/g, '');
+      const { data: isAvailable, error: checkError } = await supabase.rpc(
+        'is_document_available',
+        { doc: normalizedDocument }
+      );
+
+      if (checkError) {
+        throw new Error('Erro ao verificar documento. Tente novamente.');
+      }
+
+      if (!isAvailable) {
+        const errorMsg = 'Este CPF/CNPJ já está cadastrado. Use outro documento ou faça login.';
+        toast({
+          title: "Documento já cadastrado",
+          description: errorMsg,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -54,7 +76,7 @@ const Register = () => {
           data: {
             full_name: data.fullName,
             document_type: data.documentType,
-            document_number: data.documentNumber.replace(/\D/g, '')
+            document_number: normalizedDocument
           },
           emailRedirectTo: `${window.location.origin}/dashboard`
         }
@@ -81,9 +103,21 @@ const Register = () => {
 
       setTimeout(() => navigate("/login"), 2000);
     } catch (error: any) {
+      let errorMessage = error.message;
+      
+      // Handle duplicate email
+      if (errorMessage?.includes('User already registered')) {
+        errorMessage = 'Este email já está cadastrado. Faça login ou recupere sua senha.';
+      }
+      
+      // Handle duplicate document (fallback if pre-check didn't catch it)
+      if (errorMessage?.includes('duplicate key') && errorMessage?.includes('document_number')) {
+        errorMessage = 'Este CPF/CNPJ já está cadastrado. Use outro documento ou faça login.';
+      }
+
       toast({
         title: "Erro ao criar conta",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

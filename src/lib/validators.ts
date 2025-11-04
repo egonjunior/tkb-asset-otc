@@ -58,7 +58,7 @@ export const validateCNPJ = (cnpj: string): boolean => {
   }
 
   result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-  if (result !== parseInt(digits.charAt(1))) return false;
+  if (result !== parseInt(cleanCNPJ.charAt(length))) return false;
 
   return true;
 };
