@@ -132,14 +132,39 @@ const OrderDetails = () => {
     setTimeRemaining(calculateTimeRemaining());
 
     // Atualizar a cada segundo
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       const remaining = calculateTimeRemaining();
       setTimeRemaining(remaining);
-      if (remaining <= 0) clearInterval(interval);
+      
+      // Quando o tempo expirar e o status ainda for pending, atualizar para expired
+      if (remaining <= 0) {
+        clearInterval(interval);
+        
+        if (order.status === 'pending') {
+          try {
+            await supabase
+              .from('orders')
+              .update({ status: 'expired' })
+              .eq('id', order.id);
+            
+            // Registrar evento na timeline
+            await supabase
+              .from('order_timeline')
+              .insert({
+                order_id: order.id,
+                event_type: 'order_expired',
+                message: 'Ordem expirada automaticamente por timeout',
+                actor_type: 'system'
+              });
+          } catch (error) {
+            console.error('Error expiring order:', error);
+          }
+        }
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [order?.locked_at]);
+  }, [order?.locked_at, order?.status, order?.id]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
