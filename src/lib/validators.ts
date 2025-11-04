@@ -35,7 +35,7 @@ export const validateCNPJ = (cnpj: string): boolean => {
 
   let length = cleanCNPJ.length - 2;
   let numbers = cleanCNPJ.substring(0, length);
-  const digits = cnpj.substring(length);
+  const digits = cleanCNPJ.substring(length);
   let sum = 0;
   let pos = length - 7;
 
