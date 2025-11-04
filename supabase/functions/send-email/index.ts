@@ -410,6 +410,26 @@ const emailTemplates: Record<string, (data: Record<string, any>) => { subject: s
                 </p>
               </div>
               
+              <div class="info-box" style="background: #fff3e0; border: 2px solid #ff9800; margin-top: 30px;">
+                <h3 style="margin-top: 0; color: #ff9800;">📋 Conferir Timeline da Ordem</h3>
+                <p class="text">
+                  <strong>Acompanhe todos os eventos desta negociação na timeline da sua ordem:</strong>
+                </p>
+                <ul style="color: #666; line-height: 1.8; margin: 15px 0;">
+                  <li>✅ Criação da ordem</li>
+                  <li>✅ Travamento do preço</li>
+                  <li>✅ Envio do comprovante de pagamento</li>
+                  <li>✅ Confirmação do pagamento recebido</li>
+                  <li>🎉 <strong>Envio do USDT - Concluído!</strong></li>
+                </ul>
+                <p class="text" style="background: #fffbf5; padding: 12px; border-radius: 4px; border-left: 3px solid #ff9800;">
+                  💡 Clique no botão abaixo para ver a <strong>timeline completa</strong> com todos os detalhes, horários e a hash da transação.
+                </p>
+                <a href="${data.link_ordem}" class="button" style="background: linear-gradient(135deg, #ff9800, #f57c00); width: 100%; text-align: center; display: block; box-sizing: border-box;">
+                  📜 Ver Timeline Completa da Ordem
+                </a>
+              </div>
+              
               <p class="text">
                 <strong>⏱️ Tempo de confirmação:</strong><br>
                 • TRC20 (Tron): ~1-3 minutos<br>
