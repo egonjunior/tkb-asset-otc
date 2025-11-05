@@ -143,6 +143,54 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          created_at: string
+          email_corporativo: string
+          id: string
+          ip_address: string | null
+          necessidade: string
+          necessidade_outro: string | null
+          nome_completo: string
+          status: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          volume_mensal: string
+        }
+        Insert: {
+          created_at?: string
+          email_corporativo: string
+          id?: string
+          ip_address?: string | null
+          necessidade: string
+          necessidade_outro?: string | null
+          nome_completo: string
+          status?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          volume_mensal: string
+        }
+        Update: {
+          created_at?: string
+          email_corporativo?: string
+          id?: string
+          ip_address?: string | null
+          necessidade?: string
+          necessidade_outro?: string | null
+          nome_completo?: string
+          status?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          volume_mensal?: string
+        }
+        Relationships: []
+      }
       order_timeline: {
         Row: {
           actor_type: string

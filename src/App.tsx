@@ -26,6 +26,7 @@ import Partner from "./pages/Partner";
 import Support from "./pages/Support";
 import QuotePage from "./pages/QuotePage";
 import Settings from "./pages/Settings";
+import Empresas from "./pages/Empresas";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/home" element={<Landing />} />
+            <Route path="/empresas" element={<Empresas />} />
             <Route path="/cotacao" element={<QuotePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
