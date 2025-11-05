@@ -43,6 +43,7 @@ export function ProblemaSection() {
             <Card className="p-6 bg-red-50 border-2 border-red-200">
               <h3 className="text-xl font-bold text-[hsl(220,25%,15%)] mb-4">Via SWIFT (Banco)</h3>
               <div className="space-y-2 text-[hsl(215,16%,47%)]">
+                <p className="text-lg font-semibold text-[hsl(220,25%,15%)]">Transação: R$ 2.000.000</p>
                 <p>Taxa: 5-6% = <strong className="text-[hsl(348,83%,60%)]">R$ 120.000</strong></p>
                 <p>IOF: 1.1% = <strong className="text-[hsl(348,83%,60%)]">R$ 22.000</strong></p>
                 <p>Prazo: <strong>4 dias úteis</strong></p>
@@ -58,6 +59,7 @@ export function ProblemaSection() {
             <Card className="p-6 bg-orange-50 border-2 border-orange-200">
               <h3 className="text-xl font-bold text-[hsl(220,25%,15%)] mb-4">Via Exchange</h3>
               <div className="space-y-2 text-[hsl(215,16%,47%)]">
+                <p className="text-lg font-semibold text-[hsl(220,25%,15%)]">Transação: R$ 2.000.000</p>
                 <p>Spread: 2.5% = <strong className="text-orange-600">R$ 50.000</strong></p>
                 <p>Taxa de saque: <strong className="text-orange-600">R$ 500</strong></p>
                 <p>Prazo: <strong>2-4 horas</strong></p>
