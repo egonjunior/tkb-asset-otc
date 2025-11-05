@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import QuoteCard from "@/components/QuoteCard";
 import { StatCard } from "@/components/StatCard";
@@ -129,14 +129,18 @@ const Dashboard = () => {
       <header className="h-20 bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div 
-              className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" 
-              onClick={() => navigate('/dashboard')}
-            >
-              <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
-              <div>
-                <h1 className="text-2xl font-brand">TKB ASSET</h1>
-                <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Mesa OTC</p>
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="md:hidden text-white hover:bg-white/10" />
+              
+              <div 
+                className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" 
+                onClick={() => navigate('/dashboard')}
+              >
+                <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
+                <div>
+                  <h1 className="text-2xl font-brand">TKB ASSET</h1>
+                  <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Mesa OTC</p>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-6">
@@ -161,14 +165,20 @@ const Dashboard = () => {
       </header>
 
       {/* Layout com Sidebar e Conteúdo */}
-      <SidebarProvider defaultOpen={true} style={{ ["--sidebar-width" as any]: "12rem" }}>
+      <SidebarProvider 
+        defaultOpen={false}
+        style={{ 
+          ["--sidebar-width" as any]: "16rem",
+          ["--sidebar-width-mobile" as any]: "18rem" 
+        }}
+      >
         <div className="flex w-full min-h-[calc(100vh-80px)]">
           {/* Sidebar */}
           <AppSidebar />
 
           {/* Main Content */}
-          <main className="flex-1 px-6 py-10">
-            <div className="max-w-6xl mx-auto space-y-10">
+          <main className="flex-1 px-4 md:px-6 py-6 md:py-10 w-full">
+            <div className="max-w-6xl mx-auto space-y-6 md:space-y-10">
           
           {/* Stats Overview */}
           <div>

@@ -29,6 +29,11 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r md:top-[80px] md:h-[calc(100svh-80px)]">
+      {/* Botão X para fechar no mobile */}
+      <div className="flex justify-end p-2 md:hidden">
+        <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+      </div>
+      
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Ações Rápidas</SidebarGroupLabel>
