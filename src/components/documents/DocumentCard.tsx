@@ -8,6 +8,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { DocumentStatus } from "@/lib/documentHelpers";
 
+const DOCUMENTS_REQUIRING_SIGNATURE = ['contrato-quadro', 'dossie-kyc'];
+
 interface DocumentCardProps {
   title: string;
   icon: string;
@@ -20,6 +22,7 @@ interface DocumentCardProps {
   onUpload: (file: File) => Promise<void>;
   onView: (url: string, title: string) => void;
   hideTemplateButton?: boolean;
+  customInstruction?: string;
 }
 
 export function DocumentCard({
@@ -33,7 +36,8 @@ export function DocumentCard({
   onDownloadTemplate,
   onUpload,
   onView,
-  hideTemplateButton = false
+  hideTemplateButton = false,
+  customInstruction
 }: DocumentCardProps) {
   const [showUploader, setShowUploader] = useState(false);
 
@@ -62,7 +66,13 @@ export function DocumentCard({
           </Alert>
         )}
 
-        {status === 'pending' && (
+        {status === 'pending' && !DOCUMENTS_REQUIRING_SIGNATURE.includes(type) && customInstruction && (
+          <p className="text-sm text-muted-foreground">
+            💡 {customInstruction}
+          </p>
+        )}
+
+        {status === 'pending' && DOCUMENTS_REQUIRING_SIGNATURE.includes(type) && (
           <div className="text-sm text-muted-foreground space-y-1">
             <p>📥 <strong>Passo 1:</strong> Baixe a minuta</p>
             <p>✍️ <strong>Passo 2:</strong> Preencha seus dados</p>
@@ -112,11 +122,17 @@ export function DocumentCard({
                       className="w-full justify-start"
                     >
                       <Upload className="mr-2 h-4 w-4" />
-                      Anexar Documento Assinado
+                      {DOCUMENTS_REQUIRING_SIGNATURE.includes(type) 
+                        ? "Anexar Documento Assinado"
+                        : "Enviar Documento"}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Envie o documento preenchido e assinado</p>
+                    <p>
+                      {DOCUMENTS_REQUIRING_SIGNATURE.includes(type)
+                        ? "Envie o documento preenchido e assinado"
+                        : "Envie o documento solicitado"}
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </>

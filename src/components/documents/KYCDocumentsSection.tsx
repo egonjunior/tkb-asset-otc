@@ -48,24 +48,21 @@ export function KYCDocumentsSection({ documents, onUpload, onView }: KYCDocument
       </CardHeader>
       <CardContent className="space-y-4">
         {kycTypes.map(type => (
-          <div key={type} className="space-y-1">
-            <DocumentCard
-              title={getDocumentDisplayName(type)}
-              icon={getDocumentIcon(type)}
-              type={type}
-              status={documents[type]?.status || 'pending'}
-              clientFileUrl={documents[type]?.client_file_url}
-              tkbFileUrl={documents[type]?.tkb_file_url}
-              rejectionReason={documents[type]?.rejection_reason}
-              onDownloadTemplate={() => {}}
-              onUpload={(file) => onUpload(type, file)}
-              onView={onView}
-              hideTemplateButton={true}
-            />
-            <p className="text-xs text-muted-foreground pl-4">
-              💡 {KYC_INSTRUCTIONS[type]}
-            </p>
-          </div>
+          <DocumentCard
+            key={type}
+            title={getDocumentDisplayName(type)}
+            icon={getDocumentIcon(type)}
+            type={type}
+            status={documents[type]?.status || 'pending'}
+            clientFileUrl={documents[type]?.client_file_url}
+            tkbFileUrl={documents[type]?.tkb_file_url}
+            rejectionReason={documents[type]?.rejection_reason}
+            onDownloadTemplate={() => {}}
+            onUpload={(file) => onUpload(type, file)}
+            onView={onView}
+            hideTemplateButton={true}
+            customInstruction={KYC_INSTRUCTIONS[type]}
+          />
         ))}
       </CardContent>
     </Card>
