@@ -67,22 +67,14 @@ const Dashboard = () => {
     fetchOrders();
   }, []);
   const formatCurrency = (value: number): string => {
-    if (value >= 1_000_000) {
-      // Valores em milhões
-      const millions = value / 1_000_000;
-      return `R$ ${millions.toLocaleString('pt-BR', { 
-        minimumFractionDigits: 1, 
-        maximumFractionDigits: 2 
-      })}M`;
-    } else if (value >= 1_000) {
-      // Valores em milhares
-      const thousands = value / 1_000;
-      return `R$ ${thousands.toLocaleString('pt-BR', { 
-        minimumFractionDigits: 1, 
-        maximumFractionDigits: 2 
-      })}K`;
+    if (value >= 10_000) {
+      // Valores grandes: sem decimais para melhor legibilidade
+      return `R$ ${value.toLocaleString('pt-BR', { 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 0 
+      })}`;
     } else {
-      // Valores menores
+      // Valores menores: com 2 decimais para precisão
       return `R$ ${value.toLocaleString('pt-BR', { 
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
