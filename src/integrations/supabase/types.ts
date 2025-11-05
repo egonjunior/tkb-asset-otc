@@ -252,6 +252,7 @@ export type Database = {
           locked_at: string | null
           locked_price: number
           network: string
+          partner_type: string | null
           payment_confirmed_at: string | null
           receipt_url: string | null
           status: string
@@ -268,6 +269,7 @@ export type Database = {
           locked_at?: string | null
           locked_price: number
           network: string
+          partner_type?: string | null
           payment_confirmed_at?: string | null
           receipt_url?: string | null
           status?: string
@@ -284,6 +286,7 @@ export type Database = {
           locked_at?: string | null
           locked_price?: number
           network?: string
+          partner_type?: string | null
           payment_confirmed_at?: string | null
           receipt_url?: string | null
           status?: string
@@ -292,6 +295,51 @@ export type Database = {
           updated_at?: string
           user_id?: string
           wallet_address?: string | null
+        }
+        Relationships: []
+      }
+      partner_b2b_config: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          company_name: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          markup_percent: number
+          markup_type: string | null
+          notes: string | null
+          trading_volume_monthly: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          markup_percent: number
+          markup_type?: string | null
+          notes?: string | null
+          trading_volume_monthly?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          markup_percent?: number
+          markup_type?: string | null
+          notes?: string | null
+          trading_volume_monthly?: number | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -304,10 +352,13 @@ export type Database = {
           name: string
           notes: string | null
           phone: string
+          request_type: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          trading_volume_monthly: number | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -317,10 +368,13 @@ export type Database = {
           name: string
           notes?: string | null
           phone: string
+          request_type?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          trading_volume_monthly?: number | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -330,10 +384,13 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string
+          request_type?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          trading_volume_monthly?: number | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -550,7 +607,7 @@ export type Database = {
       is_document_available: { Args: { doc: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "b2b_partner"
       document_status: "pending" | "under_review" | "approved" | "rejected"
       document_type:
         | "contrato-quadro"
@@ -688,7 +745,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "b2b_partner"],
       document_status: ["pending", "under_review", "approved", "rejected"],
       document_type: [
         "contrato-quadro",

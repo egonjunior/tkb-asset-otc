@@ -38,6 +38,7 @@ const AdminDashboard = () => {
   const [pendingPartnersCount, setPendingPartnersCount] = useState(0);
   const [openTicketsCount, setOpenTicketsCount] = useState(0);
   const [newLeadsCount, setNewLeadsCount] = useState(0);
+  const [pendingB2BCount, setPendingB2BCount] = useState(0);
 
   useEffect(() => {
     const checkAdminAndFetchOrders = async () => {
@@ -124,6 +125,13 @@ const AdminDashboard = () => {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'novo');
       setNewLeadsCount(leadsCount || 0);
+
+      const { count: b2bCount } = await supabase
+        .from('partner_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('request_type', 'b2b_otc')
+        .eq('status', 'pending');
+      setPendingB2BCount(b2bCount || 0);
     };
     
     checkAdminAndFetchOrders();
@@ -332,6 +340,25 @@ const AdminDashboard = () => {
                   <Building2 className="h-8 w-8 text-purple-600" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">Cadastros via landing page /empresas</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Parceiros B2B Card */}
+          <div className="mt-4">
+            <Card 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-indigo-500" 
+              onClick={() => navigate('/admin/partners-b2b')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">🏢 Parceiros B2B - Mesas OTC</p>
+                    <p className="text-xl font-bold text-indigo-600">{pendingB2BCount} Pendentes →</p>
+                  </div>
+                  <Building2 className="h-8 w-8 text-indigo-600" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Solicitações de mesas OTC com markup diferenciado</p>
               </CardContent>
             </Card>
           </div>

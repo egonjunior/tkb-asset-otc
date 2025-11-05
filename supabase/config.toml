@@ -2,3 +2,6 @@ project_id = "lvvzcjyapspbplisneze"
 
 [functions.send-email]
 verify_jwt = false
+
+[functions.get-partner-price]
+verify_jwt = true

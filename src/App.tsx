@@ -23,7 +23,9 @@ import AdminDocuments from "./pages/admin/AdminDocuments";
 import AdminPartners from "./pages/admin/AdminPartners";
 import AdminSupport from "./pages/admin/AdminSupport";
 import AdminLeads from "./pages/admin/AdminLeads";
+import AdminPartnersB2B from "./pages/admin/AdminPartnersB2B";
 import Partner from "./pages/Partner";
+import PartnerB2B from "./pages/PartnerB2B";
 import Support from "./pages/Support";
 import QuotePage from "./pages/QuotePage";
 import Settings from "./pages/Settings";
@@ -76,6 +78,7 @@ const App = () => (
                 <Partner />
               </ProtectedRoute>
             } />
+            <Route path="/partner-b2b" element={<PartnerB2B />} />
             <Route path="/suporte" element={
               <ProtectedRoute>
                 <Support />
@@ -83,6 +86,7 @@ const App = () => (
             } />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/partners" element={<AdminPartners />} />
+            <Route path="/admin/partners-b2b" element={<AdminPartnersB2B />} />
             <Route path="/admin/support" element={<AdminSupport />} />
             <Route path="/admin/leads" element={<AdminLeads />} />
             <Route path="/admin/documents" element={<AdminDocuments />} />
