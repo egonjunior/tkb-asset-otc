@@ -200,7 +200,7 @@ export function CTAForm() {
                 size="lg"
                 variant="outline"
                 className="w-full text-lg py-6 border-2 border-[hsl(186,100%,50%)] text-[hsl(186,100%,50%)] hover:bg-[hsl(186,100%,95%)]"
-                onClick={() => window.open('https://wa.me/5511999999999', '_blank')}
+                onClick={() => window.open('https://wa.me/5541984219668?text=Olá! Gostaria de falar com um especialista sobre as soluções TKB Asset para empresas.', '_blank')}
               >
                 FALAR COM ESPECIALISTA
               </Button>
@@ -238,7 +238,7 @@ export function CTAForm() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  <span>WhatsApp: +55 11 99999-9999</span>
+                  <span>WhatsApp: +55 41 98421-9668</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
