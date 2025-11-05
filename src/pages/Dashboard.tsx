@@ -116,17 +116,24 @@ const Dashboard = () => {
     .filter(order => order.status === 'completed')
     .reduce((sum, order) => sum + order.total, 0);
   const completedOrders = orders.filter(order => order.status === 'completed').length;
-  return <div className="min-h-screen bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
-      {/* Floating orbs */}
-      <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-40 right-20 w-80 h-80 bg-tkb-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
-      
-      {/* Subtle grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(220,15%,92%)_1px,transparent_1px),linear-gradient(to_bottom,hsl(220,15%,92%)_1px,transparent_1px)] bg-[size:64px_64px] opacity-20 pointer-events-none"></div>
+  return <SidebarProvider 
+      defaultOpen={false}
+      style={{ 
+        ["--sidebar-width" as any]: "16rem",
+        ["--sidebar-width-mobile" as any]: "18rem" 
+      }}
+    >
+      <div className="min-h-screen bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
+        {/* Floating orbs */}
+        <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-40 right-20 w-80 h-80 bg-tkb-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(220,15%,92%)_1px,transparent_1px),linear-gradient(to_bottom,hsl(220,15%,92%)_1px,transparent_1px)] bg-[size:64px_64px] opacity-20 pointer-events-none"></div>
 
-      <div className="relative z-10">
-      {/* Header */}
-      <header className="h-20 bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
+        <div className="relative z-10">
+        {/* Header */}
+        <header className="h-20 bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -162,16 +169,9 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-      </header>
+        </header>
 
-      {/* Layout com Sidebar e Conteúdo */}
-      <SidebarProvider 
-        defaultOpen={false}
-        style={{ 
-          ["--sidebar-width" as any]: "16rem",
-          ["--sidebar-width-mobile" as any]: "18rem" 
-        }}
-      >
+        {/* Layout com Sidebar e Conteúdo */}
         <div className="flex w-full min-h-[calc(100vh-80px)]">
           {/* Sidebar */}
           <AppSidebar />
@@ -278,12 +278,12 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </div>
-          </div>
+            </div>
           </main>
         </div>
-      </SidebarProvider>
+        </div>
       </div>
-    </div>;
+    </SidebarProvider>;
 };
 
 export default Dashboard;
