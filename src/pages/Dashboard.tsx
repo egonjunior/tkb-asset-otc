@@ -66,6 +66,30 @@ const Dashboard = () => {
     };
     fetchOrders();
   }, []);
+  const formatCurrency = (value: number): string => {
+    if (value >= 1_000_000) {
+      // Valores em milhões
+      const millions = value / 1_000_000;
+      return `R$ ${millions.toLocaleString('pt-BR', { 
+        minimumFractionDigits: 1, 
+        maximumFractionDigits: 2 
+      })}M`;
+    } else if (value >= 1_000) {
+      // Valores em milhares
+      const thousands = value / 1_000;
+      return `R$ ${thousands.toLocaleString('pt-BR', { 
+        minimumFractionDigits: 1, 
+        maximumFractionDigits: 2 
+      })}K`;
+    } else {
+      // Valores menores
+      return `R$ ${value.toLocaleString('pt-BR', { 
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`;
+    }
+  };
+
   const handleLogout = async () => {
     await signOut();
   };
@@ -161,9 +185,7 @@ const Dashboard = () => {
               Visão Geral
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatCard icon={Briefcase} label="Patrimônio Operado" value={`R$ ${totalVolume.toLocaleString('pt-BR', {
-              minimumFractionDigits: 2
-            })}`} trend={completedOrders > 0 ? `${completedOrders} operações concluídas` : 'Nenhuma operação'} trendDirection="up" />
+              <StatCard icon={Briefcase} label="Patrimônio Operado" value={formatCurrency(totalVolume)} trend={completedOrders > 0 ? `${completedOrders} operações concluídas` : 'Nenhuma operação'} trendDirection="up" />
               <StatCard icon={Clock} label="Última Operação" value={orders.length > 0 ? orders[0].createdAt.toLocaleDateString('pt-BR', {
               day: '2-digit',
               month: 'short'
