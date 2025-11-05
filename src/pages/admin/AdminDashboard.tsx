@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users, Handshake, MessageCircle } from "lucide-react";
+import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users, Handshake, MessageCircle, Building2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VolumeCard } from "@/components/admin/VolumeCard";
@@ -37,6 +37,7 @@ const AdminDashboard = () => {
   const [volumePeriod, setVolumePeriod] = useState<VolumePeriod>('day');
   const [pendingPartnersCount, setPendingPartnersCount] = useState(0);
   const [openTicketsCount, setOpenTicketsCount] = useState(0);
+  const [newLeadsCount, setNewLeadsCount] = useState(0);
 
   useEffect(() => {
     const checkAdminAndFetchOrders = async () => {
@@ -117,6 +118,12 @@ const AdminDashboard = () => {
         .select('*', { count: 'exact', head: true })
         .in('status', ['open', 'in_progress']);
       setOpenTicketsCount(ticketsCount || 0);
+
+      const { count: leadsCount } = await supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'novo');
+      setNewLeadsCount(leadsCount || 0);
     };
     
     checkAdminAndFetchOrders();
@@ -247,7 +254,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Ações Rápidas */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <Card 
               className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-primary" 
               onClick={() => navigate('/admin/users')}
@@ -309,6 +316,22 @@ const AdminDashboard = () => {
                   <MessageCircle className="h-8 w-8 text-orange-600" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">Tickets aguardando resposta</p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-purple-500" 
+              onClick={() => navigate('/admin/leads')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Leads Empresas</p>
+                    <p className="text-xl font-bold text-purple-600">{newLeadsCount} Novos →</p>
+                  </div>
+                  <Building2 className="h-8 w-8 text-purple-600" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Cadastros via landing page /empresas</p>
               </CardContent>
             </Card>
           </div>

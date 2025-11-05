@@ -145,6 +145,9 @@ export type Database = {
       }
       leads: {
         Row: {
+          admin_notes: string | null
+          contacted_at: string | null
+          converted_at: string | null
           created_at: string
           email_corporativo: string
           id: string
@@ -152,7 +155,9 @@ export type Database = {
           necessidade: string
           necessidade_outro: string | null
           nome_completo: string
+          qualified_at: string | null
           status: string | null
+          updated_at: string | null
           user_agent: string | null
           utm_campaign: string | null
           utm_medium: string | null
@@ -160,6 +165,9 @@ export type Database = {
           volume_mensal: string
         }
         Insert: {
+          admin_notes?: string | null
+          contacted_at?: string | null
+          converted_at?: string | null
           created_at?: string
           email_corporativo: string
           id?: string
@@ -167,7 +175,9 @@ export type Database = {
           necessidade: string
           necessidade_outro?: string | null
           nome_completo: string
+          qualified_at?: string | null
           status?: string | null
+          updated_at?: string | null
           user_agent?: string | null
           utm_campaign?: string | null
           utm_medium?: string | null
@@ -175,6 +185,9 @@ export type Database = {
           volume_mensal: string
         }
         Update: {
+          admin_notes?: string | null
+          contacted_at?: string | null
+          converted_at?: string | null
           created_at?: string
           email_corporativo?: string
           id?: string
@@ -182,7 +195,9 @@ export type Database = {
           necessidade?: string
           necessidade_outro?: string | null
           nome_completo?: string
+          qualified_at?: string | null
           status?: string | null
+          updated_at?: string | null
           user_agent?: string | null
           utm_campaign?: string | null
           utm_medium?: string | null
