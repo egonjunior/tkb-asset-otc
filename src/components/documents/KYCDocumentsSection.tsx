@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocumentCard } from "./DocumentCard";
 import { DocumentType, getDocumentDisplayName, getDocumentIcon } from "@/lib/documentHelpers";
 
@@ -36,35 +35,28 @@ export function KYCDocumentsSection({ documents, onUpload, onView }: KYCDocument
   ];
 
   return (
-    <Card className="border-2">
-      <CardHeader>
-        <CardTitle className="text-xl flex items-center gap-2">
-          <span className="text-2xl">🔍</span>
-          Dossiê KYC/CDD - Documentos Complementares
-        </CardTitle>
-        <p className="text-sm text-muted-foreground mt-2">
-          Para compliance completo, envie todos os documentos abaixo
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {kycTypes.map(type => (
-          <DocumentCard
-            key={type}
-            title={getDocumentDisplayName(type)}
-            icon={getDocumentIcon(type)}
-            type={type}
-            status={documents[type]?.status || 'pending'}
-            clientFileUrl={documents[type]?.client_file_url}
-            tkbFileUrl={documents[type]?.tkb_file_url}
-            rejectionReason={documents[type]?.rejection_reason}
-            onDownloadTemplate={() => {}}
-            onUpload={(file) => onUpload(type, file)}
-            onView={onView}
-            hideTemplateButton={true}
-            customInstruction={KYC_INSTRUCTIONS[type]}
-          />
-        ))}
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground mb-4">
+        Para compliance completo, envie todos os documentos abaixo
+      </p>
+      
+      {kycTypes.map(type => (
+        <DocumentCard
+          key={type}
+          title={getDocumentDisplayName(type)}
+          icon={getDocumentIcon(type)}
+          type={type}
+          status={documents[type]?.status || 'pending'}
+          clientFileUrl={documents[type]?.client_file_url}
+          tkbFileUrl={documents[type]?.tkb_file_url}
+          rejectionReason={documents[type]?.rejection_reason}
+          onDownloadTemplate={() => {}}
+          onUpload={(file) => onUpload(type, file)}
+          onView={onView}
+          hideTemplateButton={true}
+          customInstruction={KYC_INSTRUCTIONS[type]}
+        />
+      ))}
+    </div>
   );
 }

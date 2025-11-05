@@ -23,6 +23,7 @@ interface DocumentCardProps {
   onView: (url: string, title: string) => void;
   hideTemplateButton?: boolean;
   customInstruction?: string;
+  hideTitle?: boolean;
 }
 
 export function DocumentCard({
@@ -37,7 +38,8 @@ export function DocumentCard({
   onUpload,
   onView,
   hideTemplateButton = false,
-  customInstruction
+  customInstruction,
+  hideTitle = false
 }: DocumentCardProps) {
   const [showUploader, setShowUploader] = useState(false);
 
@@ -48,13 +50,15 @@ export function DocumentCard({
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <span className="text-2xl">{icon}</span>
-            {title}
-          </CardTitle>
-          <DocumentStatusBadge status={status} />
-        </div>
+        {!hideTitle && (
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <span className="text-2xl">{icon}</span>
+              {title}
+            </CardTitle>
+            <DocumentStatusBadge status={status} />
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {rejectionReason && status === 'rejected' && (
