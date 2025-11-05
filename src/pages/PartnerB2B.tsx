@@ -83,7 +83,7 @@ export default function PartnerB2B() {
                 </div>
                 <h3 className="font-semibold text-lg">Markup Personalizado</h3>
                 <p className="text-sm text-muted-foreground">
-                  Configure seu próprio markup a partir de 0.4% sobre o preço Binance
+                  Markup personalizado com condições especiais para sua operação
                 </p>
               </div>
             </CardContent>
