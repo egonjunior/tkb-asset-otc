@@ -50,7 +50,15 @@ export default function AdminDocuments() {
       const { data, error } = await supabase
         .from('documents')
         .select('*, profiles!documents_user_id_fkey(full_name, document_number)')
-        .in('document_type', ['contrato-quadro', 'dossie-kyc'])
+        .in('document_type', [
+          'contrato-quadro', 
+          'dossie-kyc',
+          'kyc-faturamento',
+          'kyc-cnpj',
+          'kyc-identificacao',
+          'kyc-comprovante-residencia',
+          'kyc-outros'
+        ])
         .order('uploaded_at', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
@@ -190,7 +198,12 @@ export default function AdminDocuments() {
               <SelectContent>
                 <SelectItem value="all">Todos os tipos</SelectItem>
                 <SelectItem value="contrato-quadro">Contrato-Quadro</SelectItem>
-                <SelectItem value="dossie-kyc">Dossiê KYC</SelectItem>
+                <SelectItem value="dossie-kyc">Dossiê KYC (antigo)</SelectItem>
+                <SelectItem value="kyc-faturamento">KYC - Faturamento</SelectItem>
+                <SelectItem value="kyc-cnpj">KYC - CNPJ</SelectItem>
+                <SelectItem value="kyc-identificacao">KYC - RG/CNH</SelectItem>
+                <SelectItem value="kyc-comprovante-residencia">KYC - Comprovante</SelectItem>
+                <SelectItem value="kyc-outros">KYC - Outros</SelectItem>
               </SelectContent>
             </Select>
           </div>

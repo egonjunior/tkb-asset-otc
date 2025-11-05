@@ -9,16 +9,17 @@ import { DocumentCard } from "@/components/documents/DocumentCard";
 import { DocumentStatusBadge } from "@/components/documents/DocumentStatusBadge";
 import { DocumentViewerModal } from "@/components/documents/DocumentViewerModal";
 import { TermsModal } from "@/components/documents/TermsModal";
+import { KYCDocumentsSection } from "@/components/documents/KYCDocumentsSection";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { toast } from "sonner";
 import { Eye, CheckCircle2, LogOut, Settings } from "lucide-react";
-import { getTemplatePath, type DocumentStatus } from "@/lib/documentHelpers";
+import { getTemplatePath, type DocumentStatus, type DocumentType } from "@/lib/documentHelpers";
 import tkbLogo from "@/assets/tkb-logo.png";
 
 interface Document {
   id: string;
-  document_type: string;
+  document_type: DocumentType;
   status: DocumentStatus;
   client_file_url: string | null;
   tkb_file_url: string | null;
@@ -51,7 +52,17 @@ export default function Documents() {
       const { data, error } = await supabase
         .from('documents')
         .select('*')
-        .eq('user_id', user?.id);
+        .eq('user_id', user?.id)
+        .in('document_type', [
+          'contrato-quadro', 
+          'dossie-kyc',
+          'politica-pld',
+          'kyc-faturamento',
+          'kyc-cnpj',
+          'kyc-identificacao',
+          'kyc-comprovante-residencia',
+          'kyc-outros'
+        ]);
 
       if (error) throw error;
 
@@ -244,7 +255,7 @@ export default function Documents() {
     doc => doc.status === 'approved' || (doc.document_type === 'politica-pld' && doc.pld_acknowledged)
   ).length + 1; // Terms always accepted at registration
 
-  const totalCount = 4;
+  const totalCount = 8; // 1 termos + 1 pld + 1 contrato + 5 kyc
   const progressPercentage = (completedCount / totalCount) * 100;
 
   if (loading) {
@@ -464,17 +475,10 @@ export default function Documents() {
           onView={handleView}
         />
 
-        {/* Dossiê KYC/CDD */}
-        <DocumentCard
-          title="Dossiê KYC/CDD"
-          icon="🔍"
-          type="dossie-kyc"
-          status={documents['dossie-kyc']?.status || 'pending'}
-          clientFileUrl={documents['dossie-kyc']?.client_file_url}
-          tkbFileUrl={documents['dossie-kyc']?.tkb_file_url}
-          rejectionReason={documents['dossie-kyc']?.rejection_reason}
-          onDownloadTemplate={() => handleDownloadTemplate('dossie-kyc')}
-          onUpload={(file) => handleUpload('dossie-kyc', file)}
+        {/* Dossiê KYC/CDD - Documentos Complementares */}
+        <KYCDocumentsSection
+          documents={documents}
+          onUpload={handleUpload}
           onView={handleView}
         />
       </div>

@@ -489,7 +489,15 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       document_status: "pending" | "under_review" | "approved" | "rejected"
-      document_type: "contrato-quadro" | "dossie-kyc" | "politica-pld"
+      document_type:
+        | "contrato-quadro"
+        | "dossie-kyc"
+        | "politica-pld"
+        | "kyc-faturamento"
+        | "kyc-cnpj"
+        | "kyc-identificacao"
+        | "kyc-comprovante-residencia"
+        | "kyc-outros"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -619,7 +627,16 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       document_status: ["pending", "under_review", "approved", "rejected"],
-      document_type: ["contrato-quadro", "dossie-kyc", "politica-pld"],
+      document_type: [
+        "contrato-quadro",
+        "dossie-kyc",
+        "politica-pld",
+        "kyc-faturamento",
+        "kyc-cnpj",
+        "kyc-identificacao",
+        "kyc-comprovante-residencia",
+        "kyc-outros",
+      ],
     },
   },
 } as const

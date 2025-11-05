@@ -19,6 +19,7 @@ interface DocumentCardProps {
   onDownloadTemplate: () => void;
   onUpload: (file: File) => Promise<void>;
   onView: (url: string, title: string) => void;
+  hideTemplateButton?: boolean;
 }
 
 export function DocumentCard({
@@ -31,7 +32,8 @@ export function DocumentCard({
   rejectionReason,
   onDownloadTemplate,
   onUpload,
-  onView
+  onView,
+  hideTemplateButton = false
 }: DocumentCardProps) {
   const [showUploader, setShowUploader] = useState(false);
 
@@ -85,21 +87,23 @@ export function DocumentCard({
           <div className="flex flex-col gap-2">
             {canUpload && !showUploader && (
               <>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      onClick={onDownloadTemplate}
-                      className="w-full justify-start"
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Baixar Minuta
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Download do documento em branco para preencher</p>
-                  </TooltipContent>
-                </Tooltip>
+                {!hideTemplateButton && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        onClick={onDownloadTemplate}
+                        className="w-full justify-start"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Baixar Minuta
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Download do documento em branco para preencher</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
                 
                 <Tooltip>
                   <TooltipTrigger asChild>

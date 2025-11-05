@@ -1,18 +1,28 @@
-export type DocumentType = 'contrato-quadro' | 'dossie-kyc' | 'politica-pld' | 'termos-de-uso';
+export type DocumentType = 'contrato-quadro' | 'dossie-kyc' | 'politica-pld' | 'termos-de-uso' | 'kyc-faturamento' | 'kyc-cnpj' | 'kyc-identificacao' | 'kyc-comprovante-residencia' | 'kyc-outros';
 export type DocumentStatus = 'pending' | 'under_review' | 'approved' | 'rejected';
 
 export const DOCUMENT_DISPLAY_NAMES: Record<DocumentType, string> = {
   'termos-de-uso': 'Termos de Uso e Política de Privacidade',
   'politica-pld': 'Política de Prevenção à Lavagem de Dinheiro (PLD/FTP)',
   'contrato-quadro': 'Contrato-Quadro',
-  'dossie-kyc': 'Dossiê KYC/CDD'
+  'dossie-kyc': 'Dossiê KYC/CDD',
+  'kyc-faturamento': 'Faturamento com Assinatura do Contador',
+  'kyc-cnpj': 'Cartão CNPJ',
+  'kyc-identificacao': 'RG ou CNH',
+  'kyc-comprovante-residencia': 'Comprovante de Residência',
+  'kyc-outros': 'Outros Documentos KYC'
 };
 
 export const DOCUMENT_ICONS: Record<DocumentType, string> = {
   'termos-de-uso': '📜',
   'politica-pld': '🛡️',
   'contrato-quadro': '📄',
-  'dossie-kyc': '🔍'
+  'dossie-kyc': '🔍',
+  'kyc-faturamento': '📊',
+  'kyc-cnpj': '🏢',
+  'kyc-identificacao': '🪪',
+  'kyc-comprovante-residencia': '🏠',
+  'kyc-outros': '📎'
 };
 
 export const STATUS_CONFIG = {
@@ -82,7 +92,12 @@ export function getTemplatePath(type: DocumentType): string {
     'termos-de-uso': '/documents/termos-de-uso.pdf',
     'politica-pld': '/documents/politica-pld.pdf',
     'contrato-quadro': '/documents/templates/contrato-quadro.pdf',
-    'dossie-kyc': '/documents/templates/dossie-kyc.pdf'
+    'dossie-kyc': '/documents/templates/dossie-kyc.pdf',
+    'kyc-faturamento': '',
+    'kyc-cnpj': '',
+    'kyc-identificacao': '',
+    'kyc-comprovante-residencia': '',
+    'kyc-outros': ''
   };
   return paths[type] || '';
 }
