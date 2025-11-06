@@ -57,7 +57,7 @@ serve(async (req) => {
     // Buscar documento
     const { data: document, error: docError } = await supabase
       .from('documents')
-      .select('*, profiles(*)')
+      .select('*, profiles!documents_user_id_fkey(full_name, document_number)')
       .eq('id', documentId)
       .single();
 
@@ -105,7 +105,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Erro desconhecido' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
