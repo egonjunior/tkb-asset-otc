@@ -58,15 +58,22 @@ export function DocumentReviewModal({ isOpen, onClose, document, onReviewComplet
   }, [document]);
 
   const handleDownload = async () => {
-    if (!document?.client_file_url) return;
+    if (!documentUrl) {
+      toast.error('Documento ainda carregando...');
+      return;
+    }
     
     try {
-      const { data } = supabase.storage
-        .from('documents')
-        .getPublicUrl(document.client_file_url);
-      
-      window.open(data.publicUrl, '_blank');
+      // Create temporary link element to trigger download
+      const link = document.createElement('a');
+      link.href = documentUrl;
+      link.download = `documento-${document.document_type}.pdf`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
+      console.error('Error downloading document:', error);
       toast.error('Erro ao baixar documento');
     }
   };

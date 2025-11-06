@@ -68,7 +68,17 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
         .createSignedUrl(doc.client_file_url, 3600);
       
       if (error) throw error;
-      window.open(data.signedUrl, '_blank');
+      
+      // Create temporary link element to trigger download without popup blocker
+      const link = document.createElement('a');
+      link.href = data.signedUrl;
+      link.download = `${documentTypeLabels[doc.document_type] || doc.document_type}.pdf`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('Download iniciado');
     } catch (error) {
       console.error('Error downloading document:', error);
       toast.error('Erro ao baixar documento');
