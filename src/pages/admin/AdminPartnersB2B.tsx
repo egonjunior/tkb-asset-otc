@@ -61,7 +61,7 @@ export default function AdminPartnersB2B() {
         .from('partner_requests')
         .select(`
           *,
-          partner_b2b_config:partner_b2b_config!partner_b2b_config_user_id_fkey(*)
+          partner_b2b_config(*)
         `)
         .eq('request_type', 'b2b_otc')
         .order('created_at', { ascending: false });

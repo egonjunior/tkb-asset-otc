@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { partnerRequestSchema } from "@/lib/validators";
 import { z } from "zod";
-import { Handshake, Phone, Linkedin, Instagram, ArrowLeft, Building2, Users } from "lucide-react";
+import { Handshake, Phone, Linkedin, Instagram, ArrowLeft, Building2, Users, Clock, CheckCircle, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -17,6 +17,8 @@ type PartnerFormData = z.infer<typeof partnerRequestSchema>;
 
 export default function Partner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingRequest, setExistingRequest] = useState<any>(null);
+  const [isCheckingRequest, setIsCheckingRequest] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -30,6 +32,36 @@ export default function Partner() {
   } = useForm<PartnerFormData>({
     resolver: zodResolver(partnerRequestSchema),
   });
+
+  useEffect(() => {
+    checkExistingRequest();
+  }, []);
+
+  const checkExistingRequest = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setIsCheckingRequest(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('partner_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('request_type', 'assessor')
+        .in('status', ['pending', 'approved'])
+        .maybeSingle();
+
+      if (data) {
+        setExistingRequest(data);
+      }
+    } catch (error) {
+      console.error('Error checking request:', error);
+    } finally {
+      setIsCheckingRequest(false);
+    }
+  };
 
   const formatPhone = (value: string): string => {
     const cleaned = value.replace(/\D/g, "");
@@ -49,11 +81,15 @@ export default function Partner() {
     setIsSubmitting(true);
     
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
       const insertData = {
         name: data.name,
         phone: data.phone,
         linkedin: data.linkedin || null,
         instagram: data.instagram || null,
+        request_type: 'assessor',
+        user_id: user?.id || null,
       };
 
       const { error } = await supabase
@@ -67,7 +103,11 @@ export default function Partner() {
         description: "Entraremos em contato em breve.",
       });
 
-      reset();
+      if (user) {
+        checkExistingRequest();
+      } else {
+        reset();
+      }
     } catch (error) {
       console.error("Error submitting partner request:", error);
       toast({
@@ -133,7 +173,50 @@ export default function Partner() {
                     </p>
                   </div>
 
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  {isCheckingRequest ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                      <p className="text-muted-foreground mt-2">Verificando solicitação...</p>
+                    </div>
+                  ) : existingRequest ? (
+                    <Card className="border-primary/20">
+                      <CardContent className="pt-6">
+                        <div className="text-center space-y-4">
+                          {existingRequest.status === 'pending' && (
+                            <>
+                              <div className="bg-yellow-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
+                                <Clock className="h-8 w-8 text-yellow-600" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-lg">Solicitação em Análise</h3>
+                                <p className="text-muted-foreground mt-2">
+                                  Sua solicitação de parceria foi enviada em{' '}
+                                  {new Date(existingRequest.created_at).toLocaleDateString('pt-BR')}
+                                </p>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Nossa equipe está analisando seu pedido. Em breve entraremos em contato!
+                                </p>
+                              </div>
+                            </>
+                          )}
+                          {existingRequest.status === 'approved' && (
+                            <>
+                              <div className="bg-green-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
+                                <CheckCircle className="h-8 w-8 text-green-600" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-lg text-green-700">Parceria Aprovada! 🎉</h3>
+                                <p className="text-muted-foreground mt-2">
+                                  Sua parceria foi aprovada. Entre em contato conosco para mais detalhes.
+                                </p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Nome Completo *</Label>
                       <Input
@@ -208,6 +291,7 @@ export default function Partner() {
                       {isSubmitting ? "Enviando..." : "Enviar Solicitação"}
                     </Button>
                   </form>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="b2b" className="space-y-4">
