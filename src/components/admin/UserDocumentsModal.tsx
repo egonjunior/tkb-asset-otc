@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { DocumentReviewModal } from "./DocumentReviewModal";
+import { TKBUploadModal } from "./TKBUploadModal";
 import { DocumentStatusBadge } from "@/components/documents/DocumentStatusBadge";
-import { FileText, Eye, Download } from "lucide-react";
+import { FileText, Eye, Download, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { DocumentStatus } from "@/lib/documentHelpers";
@@ -55,11 +56,12 @@ const documentTypeLabels: Record<string, string> = {
 export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: UserDocumentsModalProps) {
   const [selectedDocument, setSelectedDocument] = useState<AdminDocument | null>(null);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [tkbUploadModalOpen, setTkbUploadModalOpen] = useState(false);
 
   const approvedCount = user.documents.filter(doc => doc.status === 'approved').length;
   const progressPercent = (approvedCount / user.total_count) * 100;
 
-  const handleDownload = async (doc: AdminDocument) => {
+  const handleDownload = async (doc: AdminDocument, fileType: 'client' | 'tkb' = 'client') => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -71,7 +73,7 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
             'Authorization': `Bearer ${session?.access_token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ documentId: doc.id })
+          body: JSON.stringify({ documentId: doc.id, fileType })
         }
       );
 
@@ -85,7 +87,8 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
       // Download
       const link = document.createElement('a');
       link.href = signedUrl;
-      link.download = `${documentTypeLabels[doc.document_type] || doc.document_type}.pdf`;
+      const suffix = fileType === 'tkb' ? '-TKB' : '';
+      link.download = `${documentTypeLabels[doc.document_type] || doc.document_type}${suffix}.pdf`;
       link.target = '_blank';
       document.body.appendChild(link);
       link.click();
@@ -96,6 +99,11 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
       console.error('Error downloading document:', error);
       toast.error('Erro ao baixar documento: ' + error.message);
     }
+  };
+
+  const handleAttachTKB = (doc: AdminDocument) => {
+    setSelectedDocument(doc);
+    setTkbUploadModalOpen(true);
   };
 
   const handleReview = (doc: AdminDocument) => {
@@ -173,7 +181,7 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
                             </div>
                           )}
 
-                          <div className="flex gap-2 mt-3">
+                          <div className="flex flex-wrap gap-2 mt-3">
                             {(doc.status === 'pending' || doc.status === 'under_review') && (
                               <Button
                                 size="sm"
@@ -184,19 +192,46 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
                                 Revisar
                               </Button>
                             )}
+                            
                             {doc.status === 'approved' && (
-                              <Badge variant="outline" className="text-green-600 dark:text-green-400">
-                                Aprovado
-                              </Badge>
+                              <>
+                                {doc.tkb_file_url ? (
+                                  <Badge variant="outline" className="text-green-600 border-green-600">
+                                    ✓ Com documento TKB
+                                  </Badge>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleAttachTKB(doc)}
+                                    className="border-primary text-primary hover:bg-primary/10"
+                                  >
+                                    <Upload className="h-4 w-4 mr-1" />
+                                    Anexar TKB
+                                  </Button>
+                                )}
+                              </>
                             )}
+                            
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleDownload(doc)}
+                              onClick={() => handleDownload(doc, 'client')}
                             >
                               <Download className="h-4 w-4 mr-1" />
-                              Baixar
+                              Baixar Cliente
                             </Button>
+                            
+                            {doc.status === 'approved' && doc.tkb_file_url && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDownload(doc, 'tkb')}
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Baixar TKB
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -209,19 +244,35 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
       </Dialog>
 
       {selectedDocument && (
-        <DocumentReviewModal
-          isOpen={reviewModalOpen}
-          onClose={() => {
-            setReviewModalOpen(false);
-            setSelectedDocument(null);
-          }}
-          document={selectedDocument}
-          onReviewComplete={() => {
-            onReviewComplete();
-            setReviewModalOpen(false);
-            setSelectedDocument(null);
-          }}
-        />
+        <>
+          <DocumentReviewModal
+            isOpen={reviewModalOpen}
+            onClose={() => {
+              setReviewModalOpen(false);
+              setSelectedDocument(null);
+            }}
+            document={selectedDocument}
+            onReviewComplete={() => {
+              onReviewComplete();
+              setReviewModalOpen(false);
+              setSelectedDocument(null);
+            }}
+          />
+          
+          <TKBUploadModal
+            isOpen={tkbUploadModalOpen}
+            onClose={() => {
+              setTkbUploadModalOpen(false);
+              setSelectedDocument(null);
+            }}
+            document={selectedDocument}
+            onUploadComplete={() => {
+              onReviewComplete();
+              setTkbUploadModalOpen(false);
+              setSelectedDocument(null);
+            }}
+          />
+        </>
       )}
     </>
   );

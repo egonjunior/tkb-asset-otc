@@ -93,7 +93,33 @@ export function DocumentReviewModal({ isOpen, onClose, document, onReviewComplet
     }
   };
 
-  const handleApprove = async () => {
+  const handleApproveOnly = async () => {
+    setProcessing(true);
+    try {
+      const { error } = await supabase
+        .from('documents')
+        .update({
+          status: 'approved',
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: (await supabase.auth.getUser()).data.user?.id,
+          rejection_reason: null
+        })
+        .eq('id', document.id);
+
+      if (error) throw error;
+
+      toast.success('Documento aprovado com sucesso');
+      onReviewComplete();
+      handleClose();
+    } catch (error) {
+      console.error('Error approving document:', error);
+      toast.error('Erro ao aprovar documento');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleApproveWithTKB = async () => {
     if (!tkbFile) {
       toast.error('Por favor, anexe o documento assinado pela TKB Asset');
       return;
@@ -126,7 +152,7 @@ export function DocumentReviewModal({ isOpen, onClose, document, onReviewComplet
 
       toast.success('Documento aprovado com sucesso');
       onReviewComplete();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error('Error approving document:', error);
       toast.error('Erro ao aprovar documento');
@@ -290,11 +316,20 @@ export function DocumentReviewModal({ isOpen, onClose, document, onReviewComplet
                       Baixar Documento
                     </Button>
                     <Button
-                      onClick={() => setMode('approve')}
+                      onClick={handleApproveOnly}
+                      disabled={processing}
                       className="w-full justify-start bg-green-600 hover:bg-green-700"
                     >
                       <CheckCircle2 className="mr-2 h-4 w-4" />
-                      Aprovar Documento
+                      Aprovar
+                    </Button>
+                    <Button
+                      onClick={() => setMode('approve')}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Aprovar e Anexar TKB
                     </Button>
                     <Button
                       onClick={() => setMode('reject')}
@@ -310,7 +345,7 @@ export function DocumentReviewModal({ isOpen, onClose, document, onReviewComplet
 
               {mode === 'approve' && (
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-green-600">Aprovar Documento</h3>
+                  <h3 className="font-semibold text-green-600">Aprovar e Anexar TKB</h3>
                   <p className="text-sm text-muted-foreground">
                     Anexe o documento assinado pela TKB Asset para concluir a aprovação.
                   </p>
@@ -320,7 +355,7 @@ export function DocumentReviewModal({ isOpen, onClose, document, onReviewComplet
                   />
                   <div className="flex gap-2">
                     <Button
-                      onClick={handleApprove}
+                      onClick={handleApproveWithTKB}
                       disabled={!tkbFile || processing}
                       className="flex-1"
                     >

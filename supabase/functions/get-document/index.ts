@@ -51,8 +51,8 @@ serve(async (req) => {
     console.log('Admin verified');
 
     // Obter parâmetros
-    const { documentId } = await req.json();
-    console.log('Fetching document:', documentId);
+    const { documentId, fileType = 'client' } = await req.json();
+    console.log('Fetching document:', documentId, 'fileType:', fileType);
 
     // Buscar documento
     const { data: document, error: docError } = await supabase
@@ -69,12 +69,25 @@ serve(async (req) => {
       });
     }
 
-    console.log('Document found:', document.client_file_url);
+    // Decidir qual arquivo retornar
+    const fileUrl = fileType === 'tkb' ? document.tkb_file_url : document.client_file_url;
+    
+    if (!fileUrl) {
+      console.error(`File not found for type: ${fileType}`);
+      return new Response(JSON.stringify({ 
+        error: `Arquivo ${fileType === 'tkb' ? 'TKB' : 'do cliente'} não encontrado` 
+      }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log('Document found:', fileUrl);
 
     // Gerar signed URL com Service Role (bypass RLS)
     const { data: signedUrl, error: urlError } = await supabase.storage
       .from('documents')
-      .createSignedUrl(document.client_file_url, 3600); // 1 hora
+      .createSignedUrl(fileUrl, 3600); // 1 hora
 
     if (urlError) {
       console.error('Error creating signed URL:', urlError);
