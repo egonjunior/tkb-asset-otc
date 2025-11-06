@@ -7,9 +7,15 @@ interface StatCardProps {
   value: string;
   trend?: string;
   trendDirection?: 'up' | 'down';
+  emptyStateAction?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
-export const StatCard = ({ icon: Icon, label, value, trend, trendDirection }: StatCardProps) => {
+export const StatCard = ({ icon: Icon, label, value, trend, trendDirection, emptyStateAction }: StatCardProps) => {
+  const isEmpty = value === "R$ 0,00" || value === "Nenhuma" || value === "0";
+  
   return (
     <Card className="bg-glass backdrop-blur-md border-glass shadow-lg hover:shadow-institutional transition-premium hover:-translate-y-1">
       <CardContent className="pt-6 pb-6">
@@ -24,6 +30,15 @@ export const StatCard = ({ icon: Icon, label, value, trend, trendDirection }: St
           <p className={`text-xs font-medium ${trendDirection === 'up' ? 'text-success' : 'text-danger'}`}>
             {trend}
           </p>
+        )}
+        {isEmpty && emptyStateAction && (
+          <button
+            onClick={emptyStateAction.onClick}
+            className="mt-3 text-xs font-medium text-primary hover:text-primary-hover transition-colors flex items-center gap-1 group"
+          >
+            <span>{emptyStateAction.label}</span>
+            <span className="group-hover:translate-x-1 transition-transform">→</span>
+          </button>
         )}
       </CardContent>
     </Card>

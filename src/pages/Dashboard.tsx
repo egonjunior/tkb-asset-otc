@@ -8,6 +8,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import QuoteCard from "@/components/QuoteCard";
 import { StatCard } from "@/components/StatCard";
+import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { Briefcase, LogOut, Plus, Clock, TrendingUp, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
@@ -123,7 +124,7 @@ const Dashboard = () => {
         ["--sidebar-width-mobile" as any]: "18rem" 
       }}
     >
-      <div className="min-h-screen bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
+      <div className="min-h-screen w-full bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
         {/* Floating orbs */}
         <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-40 right-20 w-80 h-80 bg-tkb-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -180,6 +181,11 @@ const Dashboard = () => {
           <main className="flex-1 px-4 md:px-6 py-6 md:py-10 w-full">
             <div className="max-w-6xl mx-auto space-y-6 md:space-y-10">
           
+          {/* Welcome Banner for new users */}
+          {orders.length === 0 && (
+            <WelcomeBanner userName={userName} />
+          )}
+
           {/* Stats Overview */}
           <div>
             <h2 className="text-2xl font-display font-bold text-foreground mb-6 flex items-center gap-2">
@@ -187,12 +193,36 @@ const Dashboard = () => {
               Visão Geral
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatCard icon={Briefcase} label="Patrimônio Operado" value={formatCurrency(totalVolume)} trend={completedOrders > 0 ? `${completedOrders} operações concluídas` : 'Nenhuma operação'} trendDirection="up" />
-              <StatCard icon={Clock} label="Última Operação" value={orders.length > 0 ? orders[0].createdAt.toLocaleDateString('pt-BR', {
-              day: '2-digit',
-              month: 'short'
-            }) : 'Nenhuma'} trend={orders.length > 0 ? getStatusBadge(orders[0].status).props.children : ''} />
-              <StatCard icon={TrendingUp} label="Total de Ordens" value={orders.length.toString()} trend={`${orders.length} ${orders.length === 1 ? 'ordem' : 'ordens'} criada${orders.length === 1 ? '' : 's'}`} />
+              <StatCard 
+                icon={Briefcase} 
+                label="Patrimônio Operado" 
+                value={formatCurrency(totalVolume)} 
+                trend={completedOrders > 0 ? `${completedOrders} operações concluídas` : 'Nenhuma operação'} 
+                trendDirection="up"
+                emptyStateAction={totalVolume === 0 ? {
+                  label: "Criar primeira ordem",
+                  onClick: () => navigate("/order/new")
+                } : undefined}
+              />
+              <StatCard 
+                icon={Clock} 
+                label="Última Operação" 
+                value={orders.length > 0 ? orders[0].createdAt.toLocaleDateString('pt-BR', {
+                  day: '2-digit',
+                  month: 'short'
+                }) : 'Nenhuma'} 
+                trend={orders.length > 0 ? getStatusBadge(orders[0].status).props.children : ''}
+                emptyStateAction={orders.length === 0 ? {
+                  label: "Ver cotação atual",
+                  onClick: () => window.scrollTo({ top: 400, behavior: 'smooth' })
+                } : undefined}
+              />
+              <StatCard 
+                icon={TrendingUp} 
+                label="Total de Ordens" 
+                value={orders.length.toString()} 
+                trend={`${orders.length} ${orders.length === 1 ? 'ordem' : 'ordens'} criada${orders.length === 1 ? '' : 's'}`}
+              />
               </div>
           </div>
 
@@ -202,8 +232,19 @@ const Dashboard = () => {
               <TrendingUp className="h-6 w-6 text-primary" />
               Cotação Atual
             </h2>
-            <Card className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
-              <CardContent className="p-8">
+            <Card className={`bg-white/90 backdrop-blur-xl border shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all ${
+              orders.length === 0 
+                ? 'border-primary/30 ring-2 ring-primary/10 shadow-[0_0_0_1px_rgba(var(--primary-rgb),0.1)]' 
+                : 'border-white/50'
+            }`}>
+              {orders.length === 0 && (
+                <CardHeader className="pb-2">
+                  <Badge className="w-fit bg-tkb-cyan/10 text-tkb-cyan border-tkb-cyan/30 font-semibold">
+                    ✨ Comece aqui
+                  </Badge>
+                </CardHeader>
+              )}
+              <CardContent className={orders.length === 0 ? "p-8 pt-2" : "p-8"}>
                 <div className="grid md:grid-cols-2 gap-8 mb-6">
                   <div className="space-y-3">
                     <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Mercado</p>
@@ -223,9 +264,17 @@ const Dashboard = () => {
                     <p className="text-sm text-muted-foreground font-inter">Cotação Institucional</p>
                   </div>
                 </div>
+                {orders.length === 0 && (
+                  <div className="mb-4 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                    <p className="text-xs text-center text-foreground/70 flex items-center justify-center gap-2">
+                      <span className="text-base">💡</span>
+                      <span>Monitore a cotação e solicite quando encontrar o melhor momento</span>
+                    </p>
+                  </div>
+                )}
                 <Button size="lg" variant="premium" className="w-full" onClick={() => navigate("/order/new")}>
                   <Plus className="h-5 w-5 mr-2" />
-                  Solicitar Operação
+                  {orders.length === 0 ? "Criar Minha Primeira Ordem" : "Solicitar Operação"}
                 </Button>
               </CardContent>
             </Card>
@@ -267,12 +316,44 @@ const Dashboard = () => {
                       </TableBody>
                     </Table>
                   </div> : <div className="text-center py-16 px-4">
-                    <div className="max-w-md mx-auto space-y-4">
-                      <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mx-auto">
-                        <Clock className="h-8 w-8 text-muted-foreground" />
+                    <div className="max-w-md mx-auto space-y-6">
+                      {/* Ícone maior e mais visível */}
+                      <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-primary/10 to-tkb-cyan/10 
+                                    flex items-center justify-center mx-auto">
+                        <Clock className="h-12 w-12 text-primary" />
                       </div>
-                      <p className="text-lg font-semibold text-foreground">Nenhuma ordem encontrada</p>
-                      <p className="text-sm text-muted-foreground">Comece criando sua primeira ordem de compra</p>
+                      
+                      {/* Textos mais amigáveis */}
+                      <div className="space-y-2">
+                        <p className="text-xl font-display font-bold text-foreground">
+                          Seu histórico está vazio
+                        </p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          Comece agora mesmo! Solicite sua primeira operação e 
+                          acompanhe tudo por aqui.
+                        </p>
+                      </div>
+                      
+                      {/* CTA principal */}
+                      <Button 
+                        size="lg" 
+                        variant="premium" 
+                        onClick={() => navigate("/order/new")}
+                        className="gap-2"
+                      >
+                        <Plus className="h-5 w-5" />
+                        Criar Minha Primeira Ordem
+                      </Button>
+                      
+                      {/* Link secundário */}
+                      <p className="text-xs text-muted-foreground">
+                        <button 
+                          onClick={() => navigate("/suporte")}
+                          className="underline hover:text-primary transition-colors"
+                        >
+                          Precisa de ajuda?
+                        </button>
+                      </p>
                     </div>
                   </div>}
               </CardContent>
