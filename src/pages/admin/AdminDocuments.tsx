@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DocumentStatusBadge } from "@/components/documents/DocumentStatusBadge";
-import { DocumentReviewModal } from "@/components/admin/DocumentReviewModal";
+import { Badge } from "@/components/ui/badge";
+import { UserDocumentsModal } from "@/components/admin/UserDocumentsModal";
 import { Eye, Search } from "lucide-react";
 import { toast } from "sonner";
 import type { DocumentStatus } from "@/lib/documentHelpers";
@@ -26,15 +26,24 @@ interface AdminDocument {
   };
 }
 
+interface UserDocuments {
+  user_id: string;
+  full_name: string;
+  document_number: string;
+  documents: AdminDocument[];
+  pending_count: number;
+  total_count: number;
+}
+
 export default function AdminDocuments() {
   const [documents, setDocuments] = useState<AdminDocument[]>([]);
-  const [filteredDocuments, setFilteredDocuments] = useState<AdminDocument[]>([]);
+  const [userDocuments, setUserDocuments] = useState<UserDocuments[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserDocuments[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [selectedDocument, setSelectedDocument] = useState<AdminDocument | null>(null);
-  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserDocuments | null>(null);
+  const [userModalOpen, setUserModalOpen] = useState(false);
 
   useEffect(() => {
     fetchDocuments();
@@ -42,8 +51,13 @@ export default function AdminDocuments() {
   }, []);
 
   useEffect(() => {
-    filterDocuments();
-  }, [documents, searchTerm, statusFilter, typeFilter]);
+    const grouped = groupDocumentsByUser(documents);
+    setUserDocuments(grouped);
+  }, [documents]);
+
+  useEffect(() => {
+    filterUsers();
+  }, [userDocuments, searchTerm, statusFilter]);
 
   const fetchDocuments = async () => {
     try {
@@ -89,30 +103,48 @@ export default function AdminDocuments() {
     };
   };
 
-  const filterDocuments = () => {
-    let filtered = [...documents];
+  const groupDocumentsByUser = (docs: AdminDocument[]): UserDocuments[] => {
+    const grouped = docs.reduce((acc, doc) => {
+      const userId = doc.user_id;
+      if (!acc[userId]) {
+        acc[userId] = {
+          user_id: userId,
+          full_name: doc.profiles?.full_name || 'Sem nome',
+          document_number: doc.profiles?.document_number || 'Sem documento',
+          documents: [],
+          pending_count: 0,
+          total_count: 0
+        };
+      }
+      acc[userId].documents.push(doc);
+      acc[userId].total_count++;
+      if (doc.status === 'under_review' || doc.status === 'pending') {
+        acc[userId].pending_count++;
+      }
+      return acc;
+    }, {} as Record<string, UserDocuments>);
+
+    return Object.values(grouped)
+      .sort((a, b) => b.pending_count - a.pending_count);
+  };
+
+  const filterUsers = () => {
+    let filtered = [...userDocuments];
 
     if (searchTerm) {
-      filtered = filtered.filter(doc =>
-        doc.profiles?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.profiles?.document_number.includes(searchTerm)
+      filtered = filtered.filter(user =>
+        user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.document_number.includes(searchTerm)
       );
     }
 
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(doc => doc.status === statusFilter);
+      filtered = filtered.filter(user => 
+        user.documents.some(doc => doc.status === statusFilter)
+      );
     }
 
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(doc => doc.document_type === typeFilter);
-    }
-
-    setFilteredDocuments(filtered);
-  };
-
-  const handleReview = (document: AdminDocument) => {
-    setSelectedDocument(document);
-    setReviewModalOpen(true);
+    setFilteredUsers(filtered);
   };
 
   const pendingCount = documents.filter(d => d.status === 'under_review').length;
@@ -191,27 +223,12 @@ export default function AdminDocuments() {
                 <SelectItem value="rejected">Reprovado</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value="contrato-quadro">Contrato-Quadro</SelectItem>
-                <SelectItem value="dossie-kyc">Dossiê KYC (antigo)</SelectItem>
-                <SelectItem value="kyc-faturamento">KYC - Faturamento</SelectItem>
-                <SelectItem value="kyc-cnpj">KYC - CNPJ</SelectItem>
-                <SelectItem value="kyc-identificacao">KYC - RG/CNH</SelectItem>
-                <SelectItem value="kyc-comprovante-residencia">KYC - Comprovante</SelectItem>
-                <SelectItem value="kyc-outros">KYC - Outros</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardHeader>
         <CardContent>
-          {filteredDocuments.length === 0 ? (
+          {filteredUsers.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              Nenhum documento encontrado
+              Nenhum cliente encontrado
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -220,37 +237,41 @@ export default function AdminDocuments() {
                   <TableRow>
                     <TableHead>Cliente</TableHead>
                     <TableHead>CPF/CNPJ</TableHead>
-                    <TableHead>Documento</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Data Envio</TableHead>
+                    <TableHead>Documentos</TableHead>
+                    <TableHead>Pendentes</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredDocuments.map((doc) => (
-                    <TableRow key={doc.id}>
-                      <TableCell className="font-medium">
-                        {doc.profiles?.full_name || '-'}
-                      </TableCell>
-                      <TableCell>{doc.profiles?.document_number || '-'}</TableCell>
-                      <TableCell className="capitalize">
-                        {doc.document_type === 'contrato-quadro' ? 'Contrato-Quadro' : 'Dossiê KYC'}
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user.user_id}>
+                      <TableCell className="font-medium">{user.full_name}</TableCell>
+                      <TableCell>{user.document_number}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{user.total_count} total</Badge>
                       </TableCell>
                       <TableCell>
-                        <DocumentStatusBadge status={doc.status} />
-                      </TableCell>
-                      <TableCell>
-                        {doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString('pt-BR') : '-'}
+                        {user.pending_count > 0 ? (
+                          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
+                            {user.pending_count} pendente{user.pending_count > 1 ? 's' : ''}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-green-600 dark:text-green-400">
+                            Tudo aprovado
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleReview(doc)}
-                          disabled={!doc.client_file_url}
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setUserModalOpen(true);
+                          }}
                         >
                           <Eye className="h-4 w-4 mr-1" />
-                          Revisar
+                          Ver Documentos
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -262,14 +283,14 @@ export default function AdminDocuments() {
         </CardContent>
       </Card>
 
-      {selectedDocument && (
-        <DocumentReviewModal
-          isOpen={reviewModalOpen}
+      {selectedUser && (
+        <UserDocumentsModal
+          isOpen={userModalOpen}
           onClose={() => {
-            setReviewModalOpen(false);
-            setSelectedDocument(null);
+            setUserModalOpen(false);
+            setSelectedUser(null);
           }}
-          document={selectedDocument}
+          user={selectedUser}
           onReviewComplete={fetchDocuments}
         />
       )}

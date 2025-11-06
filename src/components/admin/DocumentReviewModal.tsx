@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { DocumentUploader } from "@/components/documents/DocumentUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Download, CheckCircle2, XCircle } from "lucide-react";
+import { Download, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 
 interface DocumentReviewModalProps {
   isOpen: boolean;
@@ -28,6 +28,34 @@ export function DocumentReviewModal({ isOpen, onClose, document, onReviewComplet
     dateField: false
   });
   const [processing, setProcessing] = useState(false);
+  const [documentUrl, setDocumentUrl] = useState('');
+  const [loadingUrl, setLoadingUrl] = useState(true);
+
+  useEffect(() => {
+    const fetchSignedUrl = async () => {
+      if (!document?.client_file_url) {
+        setLoadingUrl(false);
+        return;
+      }
+      
+      setLoadingUrl(true);
+      try {
+        const { data, error } = await supabase.storage
+          .from('documents')
+          .createSignedUrl(document.client_file_url, 3600);
+        
+        if (error) throw error;
+        setDocumentUrl(data.signedUrl);
+      } catch (error) {
+        console.error('Error creating signed URL:', error);
+        toast.error('Erro ao carregar documento');
+      } finally {
+        setLoadingUrl(false);
+      }
+    };
+
+    fetchSignedUrl();
+  }, [document]);
 
   const handleDownload = async () => {
     if (!document?.client_file_url) return;
@@ -131,10 +159,6 @@ export function DocumentReviewModal({ isOpen, onClose, document, onReviewComplet
 
   if (!document) return null;
 
-  const documentUrl = document.client_file_url 
-    ? supabase.storage.from('documents').getPublicUrl(document.client_file_url).data.publicUrl
-    : '';
-
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0">
@@ -148,11 +172,17 @@ export function DocumentReviewModal({ isOpen, onClose, document, onReviewComplet
           {/* Left side - PDF viewer */}
           <div className="flex-1 p-4 md:w-3/5">
             <ScrollArea className="h-full">
-              <iframe
-                src={documentUrl}
-                className="w-full h-[calc(90vh-200px)] border rounded-lg"
-                title="Document preview"
-              />
+              {loadingUrl ? (
+                <div className="flex items-center justify-center h-[calc(90vh-200px)]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <iframe
+                  src={documentUrl}
+                  className="w-full h-[calc(90vh-200px)] border rounded-lg"
+                  title="Document preview"
+                />
+              )}
             </ScrollArea>
           </div>
 
