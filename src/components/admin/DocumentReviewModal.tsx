@@ -33,29 +33,44 @@ export function DocumentReviewModal({ isOpen, onClose, document, onReviewComplet
 
   useEffect(() => {
     const fetchSignedUrl = async () => {
-      if (!document?.client_file_url) {
+      if (!document?.id) {
         setLoadingUrl(false);
         return;
       }
       
       setLoadingUrl(true);
       try {
-        const { data, error } = await supabase.storage
-          .from('documents')
-          .createSignedUrl(document.client_file_url, 3600);
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (error) throw error;
-        setDocumentUrl(data.signedUrl);
-      } catch (error) {
-        console.error('Error creating signed URL:', error);
-        toast.error('Erro ao carregar documento');
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-document`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ documentId: document.id })
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Erro ao carregar documento');
+        }
+
+        const result = await response.json();
+        setDocumentUrl(result.signedUrl);
+      } catch (error: any) {
+        console.error('Error fetching signed URL:', error);
+        toast.error('Erro ao carregar documento: ' + error.message);
       } finally {
         setLoadingUrl(false);
       }
     };
 
     fetchSignedUrl();
-  }, [document]);
+  }, [document?.id]);
 
   const handleDownload = async () => {
     if (!documentUrl) {

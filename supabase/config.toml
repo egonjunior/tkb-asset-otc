@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.get-partner-price]
 verify_jwt = true
+
+[functions.get-document]
+verify_jwt = true

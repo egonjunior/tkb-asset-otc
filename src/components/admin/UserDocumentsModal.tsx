@@ -60,18 +60,31 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
   const progressPercent = (approvedCount / user.total_count) * 100;
 
   const handleDownload = async (doc: AdminDocument) => {
-    if (!doc?.client_file_url) return;
-    
     try {
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .createSignedUrl(doc.client_file_url, 3600);
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (error) throw error;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-document`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ documentId: doc.id })
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao obter documento');
+      }
+
+      const { signedUrl } = await response.json();
       
-      // Create temporary link element to trigger download without popup blocker
+      // Download
       const link = document.createElement('a');
-      link.href = data.signedUrl;
+      link.href = signedUrl;
       link.download = `${documentTypeLabels[doc.document_type] || doc.document_type}.pdf`;
       link.target = '_blank';
       document.body.appendChild(link);
@@ -79,9 +92,9 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
       document.body.removeChild(link);
       
       toast.success('Download iniciado');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error downloading document:', error);
-      toast.error('Erro ao baixar documento');
+      toast.error('Erro ao baixar documento: ' + error.message);
     }
   };
 
