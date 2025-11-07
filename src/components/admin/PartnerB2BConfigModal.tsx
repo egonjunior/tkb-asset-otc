@@ -35,6 +35,12 @@ export const PartnerB2BConfigModal = ({ partner, isOpen, onClose, onSuccess }: P
   const handleApprove = async () => {
     setIsSubmitting(true);
     try {
+      console.log('🟦 Approving B2B partner', {
+        partnerId: partner?.id,
+        userId: partner?.user_id,
+        markupPercent,
+        notes,
+      });
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 

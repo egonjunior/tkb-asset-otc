@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 // TypeScript interfaces para type safety
 interface PartnerB2BConfig {
+  user_id: string;
   markup_percent: number;
   is_active: boolean;
   company_name: string | null;
@@ -43,15 +44,20 @@ export default function AdminPartnersB2B() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchPartners();
 
-    // Real-time subscription
+    // Real-time subscription for requests and configs
     const channel = supabase
       .channel('admin-partners-b2b')
       .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'partner_requests', filter: 'request_type=eq.b2b_otc' },
+        { event: '*', schema: 'public', table: 'partner_requests' },
+        () => fetchPartners()
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'partner_b2b_config' },
         () => fetchPartners()
       )
       .subscribe();
@@ -79,30 +85,44 @@ export default function AdminPartnersB2B() {
   }, [partners, statusFilter, searchTerm]);
 
   const fetchPartners = async () => {
+    setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // 1) Fetch partner requests without JOIN
+      const { data: requestsData, error: requestsError } = await supabase
         .from('partner_requests')
-        .select(`
-          *,
-          partner_b2b_config(*)
-        `)
+        .select('*')
         .eq('request_type', 'b2b_otc')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      
-      // Normalizar dados: garantir que partner_b2b_config seja null ou objeto válido
-      const normalizedData = (data || []).map(partner => ({
-        ...partner,
-        partner_b2b_config: Array.isArray(partner.partner_b2b_config) 
-          ? partner.partner_b2b_config[0] || null 
-          : partner.partner_b2b_config
+      if (requestsError) throw requestsError;
+
+      // 2) Fetch all existing configs
+      const { data: configsData, error: configsError } = await supabase
+        .from('partner_b2b_config')
+        .select('*');
+
+      if (configsError) {
+        console.warn('⚠️ Could not fetch partner_b2b_config:', configsError);
+      }
+
+      // 3) Map configs by user_id for quick lookup
+      const configMap = new Map<string, any>();
+      (configsData || []).forEach((cfg: any) => {
+        if (cfg?.user_id) configMap.set(cfg.user_id, cfg);
+      });
+
+      // 4) Merge data manually
+      const combined = (requestsData || []).map((req: any) => ({
+        ...req,
+        partner_b2b_config: req.user_id ? configMap.get(req.user_id) || null : null,
       }));
-      
-      setPartners(normalizedData as PartnerRequest[]);
+
+      setPartners(combined as PartnerRequest[]);
     } catch (error: any) {
-      console.error("❌ Error fetching B2B partners:", error);
-      toast.error("Erro ao carregar parceiros B2B");
+      console.error('❌ Error fetching B2B partners:', error);
+      toast.error('Erro ao carregar parceiros B2B');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -242,7 +262,16 @@ export default function AdminPartnersB2B() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPartners.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent"></div>
+                        Carregando parceiros...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredPartners.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Nenhum parceiro B2B encontrado
