@@ -16,7 +16,14 @@ interface PartnerB2BConfigModalProps {
 }
 
 export const PartnerB2BConfigModal = ({ partner, isOpen, onClose, onSuccess }: PartnerB2BConfigModalProps) => {
-  const [markupPercent, setMarkupPercent] = useState(partner?.partner_b2b_config?.markup_percent || "0.4");
+  // Normalizar config: garantir que seja null ou objeto válido
+  const config = Array.isArray(partner?.partner_b2b_config) 
+    ? partner.partner_b2b_config[0] 
+    : partner?.partner_b2b_config;
+
+  const [markupPercent, setMarkupPercent] = useState(
+    config?.markup_percent?.toString() || "0.4"
+  );
   const [notes, setNotes] = useState(partner?.notes || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 

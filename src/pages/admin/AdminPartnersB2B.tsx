@@ -12,10 +12,33 @@ import { PartnerB2BStats } from "@/components/admin/PartnerB2BStats";
 import { PartnerB2BConfigModal } from "@/components/admin/PartnerB2BConfigModal";
 import { toast } from "sonner";
 
+// TypeScript interfaces para type safety
+interface PartnerB2BConfig {
+  markup_percent: number;
+  is_active: boolean;
+  company_name: string | null;
+  trading_volume_monthly: number | null;
+  notes: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
+}
+
+interface PartnerRequest {
+  id: string;
+  name: string;
+  phone: string;
+  status: 'pending' | 'approved' | 'rejected' | 'contacted';
+  user_id: string | null;
+  trading_volume_monthly: number | null;
+  notes: string | null;
+  created_at: string;
+  partner_b2b_config: PartnerB2BConfig | null;
+}
+
 export default function AdminPartnersB2B() {
   const navigate = useNavigate();
-  const [partners, setPartners] = useState<any[]>([]);
-  const [filteredPartners, setFilteredPartners] = useState<any[]>([]);
+  const [partners, setPartners] = useState<PartnerRequest[]>([]);
+  const [filteredPartners, setFilteredPartners] = useState<PartnerRequest[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
@@ -67,9 +90,18 @@ export default function AdminPartnersB2B() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPartners(data || []);
+      
+      // Normalizar dados: garantir que partner_b2b_config seja null ou objeto válido
+      const normalizedData = (data || []).map(partner => ({
+        ...partner,
+        partner_b2b_config: Array.isArray(partner.partner_b2b_config) 
+          ? partner.partner_b2b_config[0] || null 
+          : partner.partner_b2b_config
+      }));
+      
+      setPartners(normalizedData as PartnerRequest[]);
     } catch (error: any) {
-      console.error("Error fetching B2B partners:", error);
+      console.error("❌ Error fetching B2B partners:", error);
       toast.error("Erro ao carregar parceiros B2B");
     }
   };
@@ -116,9 +148,15 @@ export default function AdminPartnersB2B() {
     }
   };
 
-  const handleToggleActive = async (partner: any) => {
+  const handleToggleActive = async (partner: PartnerRequest) => {
+    // Verificar se partner tem config antes de tentar toggle
+    if (!partner.partner_b2b_config) {
+      toast.error("Este parceiro ainda não foi configurado");
+      return;
+    }
+
     try {
-      const newStatus = !partner.partner_b2b_config?.is_active;
+      const newStatus = !partner.partner_b2b_config.is_active;
       
       const { error } = await supabase
         .from('partner_b2b_config')
@@ -225,23 +263,23 @@ export default function AdminPartnersB2B() {
                       <TableCell>
                         {partner.trading_volume_monthly ? (
                           <span className="font-medium">
-                            R$ {parseFloat(partner.trading_volume_monthly).toLocaleString('pt-BR')}
+                            R$ {Number(partner.trading_volume_monthly).toLocaleString('pt-BR')}
                           </span>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        {partner.partner_b2b_config?.markup_percent ? (
+                        {partner.partner_b2b_config?.markup_percent != null ? (
                           <Badge variant="outline" className="font-mono">
                             {partner.partner_b2b_config.markup_percent}%
                           </Badge>
                         ) : (
-                          <span className="text-muted-foreground">-</span>
+                          <span className="text-muted-foreground text-xs">Não configurado</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        {getStatusBadge(partner.status, partner.partner_b2b_config?.is_active)}
+                        {getStatusBadge(partner.status, partner.partner_b2b_config?.is_active ?? false)}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {new Date(partner.created_at).toLocaleDateString('pt-BR')}
