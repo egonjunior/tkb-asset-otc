@@ -206,6 +206,133 @@ export type Database = {
         }
         Relationships: []
       }
+      offline_client_documents: {
+        Row: {
+          client_id: string
+          document_name: string
+          document_type: string | null
+          file_url: string
+          id: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          client_id: string
+          document_name: string
+          document_type?: string | null
+          file_url: string
+          id?: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          client_id?: string
+          document_name?: string
+          document_type?: string | null
+          file_url?: string
+          id?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offline_client_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "offline_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offline_clients: {
+        Row: {
+          created_at: string
+          created_by: string
+          document_number: string
+          document_type: string
+          email: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          document_number: string
+          document_type?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          document_number?: string
+          document_type?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      offline_transactions: {
+        Row: {
+          brl_amount: number
+          client_id: string
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          operation_type: string
+          transaction_date: string
+          updated_at: string
+          usdt_amount: number
+          usdt_rate: number
+        }
+        Insert: {
+          brl_amount: number
+          client_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          notes?: string | null
+          operation_type?: string
+          transaction_date: string
+          updated_at?: string
+          usdt_amount: number
+          usdt_rate: number
+        }
+        Update: {
+          brl_amount?: number
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          operation_type?: string
+          transaction_date?: string
+          updated_at?: string
+          usdt_amount?: number
+          usdt_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offline_transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "offline_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_timeline: {
         Row: {
           actor_type: string

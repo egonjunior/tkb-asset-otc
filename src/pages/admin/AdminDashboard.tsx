@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users, Handshake, MessageCircle, Building2 } from "lucide-react";
+import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users, Handshake, MessageCircle, Building2, UserCog } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VolumeCard } from "@/components/admin/VolumeCard";
@@ -345,7 +345,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Parceiros B2B Card */}
-          <div className="mt-4">
+          <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
             <Card 
               className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-indigo-500" 
               onClick={() => navigate('/admin/partners-b2b')}
@@ -359,6 +359,22 @@ const AdminDashboard = () => {
                   <Building2 className="h-8 w-8 text-indigo-600" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">Solicitações de mesas OTC com markup diferenciado</p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-blue-500" 
+              onClick={() => navigate('/admin/offline-clients')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">👤 Clientes Offline</p>
+                    <p className="text-xl font-bold text-blue-600">Gerenciar →</p>
+                  </div>
+                  <UserCog className="h-8 w-8 text-blue-600" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Operações manuais e relatórios mensais</p>
               </CardContent>
             </Card>
           </div>

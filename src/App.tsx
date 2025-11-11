@@ -30,6 +30,8 @@ import Support from "./pages/Support";
 import QuotePage from "./pages/QuotePage";
 import Settings from "./pages/Settings";
 import Empresas from "./pages/Empresas";
+import AdminOfflineClients from "./pages/admin/AdminOfflineClients";
+import AdminOfflineClientDetails from "./pages/admin/AdminOfflineClientDetails";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +95,8 @@ const App = () => (
             <Route path="/admin/order/:orderId" element={<AdminOrderDetails />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/users/:userId" element={<AdminUserDetails />} />
+            <Route path="/admin/offline-clients" element={<AdminOfflineClients />} />
+            <Route path="/admin/offline-clients/:clientId" element={<AdminOfflineClientDetails />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
