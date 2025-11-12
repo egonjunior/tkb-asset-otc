@@ -1,23 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-interface OfflineClient {
-  id: string;
-  full_name: string;
-  document_type: string;
-  document_number: string;
-  email?: string;
-  phone?: string;
-}
-
-interface OfflineTransaction {
-  id: string;
-  transaction_date: string;
-  usdt_amount: number;
-  brl_amount: number;
-  usdt_rate: number;
-  operation_type: string;
-}
+import type { OfflineClient, OfflineTransaction } from "@/types/offlineClients";
 
 interface OfflineClientReportProps {
   client: OfflineClient;
