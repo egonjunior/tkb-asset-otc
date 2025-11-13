@@ -30,6 +30,16 @@ export default {
           light: "hsl(var(--tkb-cyan-light))",
           dark: "hsl(var(--tkb-cyan-dark))",
         },
+        institutional: {
+          navy: "hsl(var(--institutional-navy))",
+          gold: "hsl(var(--institutional-gold))",
+          silver: "hsl(var(--institutional-silver))",
+          platinum: "hsl(var(--institutional-platinum))",
+        },
+        otc: {
+          "deep-blue": "hsl(var(--otc-deep-blue))",
+          accent: "hsl(var(--otc-accent))",
+        },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
