@@ -7,10 +7,12 @@ import tkbLogo from "@/assets/tkb-logo.png";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
 const Landing = () => {
   const navigate = useNavigate();
-  const { binancePrice, tkbPrice, isLoading } = useBinancePrice();
-
-  return (
-    <div className="min-h-screen bg-background">
+  const {
+    binancePrice,
+    tkbPrice,
+    isLoading
+  } = useBinancePrice();
+  return <div className="min-h-screen bg-background">
       {/* Header Premium */}
       <header className="bg-gradient-to-r from-primary-dark via-primary to-primary-dark border-b border-white/10 sticky top-0 z-50 backdrop-blur-lg bg-opacity-95">
         <div className="container mx-auto px-6 py-4">
@@ -43,10 +45,10 @@ const Landing = () => {
             <svg className="w-full h-full">
               <defs>
                 <pattern id="premium-grid" width="60" height="60" patternUnits="userSpaceOnUse">
-                  <path d="M 60 0 L 0 0 0 60" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+                  <path d="M 60 0 L 0 0 0 60" fill="none" stroke="currentColor" strokeWidth="0.5" />
                 </pattern>
               </defs>
-              <rect width="100%" height="100%" fill="url(#premium-grid)" className="text-white"/>
+              <rect width="100%" height="100%" fill="url(#premium-grid)" className="text-white" />
             </svg>
           </div>
           {/* Gradiente radial para profundidade */}
@@ -89,18 +91,27 @@ const Landing = () => {
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in animation-delay-800">
-              {[
-                { value: "R$ 50M+", label: "Volume Transacionado", icon: LineChart },
-                { value: "1.000+", label: "Operações Concluídas", icon: CheckCircle2 },
-                { value: "18 min", label: "Tempo Médio", icon: Clock },
-                { value: "100%", label: "Compliance PLD/FT", icon: Shield }
-              ].map((metric, index) => (
-                <div key={index} className="text-center p-6 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105">
+              {[{
+              value: "R$ 50M+",
+              label: "Volume Transacionado",
+              icon: LineChart
+            }, {
+              value: "1.000+",
+              label: "Operações Concluídas",
+              icon: CheckCircle2
+            }, {
+              value: "18 min",
+              label: "Tempo Médio",
+              icon: Clock
+            }, {
+              value: "100%",
+              label: "Compliance PLD/FT",
+              icon: Shield
+            }].map((metric, index) => <div key={index} className="text-center p-6 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105">
                   <metric.icon className="h-8 w-8 text-white mx-auto mb-3 drop-shadow-lg" />
                   <div className="font-financial-serif text-3xl font-bold text-white mb-1 drop-shadow-md">{metric.value}</div>
                   <div className="font-institutional text-sm text-white/80 uppercase tracking-wider">{metric.label}</div>
-                </div>
-              ))}
+                </div>)}
             </div>
           </div>
         </div>
@@ -120,12 +131,22 @@ const Landing = () => {
               </h2>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
-              {[
-                { icon: Shield, title: "Compliance Total PLD/FT", description: "Operações 100% regulamentadas conforme normativas COAF e Banco Central", badge: "Auditado" },
-                { icon: Lock, title: "Custódia Institucional", description: "Ativos protegidos com infraestrutura de nível bancário e multi-assinatura", badge: "Certificado" },
-                { icon: FileCheck, title: "KYC Rigoroso", description: "Processo de validação completo seguindo padrões internacionais FATF", badge: "Verificado" }
-              ].map((item, index) => (
-                <div key={index} className="group p-8 bg-white rounded-xl border-2 border-neutral-200 hover:border-primary hover:shadow-2xl transition-all duration-500 shadow-md">
+              {[{
+              icon: Shield,
+              title: "Compliance Total PLD/FT",
+              description: "Operações 100% regulamentadas conforme normativas COAF e Banco Central",
+              badge: "Auditado"
+            }, {
+              icon: Lock,
+              title: "Custódia Institucional",
+              description: "Ativos protegidos com infraestrutura de nível bancário e multi-assinatura",
+              badge: "Certificado"
+            }, {
+              icon: FileCheck,
+              title: "KYC Rigoroso",
+              description: "Processo de validação completo seguindo padrões internacionais FATF",
+              badge: "Verificado"
+            }].map((item, index) => <div key={index} className="group p-8 bg-white rounded-xl border-2 border-neutral-200 hover:border-primary hover:shadow-2xl transition-all duration-500 shadow-md">
                   <div className="mb-6 relative inline-block">
                     <div className="h-16 w-16 bg-gradient-to-br from-primary to-primary-hover rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-lg">
                       <item.icon className="h-8 w-8 text-white" />
@@ -134,8 +155,7 @@ const Landing = () => {
                   </div>
                   <h3 className="font-institutional text-xl font-bold text-neutral-900 mb-3">{item.title}</h3>
                   <p className="font-inter text-neutral-600 leading-relaxed">{item.description}</p>
-                </div>
-              ))}
+                </div>)}
             </div>
           </div>
         </div>
@@ -161,17 +181,13 @@ const Landing = () => {
                   </div>
                   <TrendingUp className="h-6 w-6 text-neutral-400 group-hover:text-primary transition-colors" />
                 </div>
-                {isLoading ? (
-                  <div className="h-20 bg-neutral-100 rounded-lg animate-pulse"></div>
-                ) : (
-                  <>
+                {isLoading ? <div className="h-20 bg-neutral-100 rounded-lg animate-pulse"></div> : <>
                     <div className="font-financial-serif text-5xl font-bold text-neutral-900 mb-2">R$ {binancePrice?.toFixed(4)}</div>
                     <div className="flex items-center gap-2 text-neutral-600">
                       <Clock className="h-4 w-4" />
                       <span className="font-inter text-sm">Atualizado agora</span>
                     </div>
-                  </>
-                )}
+                  </>}
               </div>
               <div className="relative group p-8 bg-gradient-to-br from-primary via-primary-hover to-primary-dark rounded-2xl shadow-2xl hover:shadow-primary/30 transition-all duration-500 overflow-hidden">
                 <div className="absolute inset-0 shimmer-border opacity-20"></div>
@@ -186,20 +202,16 @@ const Landing = () => {
                     </div>
                     <Shield className="h-6 w-6 text-white" />
                   </div>
-                  {isLoading ? (
-                    <div className="h-20 bg-white/10 rounded-lg animate-pulse"></div>
-                  ) : (
-                    <>
+                  {isLoading ? <div className="h-20 bg-white/10 rounded-lg animate-pulse"></div> : <>
                       <div className="font-financial-serif text-5xl font-bold text-white mb-2 drop-shadow-lg">R$ {tkbPrice?.toFixed(4)}</div>
                       <div className="flex items-center gap-4 text-white/90">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4" />
                           <span className="font-inter text-sm">Cotação instantânea</span>
                         </div>
-                        <div className="px-3 py-1 bg-white/20 text-white rounded-full text-xs font-semibold backdrop-blur-sm">+1% Markup</div>
+                        
                       </div>
-                    </>
-                  )}
+                    </>}
                 </div>
               </div>
             </div>
@@ -270,8 +282,6 @@ const Landing = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Landing;
