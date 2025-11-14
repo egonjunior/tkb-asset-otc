@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Shield, TrendingUp, ArrowRight, LineChart, Lock, Clock, CheckCircle2, Instagram, Linkedin, UserPlus, FileCheck, Handshake } from "lucide-react";
 import tkbLogo from "@/assets/tkb-logo.png";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
