@@ -23,22 +23,12 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
           hover: "hsl(var(--primary-hover))",
-          glow: "hsl(var(--primary-glow))",
+          dark: "hsl(var(--primary-dark))",
         },
         "tkb-cyan": {
           DEFAULT: "hsl(var(--tkb-cyan))",
           light: "hsl(var(--tkb-cyan-light))",
           dark: "hsl(var(--tkb-cyan-dark))",
-        },
-        institutional: {
-          navy: "hsl(var(--institutional-navy))",
-          gold: "hsl(var(--institutional-gold))",
-          silver: "hsl(var(--institutional-silver))",
-          platinum: "hsl(var(--institutional-platinum))",
-        },
-        otc: {
-          "deep-blue": "hsl(var(--otc-deep-blue))",
-          accent: "hsl(var(--otc-accent))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -67,6 +57,8 @@ export default {
           700: "hsl(var(--neutral-700))",
           800: "hsl(var(--neutral-800))",
           900: "hsl(var(--neutral-900))",
+          black: "hsl(var(--neutral-black))",
+          white: "hsl(var(--neutral-white))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
