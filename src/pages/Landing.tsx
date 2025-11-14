@@ -11,22 +11,22 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-institutional-navy border-b border-white/10 sticky top-0 z-50">
+      {/* Header Premium */}
+      <header className="bg-gradient-to-r from-primary-dark via-primary to-primary-dark border-b border-white/10 sticky top-0 z-50 backdrop-blur-lg bg-opacity-95">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
+              <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10 drop-shadow-lg" />
               <div>
-                <h1 className="text-xl font-institutional font-bold text-white">TKB ASSET</h1>
-                <p className="text-xs text-white/60 font-inter uppercase tracking-wider">Mesa OTC Institucional</p>
+                <h1 className="text-xl font-institutional font-bold text-white drop-shadow-md">TKB ASSET</h1>
+                <p className="text-xs text-white/70 font-inter uppercase tracking-[0.15em]">Mesa OTC Institucional</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:inline-flex text-white hover:bg-white/10">
+              <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:inline-flex text-white hover:bg-white/20 transition-all duration-300">
                 Login
               </Button>
-              <Button onClick={() => navigate("/register")} className="bg-institutional-gold text-institutional-navy hover:bg-institutional-gold/90 font-institutional font-semibold">
+              <Button onClick={() => navigate("/register")} className="bg-white text-primary hover:bg-white/90 font-institutional font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
                 Criar Conta
               </Button>
             </div>
@@ -35,48 +35,55 @@ const Landing = () => {
       </header>
 
       {/* Hero Section Premium */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden gradient-institutional">
-        <div className="absolute inset-0 opacity-5">
-          <svg className="w-full h-full">
-            <defs>
-              <pattern id="institutional-grid" width="60" height="60" patternUnits="userSpaceOnUse">
-                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="currentColor" strokeWidth="0.5"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#institutional-grid)" className="text-white"/>
-          </svg>
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden gradient-premium-blue">
+        {/* Background com múltiplas camadas */}
+        <div className="absolute inset-0">
+          {/* Grid sutil */}
+          <div className="absolute inset-0 opacity-[0.03]">
+            <svg className="w-full h-full">
+              <defs>
+                <pattern id="premium-grid" width="60" height="60" patternUnits="userSpaceOnUse">
+                  <path d="M 60 0 L 0 0 0 60" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#premium-grid)" className="text-white"/>
+            </svg>
+          </div>
+          {/* Gradiente radial para profundidade */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.1),transparent_50%)]"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(37,99,235,0.15),transparent_50%)]"></div>
         </div>
 
         <div className="container mx-auto px-6 py-20 relative z-10">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8 animate-fade-in">
-              <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10">
-                <Shield className="h-4 w-4 text-institutional-gold" />
-                <span className="font-institutional text-sm text-white/90 uppercase tracking-[0.2em]">Mesa OTC Institucional</span>
-                <Lock className="h-4 w-4 text-institutional-gold" />
+              <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-xl">
+                <Shield className="h-4 w-4 text-white" />
+                <span className="font-institutional text-sm text-white font-medium uppercase tracking-[0.2em]">Mesa OTC Institucional</span>
+                <Lock className="h-4 w-4 text-white" />
               </div>
             </div>
 
-            <h2 className="text-center font-financial-serif text-5xl lg:text-7xl xl:text-8xl font-bold text-white leading-[1.05] mb-8 animate-fade-in animation-delay-200">
+            <h2 className="text-center font-financial-serif text-5xl lg:text-7xl xl:text-8xl font-bold text-white leading-[1.05] mb-8 animate-fade-in animation-delay-200 drop-shadow-2xl">
               Excelência em<br />
               <span className="relative inline-block">
-                <span className="relative z-10 bg-gradient-to-r from-institutional-gold to-white bg-clip-text text-transparent">Operações OTC</span>
-                <div className="absolute bottom-0 left-0 w-full h-1 shimmer-border opacity-50"></div>
+                <span className="relative z-10 text-white">Operações OTC</span>
+                <div className="absolute bottom-0 left-0 w-full h-1 shimmer-border opacity-70"></div>
               </span>
             </h2>
 
-            <p className="text-center font-institutional text-xl lg:text-2xl text-white/80 max-w-3xl mx-auto mb-12 animate-fade-in animation-delay-400">
+            <p className="text-center font-institutional text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto mb-12 animate-fade-in animation-delay-400 leading-relaxed">
               Plataforma institucional de USDT com padrões de segurança e transparência do mercado financeiro global
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-fade-in animation-delay-600">
-              <button onClick={() => navigate("/register")} className="group px-8 py-4 bg-institutional-gold text-institutional-navy font-institutional font-semibold rounded-lg hover-institutional">
+              <button onClick={() => navigate("/register")} className="group px-8 py-4 bg-white text-primary hover:bg-white/90 font-institutional font-semibold rounded-lg shadow-2xl hover:shadow-white/20 transition-all duration-300 hover:scale-105">
                 <span className="flex items-center gap-2 justify-center">
                   Abrir Conta
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </span>
               </button>
-              <button className="px-8 py-4 bg-white/10 backdrop-blur-md text-white font-institutional font-semibold rounded-lg border border-white/20 hover:bg-white/15 hover-institutional">
+              <button onClick={() => navigate("/cotacao")} className="px-8 py-4 bg-white/10 backdrop-blur-md text-white font-institutional font-semibold rounded-lg border border-white/30 hover:bg-white/20 shadow-xl transition-all duration-300">
                 Ver Cotações ao Vivo
               </button>
             </div>
@@ -88,10 +95,10 @@ const Landing = () => {
                 { value: "18 min", label: "Tempo Médio", icon: Clock },
                 { value: "100%", label: "Compliance PLD/FT", icon: Shield }
               ].map((metric, index) => (
-                <div key={index} className="text-center p-6 bg-white/5 backdrop-blur-md rounded-lg border border-white/10 hover-institutional">
-                  <metric.icon className="h-8 w-8 text-institutional-gold mx-auto mb-3" />
-                  <div className="font-financial-serif text-3xl font-bold text-white mb-1">{metric.value}</div>
-                  <div className="font-institutional text-sm text-white/60 uppercase tracking-wider">{metric.label}</div>
+                <div key={index} className="text-center p-6 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105">
+                  <metric.icon className="h-8 w-8 text-white mx-auto mb-3 drop-shadow-lg" />
+                  <div className="font-financial-serif text-3xl font-bold text-white mb-1 drop-shadow-md">{metric.value}</div>
+                  <div className="font-institutional text-sm text-white/80 uppercase tracking-wider">{metric.label}</div>
                 </div>
               ))}
             </div>
@@ -103,13 +110,13 @@ const Landing = () => {
 
       {/* Institutional Credibility Section */}
       <section className="py-20 bg-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.02] bg-noise"></div>
+        <div className="absolute inset-0 bg-dots-pattern opacity-30"></div>
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-16">
-              <span className="font-institutional text-sm text-institutional-gold uppercase tracking-[0.2em] mb-4 block">Padrão Institucional</span>
-              <h2 className="font-financial-serif text-4xl lg:text-5xl font-bold text-institutional-navy mb-6">
-                Segurança e Conformidade<br /><span className="text-institutional-silver">em Cada Operação</span>
+              <span className="font-institutional text-sm text-primary uppercase tracking-[0.2em] mb-4 block font-semibold">Padrão Institucional</span>
+              <h2 className="font-financial-serif text-4xl lg:text-5xl font-bold text-neutral-900 mb-6">
+                Segurança e Conformidade<br /><span className="text-primary">em Cada Operação</span>
               </h2>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
@@ -118,15 +125,15 @@ const Landing = () => {
                 { icon: Lock, title: "Custódia Institucional", description: "Ativos protegidos com infraestrutura de nível bancário e multi-assinatura", badge: "Certificado" },
                 { icon: FileCheck, title: "KYC Rigoroso", description: "Processo de validação completo seguindo padrões internacionais FATF", badge: "Verificado" }
               ].map((item, index) => (
-                <div key={index} className="group p-8 bg-neutral-50 rounded-xl border border-neutral-200 hover:border-institutional-gold hover:shadow-xl transition-all duration-500">
+                <div key={index} className="group p-8 bg-white rounded-xl border-2 border-neutral-200 hover:border-primary hover:shadow-2xl transition-all duration-500 shadow-md">
                   <div className="mb-6 relative inline-block">
-                    <div className="h-14 w-14 bg-institutional-navy rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                      <item.icon className="h-7 w-7 text-institutional-gold" />
+                    <div className="h-16 w-16 bg-gradient-to-br from-primary to-primary-hover rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-lg">
+                      <item.icon className="h-8 w-8 text-white" />
                     </div>
-                    <span className="absolute -top-2 -right-2 px-2 py-1 bg-institutional-gold text-institutional-navy text-[10px] font-bold uppercase rounded">{item.badge}</span>
+                    <span className="absolute -top-2 -right-2 px-3 py-1 bg-primary text-white text-[10px] font-bold uppercase rounded-full shadow-md">{item.badge}</span>
                   </div>
-                  <h3 className="font-institutional text-xl font-semibold text-institutional-navy mb-3">{item.title}</h3>
-                  <p className="font-inter text-neutral-700 leading-relaxed">{item.description}</p>
+                  <h3 className="font-institutional text-xl font-bold text-neutral-900 mb-3">{item.title}</h3>
+                  <p className="font-inter text-neutral-600 leading-relaxed">{item.description}</p>
                 </div>
               ))}
             </div>
@@ -143,22 +150,22 @@ const Landing = () => {
                 <div className="h-2 w-2 bg-success rounded-full animate-pulse"></div>
                 <span className="font-institutional text-sm text-success uppercase tracking-wider">Cotações em Tempo Real</span>
               </div>
-              <h2 className="font-financial-serif text-4xl font-bold text-institutional-navy">Preços Transparentes</h2>
+              <h2 className="font-financial-serif text-4xl font-bold text-neutral-900">Preços Transparentes</h2>
             </div>
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="group p-8 bg-white rounded-2xl border-2 border-neutral-200 hover:border-institutional-navy transition-all duration-500 hover:shadow-2xl">
+              <div className="group p-8 bg-white rounded-2xl border-2 border-neutral-200 hover:border-primary transition-all duration-500 hover:shadow-2xl shadow-md">
                 <div className="flex items-start justify-between mb-6">
                   <div>
                     <span className="font-institutional text-sm text-neutral-600 uppercase tracking-wider">Referência de Mercado</span>
-                    <h3 className="font-financial-serif text-2xl font-bold text-institutional-navy mt-1">Binance / OKX</h3>
+                    <h3 className="font-financial-serif text-2xl font-bold text-neutral-900 mt-1">Binance / OKX</h3>
                   </div>
-                  <TrendingUp className="h-6 w-6 text-neutral-400 group-hover:text-institutional-navy transition-colors" />
+                  <TrendingUp className="h-6 w-6 text-neutral-400 group-hover:text-primary transition-colors" />
                 </div>
                 {isLoading ? (
                   <div className="h-20 bg-neutral-100 rounded-lg animate-pulse"></div>
                 ) : (
                   <>
-                    <div className="font-financial-serif text-5xl font-bold text-institutional-navy mb-2">R$ {binancePrice?.toFixed(4)}</div>
+                    <div className="font-financial-serif text-5xl font-bold text-neutral-900 mb-2">R$ {binancePrice?.toFixed(4)}</div>
                     <div className="flex items-center gap-2 text-neutral-600">
                       <Clock className="h-4 w-4" />
                       <span className="font-inter text-sm">Atualizado agora</span>
@@ -166,49 +173,49 @@ const Landing = () => {
                   </>
                 )}
               </div>
-              <div className="relative group p-8 bg-gradient-to-br from-institutional-navy to-otc-deep-blue rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden">
+              <div className="relative group p-8 bg-gradient-to-br from-primary via-primary-hover to-primary-dark rounded-2xl shadow-2xl hover:shadow-primary/30 transition-all duration-500 overflow-hidden">
                 <div className="absolute inset-0 shimmer-border opacity-20"></div>
                 <div className="relative z-10">
                   <div className="flex items-start justify-between mb-6">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="font-institutional text-sm text-institutional-gold uppercase tracking-wider">Mesa OTC TKB Asset</span>
-                        <Badge className="bg-institutional-gold/20 text-institutional-gold border-institutional-gold/30">Exclusivo</Badge>
+                        <span className="font-institutional text-sm text-white uppercase tracking-wider font-semibold">Mesa OTC TKB Asset</span>
+                        <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm">Exclusivo</Badge>
                       </div>
                       <h3 className="font-financial-serif text-2xl font-bold text-white">Nosso Preço</h3>
                     </div>
-                    <Shield className="h-6 w-6 text-institutional-gold" />
+                    <Shield className="h-6 w-6 text-white" />
                   </div>
                   {isLoading ? (
                     <div className="h-20 bg-white/10 rounded-lg animate-pulse"></div>
                   ) : (
                     <>
-                      <div className="font-financial-serif text-5xl font-bold text-white mb-2">R$ {tkbPrice?.toFixed(4)}</div>
-                      <div className="flex items-center gap-4 text-white/80">
+                      <div className="font-financial-serif text-5xl font-bold text-white mb-2 drop-shadow-lg">R$ {tkbPrice?.toFixed(4)}</div>
+                      <div className="flex items-center gap-4 text-white/90">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4" />
                           <span className="font-inter text-sm">Cotação instantânea</span>
                         </div>
-                        <div className="px-3 py-1 bg-success/20 text-success rounded-full text-xs font-semibold">+1% Markup</div>
+                        <div className="px-3 py-1 bg-white/20 text-white rounded-full text-xs font-semibold backdrop-blur-sm">+1% Markup</div>
                       </div>
                     </>
                   )}
                 </div>
               </div>
             </div>
-            <div className="mt-8 p-6 bg-institutional-gold/10 border border-institutional-gold/20 rounded-xl">
-              <div className="flex items-center gap-3 text-institutional-navy">
-                <CheckCircle2 className="h-5 w-5 text-institutional-gold flex-shrink-0" />
-                <p className="font-inter text-sm"><strong className="font-semibold">Spread transparente de apenas 1%</strong> — Enquanto bancos tradicionais cobram 5-7% em operações internacionais, nossa mesa OTC oferece cotações institucionais competitivas.</p>
-              </div>
-            </div>
+      <div className="mt-8 p-6 bg-primary/5 border-2 border-primary/20 rounded-xl shadow-md">
+        <div className="flex items-center gap-3 text-neutral-900">
+          <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+          <p className="font-inter text-sm"><strong className="font-semibold">Spread transparente de apenas 1%</strong> — Enquanto bancos tradicionais cobram 5-7% em operações internacionais, nossa mesa OTC oferece cotações institucionais competitivas.</p>
+        </div>
+      </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="container mx-auto px-6 py-20">
-        <Card className="max-w-4xl mx-auto shadow-elevated bg-gradient-to-br from-primary via-primary-hover to-primary border-none overflow-hidden relative">
+        <Card className="max-w-4xl mx-auto shadow-elevated bg-gradient-to-br from-primary via-primary-hover to-primary-dark border-none overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_50%)]" />
           <CardContent className="relative p-10 sm:p-16 text-center space-y-8">
             <div className="space-y-5">
@@ -234,12 +241,12 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-neutral-900 text-white py-12">
+      <footer className="bg-neutral-900 text-white py-12 border-t-2 border-primary/20">
         <div className="container mx-auto px-6">
           <div className="flex flex-col items-center gap-4">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
+              <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10 drop-shadow-lg" />
               <span className="text-xl font-playfair font-bold">TKB ASSET</span>
             </div>
             
@@ -248,10 +255,10 @@ const Landing = () => {
             
             {/* Social Media */}
             <div className="flex items-center gap-4">
-              <a href="https://www.instagram.com/tkb.assetoficial/" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors" aria-label="Instagram TKB Asset">
+              <a href="https://www.instagram.com/tkb.assetoficial/" target="_blank" rel="noopener noreferrer" className="h-10 w-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-primary transition-all duration-300" aria-label="Instagram TKB Asset">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="https://www.linkedin.com/company/tkb-asset/" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors" aria-label="LinkedIn TKB Asset">
+              <a href="https://www.linkedin.com/company/tkb-asset/" target="_blank" rel="noopener noreferrer" className="h-10 w-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-primary transition-all duration-300" aria-label="LinkedIn TKB Asset">
                 <Linkedin className="h-5 w-5" />
               </a>
             </div>
