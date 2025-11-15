@@ -127,6 +127,17 @@ const Login = () => {
                 Criar conta
               </Link>
             </div>
+
+            <div className="text-center text-sm text-muted-foreground">
+              Acesso administrativo?{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/admin/login")}
+                className="text-primary hover:underline"
+              >
+                Clique aqui
+              </button>
+            </div>
           </form>
         </CardContent>
       </Card>

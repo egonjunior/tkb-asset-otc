@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, TrendingUp, ArrowRight, LineChart, Lock, Clock, CheckCircle2, Instagram, Linkedin, UserPlus, FileCheck, Handshake } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Shield, TrendingUp, Zap, ArrowRight, LineChart, Lock, Clock, CheckCircle2, Instagram, Linkedin, UserPlus, FileCheck, Handshake } from "lucide-react";
 import tkbLogo from "@/assets/tkb-logo.png";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
+import { TrustBadge } from "@/components/TrustBadge";
+import { PremiumButton } from "@/components/PremiumButton";
 const Landing = () => {
   const navigate = useNavigate();
   const {
@@ -12,222 +14,311 @@ const Landing = () => {
     tkbPrice,
     isLoading
   } = useBinancePrice();
-  return <div className="min-h-screen bg-background">
-      {/* Header Premium */}
-      <header className="bg-gradient-to-r from-primary-dark via-primary to-primary-dark border-b border-white/10 sticky top-0 z-50 backdrop-blur-lg bg-opacity-95">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10 drop-shadow-lg" />
-              <div>
-                <h1 className="text-xl font-institutional font-bold text-white drop-shadow-md">TKB ASSET</h1>
-                <p className="text-xs text-white/70 font-inter uppercase tracking-[0.15em]">Mesa OTC Institucional</p>
+  const features = [{
+    icon: Shield,
+    title: "Segurança",
+    description: "Transações 100% seguras com criptografia de ponta a ponta. Seu patrimônio protegido em cada operação.",
+    color: "text-primary",
+    bgColor: "bg-primary/10"
+  }, {
+    icon: TrendingUp,
+    title: "Transparência",
+    description: "Cotações em tempo real, transparentes e sem taxas ocultas.",
+    color: "text-success",
+    bgColor: "bg-success/10"
+  }, {
+    icon: Zap,
+    title: "Agilidade",
+    description: "Processamento rápido e eficiente. Receba seus USDT em até 30 minutos após confirmação do pagamento.",
+    color: "text-warning",
+    bgColor: "bg-warning/10"
+  }];
+  return <div className="min-h-screen bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
+      {/* Mesh gradient overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_hsl(195,100%,92%),transparent_50%),radial-gradient(ellipse_at_bottom_left,_hsl(220,60%,95%),transparent_50%)] opacity-40 pointer-events-none"></div>
+      
+      {/* Subtle noise texture */}
+      <div className="absolute inset-0 opacity-[0.015] bg-noise pointer-events-none"></div>
+
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="bg-black border-b border-neutral-800 sticky top-0 z-50">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
+                <div>
+                  <h1 className="text-xl font-brand text-white">TKB ASSET</h1>
+                  <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Mesa OTC</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:inline-flex text-white hover:bg-neutral-800">
+                  Login
+                </Button>
+                <PremiumButton onClick={() => navigate("/register")}>
+                  Criar Conta
+                </PremiumButton>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:inline-flex text-white hover:bg-white/20 transition-all duration-300">
-                Login
-              </Button>
-              <Button onClick={() => navigate("/register")} className="bg-white text-primary hover:bg-white/90 font-institutional font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
-                Criar Conta
-              </Button>
-            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Hero Section Premium */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden gradient-premium-blue">
-        {/* Background com múltiplas camadas */}
-        <div className="absolute inset-0">
-          {/* Grid sutil */}
-          <div className="absolute inset-0 opacity-[0.03]">
-            <svg className="w-full h-full">
-              <defs>
-                <pattern id="premium-grid" width="60" height="60" patternUnits="userSpaceOnUse">
-                  <path d="M 60 0 L 0 0 0 60" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#premium-grid)" className="text-white" />
-            </svg>
-          </div>
-          {/* Gradiente radial para profundidade */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.1),transparent_50%)]"></div>
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(37,99,235,0.15),transparent_50%)]"></div>
-        </div>
-
-        <div className="container mx-auto px-6 py-20 relative z-10">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-8 animate-fade-in">
-              <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-xl">
-                <Shield className="h-4 w-4 text-white" />
-                <span className="font-institutional text-sm text-white font-medium uppercase tracking-[0.2em]">Mesa OTC Institucional</span>
-                <Lock className="h-4 w-4 text-white" />
-              </div>
-            </div>
-
-            <h2 className="text-center font-financial-serif text-5xl lg:text-7xl xl:text-8xl font-bold text-white leading-[1.05] mb-8 animate-fade-in animation-delay-200 drop-shadow-2xl">
-              Excelência em<br />
-              <span className="relative inline-block">
-                <span className="relative z-10 text-white">Operações OTC</span>
-                <div className="absolute bottom-0 left-0 w-full h-1 shimmer-border opacity-70"></div>
-              </span>
-            </h2>
-
-            <p className="text-center font-institutional text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto mb-12 animate-fade-in animation-delay-400 leading-relaxed">
-              Plataforma institucional de USDT com padrões de segurança e transparência do mercado financeiro global
+        {/* Hero Section */}
+      <section className="container mx-auto px-6 py-16 lg:py-24">
+        <div className="max-w-5xl mx-auto text-center space-y-10">
+          <div className="space-y-6 animate-fade-in">
+            <Badge variant="secondary" className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider border border-gold/30 bg-gold/10 text-gold">
+              Instituição OTC Brasileira
+            </Badge>
+            
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-foreground leading-[1.1]">
+              Segurança Institucional
+              <br />
+              <span className="text-primary">para Operações Digitais</span>
+            </h1>
+            
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto font-inter leading-relaxed">
+              Plataforma profissional de USDT com cotações em tempo real e transparência total
             </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-fade-in animation-delay-600">
-              <button onClick={() => navigate("/register")} className="group px-8 py-4 bg-white text-primary hover:bg-white/90 font-institutional font-semibold rounded-lg shadow-2xl hover:shadow-white/20 transition-all duration-300 hover:scale-105">
-                <span className="flex items-center gap-2 justify-center">
-                  Abrir Conta
-                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </span>
-              </button>
-              <button onClick={() => navigate("/cotacao")} className="px-8 py-4 bg-white/10 backdrop-blur-md text-white font-institutional font-semibold rounded-lg border border-white/30 hover:bg-white/20 shadow-xl transition-all duration-300">
-                Ver Cotações ao Vivo
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in animation-delay-800">
-              {[{
-              value: "R$ 50M+",
-              label: "Volume Transacionado",
-              icon: LineChart
-            }, {
-              value: "1.000+",
-              label: "Operações Concluídas",
-              icon: CheckCircle2
-            }, {
-              value: "18 min",
-              label: "Tempo Médio",
-              icon: Clock
-            }, {
-              value: "100%",
-              label: "Compliance PLD/FT",
-              icon: Shield
-            }].map((metric, index) => <div key={index} className="text-center p-6 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105">
-                  <metric.icon className="h-8 w-8 text-white mx-auto mb-3 drop-shadow-lg" />
-                  <div className="font-financial-serif text-3xl font-bold text-white mb-1 drop-shadow-md">{metric.value}</div>
-                  <div className="font-institutional text-sm text-white/80 uppercase tracking-wider">{metric.label}</div>
-                </div>)}
-            </div>
           </div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent"></div>
-      </section>
 
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in" style={{
+            animationDelay: '150ms'
+          }}>
+            <PremiumButton onClick={() => navigate("/login")}>
+              Acessar Plataforma
+            </PremiumButton>
+            <Button size="lg" variant="tkb" onClick={() => navigate("/cotacao")}>
+              <LineChart className="mr-2 h-5 w-5" />
+              Ver Cotações
+            </Button>
+          </div>
 
-      {/* Institutional Credibility Section */}
-      <section className="py-20 bg-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-dots-pattern opacity-30"></div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-16">
-              <span className="font-institutional text-sm text-primary uppercase tracking-[0.2em] mb-4 block font-semibold">Padrão Institucional</span>
-              <h2 className="font-financial-serif text-4xl lg:text-5xl font-bold text-neutral-900 mb-6">
-                Segurança e Conformidade<br /><span className="text-primary">em Cada Operação</span>
-              </h2>
+          {/* Live Price Cards */}
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto animate-fade-in" style={{
+            animationDelay: '300ms'
+          }}>
+            <Card className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)] hover:shadow-[0_12px_48px_rgba(0,0,0,0.1)] transition-apple hover:-translate-y-1">
+              <CardContent className="pt-8 pb-8 text-center">
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-50"></div>
+                <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold mb-2">Mercado</p>
+                <p className="text-5xl font-playfair font-bold text-foreground">
+                  {isLoading ? "..." : `R$ ${binancePrice?.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2 font-inter">Cotação Base</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent backdrop-blur-md border-primary/30 shadow-institutional hover:shadow-elevated transition-premium hover:-translate-y-1">
+              <CardContent className="pt-8 pb-8 text-center">
+                <p className="text-sm uppercase tracking-wider text-primary font-semibold mb-2">TKB Asset</p>
+                <p className="text-5xl font-playfair font-bold text-primary">
+                  {isLoading ? "..." : `R$ ${tkbPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2 font-inter">Cotação Institucional</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Trust Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-3 animate-fade-in" style={{
+            animationDelay: '450ms'
+          }}>
+            <TrustBadge icon={Lock} label="Criptografia Bancária" />
+            <TrustBadge icon={Clock} label="Liquidação Rápida" />
+            <TrustBadge icon={CheckCircle2} label="Transparência Total" />
+            <TrustBadge icon={Shield} label="100% Seguro" />
+          </div>
+
+          {/* Credibility Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+            <div className="text-center animate-fade-in">
+              <p className="text-4xl md:text-5xl font-playfair font-bold text-primary mb-2">
+                +1.000
+              </p>
+              <p className="text-neutral-600 font-medium">Transações Realizadas</p>
             </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[{
-              icon: Shield,
-              title: "Compliance Total PLD/FT",
-              description: "Operações 100% regulamentadas conforme normativas COAF e Banco Central",
-              badge: "Auditado"
-            }, {
-              icon: Lock,
-              title: "Custódia Institucional",
-              description: "Ativos protegidos com infraestrutura de nível bancário e multi-assinatura",
-              badge: "Certificado"
-            }, {
-              icon: FileCheck,
-              title: "KYC Rigoroso",
-              description: "Processo de validação completo seguindo padrões internacionais FATF",
-              badge: "Verificado"
-            }].map((item, index) => <div key={index} className="group p-8 bg-white rounded-xl border-2 border-neutral-200 hover:border-primary hover:shadow-2xl transition-all duration-500 shadow-md">
-                  <div className="mb-6 relative inline-block">
-                    <div className="h-16 w-16 bg-gradient-to-br from-primary to-primary-hover rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-lg">
-                      <item.icon className="h-8 w-8 text-white" />
-                    </div>
-                    <span className="absolute -top-2 -right-2 px-3 py-1 bg-primary text-white text-[10px] font-bold uppercase rounded-full shadow-md">{item.badge}</span>
-                  </div>
-                  <h3 className="font-institutional text-xl font-bold text-neutral-900 mb-3">{item.title}</h3>
-                  <p className="font-inter text-neutral-600 leading-relaxed">{item.description}</p>
-                </div>)}
+            <div className="text-center animate-fade-in" style={{
+              animationDelay: '0.1s'
+            }}>
+              <p className="text-4xl md:text-5xl font-playfair font-bold text-primary mb-2">
+                +R$ 50M
+              </p>
+              <p className="text-neutral-600 font-medium">Negociados</p>
+            </div>
+            <div className="text-center animate-fade-in" style={{
+              animationDelay: '0.2s'
+            }}>
+              <p className="text-4xl md:text-5xl font-playfair font-bold text-primary mb-2">
+                98%
+              </p>
+              <p className="text-neutral-600 font-medium">Concluídas em menos de 1h</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Live Pricing Section */}
-      <section id="live-pricing" className="py-16 bg-gradient-to-b from-white to-neutral-50">
+      {/* Features Section */}
+      <section className="py-24 bg-gradient-to-b from-neutral-50 to-background">
         <div className="container mx-auto px-6">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 rounded-full mb-4">
-                <div className="h-2 w-2 bg-success rounded-full animate-pulse"></div>
-                <span className="font-institutional text-sm text-success uppercase tracking-wider">Cotações em Tempo Real</span>
-              </div>
-              <h2 className="font-financial-serif text-4xl font-bold text-neutral-900">Preços Transparentes</h2>
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-20 space-y-4">
+              <Badge variant="secondary" className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider">
+                Diferenciais
+              </Badge>
+              <h2 className="text-4xl sm:text-5xl font-playfair font-bold text-foreground">
+                Por que escolher a TKB Asset?
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-inter">
+                Nossa plataforma oferece tudo que você precisa para operar com confiança no mercado OTC
+              </p>
             </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="group p-8 bg-white rounded-2xl border-2 border-neutral-200 hover:border-primary transition-all duration-500 hover:shadow-2xl shadow-md">
-                <div className="flex items-start justify-between mb-6">
-                  <div>
-                    <span className="font-institutional text-sm text-neutral-600 uppercase tracking-wider">Referência de Mercado</span>
-                    <h3 className="font-financial-serif text-2xl font-bold text-neutral-900 mt-1">Binance / OKX</h3>
-                  </div>
-                  <TrendingUp className="h-6 w-6 text-neutral-400 group-hover:text-primary transition-colors" />
-                </div>
-                {isLoading ? <div className="h-20 bg-neutral-100 rounded-lg animate-pulse"></div> : <>
-                    <div className="font-financial-serif text-5xl font-bold text-neutral-900 mb-2">R$ {binancePrice?.toFixed(4)}</div>
-                    <div className="flex items-center gap-2 text-neutral-600">
-                      <Clock className="h-4 w-4" />
-                      <span className="font-inter text-sm">Atualizado agora</span>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {features.map((feature, index) => <Card key={index} className="shadow-institutional hover:shadow-elevated transition-premium hover:-translate-y-2 animate-fade-in border-border bg-white" style={{
+                animationDelay: `${index * 150}ms`
+              }}>
+                  <CardContent className="pt-10 pb-10 px-8 text-center space-y-5">
+                    <div className={`h-20 w-20 rounded-2xl ${feature.bgColor} flex items-center justify-center mx-auto shadow-lg`}>
+                      <feature.icon className={`h-10 w-10 ${feature.color}`} strokeWidth={1.5} />
                     </div>
-                  </>}
-              </div>
-              <div className="relative group p-8 bg-gradient-to-br from-primary via-primary-hover to-primary-dark rounded-2xl shadow-2xl hover:shadow-primary/30 transition-all duration-500 overflow-hidden">
-                <div className="absolute inset-0 shimmer-border opacity-20"></div>
-                <div className="relative z-10">
-                  <div className="flex items-start justify-between mb-6">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-institutional text-sm text-white uppercase tracking-wider font-semibold">Mesa OTC TKB Asset</span>
-                        <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm">Exclusivo</Badge>
-                      </div>
-                      <h3 className="font-financial-serif text-2xl font-bold text-white">Nosso Preço</h3>
+                    <div className="space-y-3">
+                      <h3 className="text-2xl font-playfair font-bold text-foreground">
+                        {feature.title}
+                      </h3>
+                      <p className="text-muted-foreground font-inter leading-relaxed">
+                        {feature.description}
+                      </p>
                     </div>
-                    <Shield className="h-6 w-6 text-white" />
-                  </div>
-                  {isLoading ? <div className="h-20 bg-white/10 rounded-lg animate-pulse"></div> : <>
-                      <div className="font-financial-serif text-5xl font-bold text-white mb-2 drop-shadow-lg">R$ {tkbPrice?.toFixed(4)}</div>
-                      <div className="flex items-center gap-4 text-white/90">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          <span className="font-inter text-sm">Cotação instantânea</span>
-                        </div>
-                        
-                      </div>
-                    </>}
-                </div>
-              </div>
+                  </CardContent>
+                </Card>)}
             </div>
-      <div className="mt-8 p-6 bg-primary/5 border-2 border-primary/20 rounded-xl shadow-md">
-        <div className="flex items-center gap-3 text-neutral-900">
-          <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-          <p className="font-inter text-sm"><strong className="font-semibold">Spread transparente de apenas 1%</strong> — Enquanto bancos tradicionais cobram 5-7% em operações internacionais, nossa mesa OTC oferece cotações institucionais competitivas.</p>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-16 space-y-4">
+              <Badge variant="secondary" className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider">
+                Simples e Rápido
+              </Badge>
+              <h2 className="text-4xl sm:text-5xl font-playfair font-bold text-foreground">
+                Como Funciona
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-inter">
+                Três passos simples para começar a negociar com segurança e transparência
+              </p>
+            </div>
+
+            {/* Steps Grid */}
+            <div className="grid md:grid-cols-3 gap-8 relative">
+              {/* Connecting Line (desktop only) */}
+              <div className="hidden md:block absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20 -z-10" />
+              
+              {/* Step 1: Cadastro */}
+              <div className="relative animate-fade-in">
+                <Card className="bg-gradient-to-br from-neutral-900 to-neutral-800 text-white border-none shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2">
+                  <CardContent className="pt-12 pb-10 px-8 text-center space-y-6">
+                    {/* Icon */}
+                    <div className="h-24 w-24 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center mx-auto shadow-2xl border-4 border-white/20">
+                      <UserPlus className="h-12 w-12 text-white" strokeWidth={1.5} />
+                    </div>
+                    
+                    {/* Step Number */}
+                    <div className="inline-block px-4 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold uppercase tracking-wider">
+                      Passo 1
+                    </div>
+                    
+                    {/* Title */}
+                    <h3 className="text-2xl font-playfair font-bold">
+                      Cadastro
+                    </h3>
+                    
+                    {/* Description */}
+                    <p className="text-white/80 font-inter leading-relaxed">
+                      Crie sua conta em minutos com CPF ou CNPJ. Processo 100% digital e seguro.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Step 2: Validação */}
+              <div className="relative animate-fade-in" style={{ animationDelay: '150ms' }}>
+                <Card className="bg-gradient-to-br from-neutral-900 to-neutral-800 text-white border-none shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2">
+                  <CardContent className="pt-12 pb-10 px-8 text-center space-y-6">
+                    {/* Icon */}
+                    <div className="h-24 w-24 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center mx-auto shadow-2xl border-4 border-white/20">
+                      <FileCheck className="h-12 w-12 text-white" strokeWidth={1.5} />
+                    </div>
+                    
+                    {/* Step Number */}
+                    <div className="inline-block px-4 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold uppercase tracking-wider">
+                      Passo 2
+                    </div>
+                    
+                    {/* Title */}
+                    <h3 className="text-2xl font-playfair font-bold">
+                      Validação
+                    </h3>
+                    
+                    {/* Description */}
+                    <p className="text-white/80 font-inter leading-relaxed">
+                      Envie seus documentos para análise. Nossa equipe valida em até 24 horas.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Step 3: Negociação */}
+              <div className="relative animate-fade-in" style={{ animationDelay: '300ms' }}>
+                <Card className="bg-gradient-to-br from-primary via-primary-hover to-primary border-none shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2">
+                  <CardContent className="pt-12 pb-10 px-8 text-center space-y-6">
+                    {/* Icon */}
+                    <div className="h-24 w-24 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center mx-auto shadow-2xl border-4 border-white/20">
+                      <Handshake className="h-12 w-12 text-white" strokeWidth={1.5} />
+                    </div>
+                    
+                    {/* Step Number */}
+                    <div className="inline-block px-4 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold uppercase tracking-wider">
+                      Passo 3
+                    </div>
+                    
+                    {/* Title */}
+                    <h3 className="text-2xl font-playfair font-bold">
+                      Negociação
+                    </h3>
+                    
+                    {/* Description */}
+                    <p className="text-white/80 font-inter leading-relaxed">
+                      Negocie USDT com segurança, transparência e liquidação rápida.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Bottom CTA */}
+            <div className="mt-16 text-center animate-fade-in" style={{ animationDelay: '450ms' }}>
+              <p className="text-muted-foreground mb-6 font-inter text-lg">
+                Comece agora mesmo e faça parte da maior mesa OTC do Brasil
+              </p>
+              <PremiumButton onClick={() => navigate("/register")}>
+                Criar Minha Conta Grátis
+              </PremiumButton>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="container mx-auto px-6 py-20">
-        <Card className="max-w-4xl mx-auto shadow-elevated bg-gradient-to-br from-primary via-primary-hover to-primary-dark border-none overflow-hidden relative">
+        <Card className="max-w-4xl mx-auto shadow-elevated bg-gradient-to-br from-primary via-primary-hover to-primary border-none overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_50%)]" />
           <CardContent className="relative p-10 sm:p-16 text-center space-y-8">
             <div className="space-y-5">
@@ -253,12 +344,12 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-neutral-900 text-white py-12 border-t-2 border-primary/20">
+      <footer className="bg-neutral-900 text-white py-12">
         <div className="container mx-auto px-6">
           <div className="flex flex-col items-center gap-4">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10 drop-shadow-lg" />
+              <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
               <span className="text-xl font-playfair font-bold">TKB ASSET</span>
             </div>
             
@@ -267,10 +358,10 @@ const Landing = () => {
             
             {/* Social Media */}
             <div className="flex items-center gap-4">
-              <a href="https://www.instagram.com/tkb.assetoficial/" target="_blank" rel="noopener noreferrer" className="h-10 w-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-primary transition-all duration-300" aria-label="Instagram TKB Asset">
+              <a href="https://www.instagram.com/tkb.assetoficial/" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors" aria-label="Instagram TKB Asset">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="https://www.linkedin.com/company/tkb-asset/" target="_blank" rel="noopener noreferrer" className="h-10 w-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-primary transition-all duration-300" aria-label="LinkedIn TKB Asset">
+              <a href="https://www.linkedin.com/company/tkb-asset/" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors" aria-label="LinkedIn TKB Asset">
                 <Linkedin className="h-5 w-5" />
               </a>
             </div>
@@ -282,6 +373,7 @@ const Landing = () => {
           </div>
         </div>
       </footer>
+      </div>
     </div>;
 };
 export default Landing;

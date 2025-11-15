@@ -9,7 +9,18 @@ import { Shield, LogOut, Plus, Search, Eye, Trash2, Edit } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { OfflineClientModal } from "@/components/admin/OfflineClientModal";
-import type { OfflineClient } from "@/types/offlineClients";
+
+interface OfflineClient {
+  id: string;
+  full_name: string;
+  document_type: string;
+  document_number: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function AdminOfflineClients() {
   const navigate = useNavigate();

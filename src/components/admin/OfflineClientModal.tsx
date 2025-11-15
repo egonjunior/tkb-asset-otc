@@ -7,7 +7,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import type { OfflineClient } from "@/types/offlineClients";
+
+interface OfflineClient {
+  id: string;
+  full_name: string;
+  document_type: string;
+  document_number: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+}
 
 interface OfflineClientModalProps {
   open: boolean;

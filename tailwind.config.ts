@@ -23,7 +23,7 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
           hover: "hsl(var(--primary-hover))",
-          dark: "hsl(var(--primary-dark))",
+          glow: "hsl(var(--primary-glow))",
         },
         "tkb-cyan": {
           DEFAULT: "hsl(var(--tkb-cyan))",
@@ -57,8 +57,6 @@ export default {
           700: "hsl(var(--neutral-700))",
           800: "hsl(var(--neutral-800))",
           900: "hsl(var(--neutral-900))",
-          black: "hsl(var(--neutral-black))",
-          white: "hsl(var(--neutral-white))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",

@@ -13,7 +13,35 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { OfflineClientReport } from "@/components/admin/OfflineClientReport";
-import type { OfflineClient, OfflineTransaction, OfflineDocument } from "@/types/offlineClients";
+
+interface OfflineClient {
+  id: string;
+  full_name: string;
+  document_type: string;
+  document_number: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+}
+
+interface OfflineTransaction {
+  id: string;
+  transaction_date: string;
+  usdt_amount: number;
+  brl_amount: number;
+  usdt_rate: number;
+  operation_type: string;
+  notes?: string;
+  created_at: string;
+}
+
+interface OfflineDocument {
+  id: string;
+  document_name: string;
+  file_url: string;
+  document_type?: string;
+  uploaded_at: string;
+}
 
 export default function AdminOfflineClientDetails() {
   const navigate = useNavigate();
