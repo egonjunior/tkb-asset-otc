@@ -48,6 +48,11 @@ export default function PartnerB2B() {
 
       if (data) {
         setExistingRequest(data);
+        
+        // If approved, redirect to B2B OTC environment
+        if (data.status === 'approved') {
+          navigate('/partner/b2b-otc');
+        }
       }
     } catch (error) {
       console.error('Error checking request:', error);
