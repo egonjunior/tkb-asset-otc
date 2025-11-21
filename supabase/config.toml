@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.get-document]
 verify_jwt = true
+
+[functions.get-otc-quote]
+verify_jwt = false
