@@ -33,6 +33,8 @@ import Settings from "./pages/Settings";
 import Empresas from "./pages/Empresas";
 import AdminOfflineClients from "./pages/admin/AdminOfflineClients";
 import AdminOfflineClientDetails from "./pages/admin/AdminOfflineClientDetails";
+import OtcQuote from "./pages/OtcQuote";
+import AdminOtcClients from "./pages/admin/AdminOtcClients";
 
 const queryClient = new QueryClient();
 
@@ -100,7 +102,9 @@ const App = () => (
             <Route path="/admin/users/:userId" element={<AdminUserDetails />} />
             <Route path="/admin/offline-clients" element={<AdminOfflineClients />} />
             <Route path="/admin/offline-clients/:clientId" element={<AdminOfflineClientDetails />} />
+            <Route path="/admin/otc-clients" element={<AdminOtcClients />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/:slug" element={<OtcQuote />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

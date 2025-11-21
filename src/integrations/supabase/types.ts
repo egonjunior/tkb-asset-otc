@@ -425,6 +425,42 @@ export type Database = {
         }
         Relationships: []
       }
+      otc_quote_clients: {
+        Row: {
+          client_name: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          slug: string
+          spread_percent: number
+          updated_at: string | null
+        }
+        Insert: {
+          client_name: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          slug: string
+          spread_percent: number
+          updated_at?: string | null
+        }
+        Update: {
+          client_name?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          slug?: string
+          spread_percent?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       partner_b2b_config: {
         Row: {
           approved_at: string | null

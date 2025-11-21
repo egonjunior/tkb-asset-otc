@@ -345,7 +345,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Parceiros B2B Card */}
-          <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+          <div className="grid sm:grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
             <Card 
               className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-indigo-500" 
               onClick={() => navigate('/admin/partners-b2b')}
@@ -375,6 +375,22 @@ const AdminDashboard = () => {
                   <UserCog className="h-8 w-8 text-blue-600" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">Operações manuais e relatórios mensais</p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-teal-500" 
+              onClick={() => navigate('/admin/otc-clients')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">💰 Clientes OTC Personalizados</p>
+                    <p className="text-xl font-bold text-teal-600">Gerenciar →</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-teal-600" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Cotações exclusivas com spreads personalizados</p>
               </CardContent>
             </Card>
           </div>
