@@ -21,7 +21,17 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const slug = url.searchParams.get('slug');
+    let slug = url.searchParams.get('slug');
+    
+    // Se não vier na URL, tentar pegar do body
+    if (!slug) {
+      try {
+        const body = await req.json();
+        slug = body.slug;
+      } catch {
+        // Body vazio ou inválido
+      }
+    }
     
     if (!slug) {
       throw new Error('Slug do cliente é obrigatório');
