@@ -73,38 +73,13 @@ export default function OtcQuote() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="text-center py-4 bg-primary/10 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">Seu Preço Exclusivo</p>
+            <div className="text-center py-6 bg-primary/10 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">Cotação Exclusiva USDT</p>
               <p className="text-5xl font-bold text-primary">
                 R$ {data.prices.clientPrice.toFixed(4)}
               </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                Spread de {data.client.spreadPercent}% sobre OKX
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-gray-800 rounded">
-                <p className="text-xs text-gray-400 mb-1">OKX Base</p>
-                <p className="text-lg font-semibold text-foreground">
-                  R$ {data.prices.okxPrice.toFixed(4)}
-                </p>
-              </div>
-              <div className="text-center p-3 bg-gray-800 rounded">
-                <p className="text-xs text-gray-400 mb-1">Spread Padrão</p>
-                <p className="text-lg font-semibold line-through text-gray-500">
-                  R$ {data.prices.standardPrice.toFixed(4)}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-center">
-              <p className="text-sm text-green-400 mb-1">Você economiza</p>
-              <p className="text-2xl font-bold text-green-400">
-                {data.savings.percent}%
-              </p>
-              <p className="text-xs text-green-400/80">
-                R$ {data.savings.amount.toFixed(4)} por USDT
+              <p className="text-xs text-muted-foreground mt-3">
+                Baseado no preço médio de mercado
               </p>
             </div>
 
@@ -123,7 +98,7 @@ export default function OtcQuote() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Mercado 24h (OKX)</CardTitle>
+            <CardTitle className="text-lg">Mercado 24h</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4 text-center">
@@ -146,7 +121,7 @@ export default function OtcQuote() {
         </Card>
 
         <p className="text-center text-sm text-gray-500">
-          Powered by TKB Asset • Dados em tempo real da OKX
+          Powered by TKB Asset • Cotação em tempo real
         </p>
       </div>
     </div>
