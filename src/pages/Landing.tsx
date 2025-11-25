@@ -79,7 +79,21 @@ const Landing = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900">
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+        {/* Video Background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/videos/cambio_mundial.mp4" type="video/mp4" />
+        </video>
+
+        {/* Dark Overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-br from-neutral-900/85 via-neutral-900/75 to-neutral-900/80" />
+
         {/* Grid Pattern Overlay */}
         <div 
           className="absolute inset-0 opacity-10"
