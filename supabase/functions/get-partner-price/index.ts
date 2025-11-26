@@ -43,24 +43,26 @@ serve(async (req) => {
     // Check if user is a B2B partner
     const { data: partnerConfig } = await supabase
       .from('partner_b2b_config')
-      .select('markup_percent, is_active, company_name')
+      .select('markup_percent, is_active, company_name, price_source')
       .eq('user_id', user.id)
       .eq('is_active', true)
       .maybeSingle();
 
-    // Determine markup
+    // Determine markup and price source
     const markup = partnerConfig 
       ? (1 + partnerConfig.markup_percent / 100)  // Ex: 1.004 for 0.4%
       : 1.01; // Default: 1%
+    
+    const priceSource = partnerConfig?.price_source || 'binance';
 
-    const cacheKey = `price_${markup}`;
+    const cacheKey = `price_${markup}_${priceSource}`;
     const now = Date.now();
 
     // Check cache
     if (priceCache.has(cacheKey)) {
       const cached = priceCache.get(cacheKey)!;
       if (now - cached.timestamp < CACHE_DURATION_MS) {
-        console.log(`✅ Returning cached price for markup ${markup}`);
+        console.log(`✅ Returning cached price for markup ${markup} from ${priceSource}`);
         return new Response(
           JSON.stringify({ ...cached.data, cached: true }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -68,25 +70,62 @@ serve(async (req) => {
       }
     }
 
-    // Fetch price from Binance
-    const [priceResponse, tickerResponse] = await Promise.all([
-      fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'),
-      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL'),
-    ]);
+    // Fetch price based on selected source
+    let basePrice: number;
+    let tickerData: any;
 
-    if (!priceResponse.ok || !tickerResponse.ok) {
-      throw new Error('Failed to fetch price from Binance');
+    if (priceSource === 'okx') {
+      // Fetch from OKX
+      const okxResponse = await fetch('https://www.okx.com/api/v5/market/ticker?instId=USDT-BRL');
+      
+      if (!okxResponse.ok) {
+        throw new Error('Failed to fetch price from OKX');
+      }
+
+      const okxData = await okxResponse.json();
+      
+      if (!okxData.data || okxData.data.length === 0) {
+        throw new Error('Invalid response from OKX');
+      }
+
+      const okxTicker = okxData.data[0];
+      basePrice = parseFloat(okxTicker.last);
+      
+      // Adapt OKX data to match our response format
+      tickerData = {
+        priceChangePercent: ((parseFloat(okxTicker.last) - parseFloat(okxTicker.open24h)) / parseFloat(okxTicker.open24h) * 100).toFixed(2),
+        volume: okxTicker.volCcy24h,
+        highPrice: okxTicker.high24h,
+        lowPrice: okxTicker.low24h,
+        count: '0', // OKX doesn't provide trade count
+      };
+
+      console.log(`📊 OKX Price fetched: ${basePrice.toFixed(4)}`);
+    } else {
+      // Fetch from Binance (default)
+      const [priceResponse, tickerResponse] = await Promise.all([
+        fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'),
+        fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL'),
+      ]);
+
+      if (!priceResponse.ok || !tickerResponse.ok) {
+        throw new Error('Failed to fetch price from Binance');
+      }
+
+      const priceData = await priceResponse.json();
+      tickerData = await tickerResponse.json();
+      basePrice = parseFloat(priceData.price);
+
+      console.log(`📊 Binance Price fetched: ${basePrice.toFixed(4)}`);
     }
 
-    const priceData = await priceResponse.json();
-    const tickerData = await tickerResponse.json();
-
-    const binancePrice = parseFloat(priceData.price);
-    const tkbPrice = binancePrice * markup;
-    const standardPrice = binancePrice * 1.01; // Standard 1% markup for comparison
+    const tkbPrice = basePrice * markup;
+    const standardPrice = basePrice * 1.01; // Standard 1% markup for comparison
 
     const responseData = {
-      binancePrice,
+      priceSource: priceSource,
+      basePrice: basePrice,
+      binancePrice: basePrice, // Keep for backwards compatibility
       tkbPrice,
       standardPrice,
       markup: markup,
@@ -105,7 +144,7 @@ serve(async (req) => {
     // Update cache
     priceCache.set(cacheKey, { data: responseData, timestamp: now });
 
-    console.log(`✅ Price for user ${user.id}: Binance=${binancePrice.toFixed(4)} | TKB=${tkbPrice.toFixed(4)} | Markup=${responseData.markupPercent}% | B2B=${!!partnerConfig}`);
+    console.log(`✅ Price for user ${user.id}: Source=${priceSource} | Base=${basePrice.toFixed(4)} | TKB=${tkbPrice.toFixed(4)} | Markup=${responseData.markupPercent}% | B2B=${!!partnerConfig}`);
 
     return new Response(
       JSON.stringify({ ...responseData, cached: false }),
