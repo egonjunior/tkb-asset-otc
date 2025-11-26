@@ -52,13 +52,14 @@ serve(async (req) => {
       throw new Error('Cliente OTC não encontrado ou inativo');
     }
 
-    const cacheKey = `otc_${slug}`;
+    const priceSource = clientConfig.price_source || 'binance';
+    const cacheKey = `otc_${slug}_${priceSource}`;
     const now = Date.now();
 
     if (priceCache.has(cacheKey)) {
       const cached = priceCache.get(cacheKey)!;
       if (now - cached.timestamp < CACHE_DURATION_MS) {
-        console.log(`✅ Cache hit para ${slug}`);
+        console.log(`✅ Cache hit para ${slug} (fonte: ${priceSource})`);
         return new Response(
           JSON.stringify({ ...cached.data, cached: true }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -66,40 +67,72 @@ serve(async (req) => {
       }
     }
 
-    console.log(`🔍 Buscando preço da OKX para ${slug}`);
+    console.log(`🔍 Buscando preço de ${priceSource.toUpperCase()} para ${slug}`);
     
-    const okxResponse = await fetch(
-      'https://www.okx.com/api/v5/market/ticker?instId=USDT-BRL'
-    );
+    let basePrice: number;
+    let tickerData: any;
 
-    if (!okxResponse.ok) {
-      throw new Error('Falha ao buscar preço da OKX');
+    if (priceSource === 'okx') {
+      // Fetch from OKX
+      const okxResponse = await fetch(
+        'https://www.okx.com/api/v5/market/ticker?instId=USDT-BRL'
+      );
+
+      if (!okxResponse.ok) {
+        throw new Error('Falha ao buscar preço da OKX');
+      }
+
+      const okxData = await okxResponse.json();
+      
+      if (okxData.code !== '0' || !okxData.data || okxData.data.length === 0) {
+        throw new Error('Dados inválidos da OKX');
+      }
+
+      tickerData = okxData.data[0];
+      basePrice = parseFloat(tickerData.last);
+    } else {
+      // Fetch from Binance (default)
+      const [priceResponse, ticker24hResponse] = await Promise.all([
+        fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'),
+        fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL'),
+      ]);
+
+      if (!priceResponse.ok || !ticker24hResponse.ok) {
+        throw new Error('Falha ao buscar preço da Binance');
+      }
+
+      const priceData = await priceResponse.json();
+      const ticker24h = await ticker24hResponse.json();
+      
+      basePrice = parseFloat(priceData.price);
+      
+      // Adapt Binance data to match OKX format
+      tickerData = {
+        last: basePrice.toString(),
+        high24h: ticker24h.highPrice,
+        low24h: ticker24h.lowPrice,
+        vol24h: ticker24h.volume,
+        sodUtc8: ticker24h.priceChangePercent,
+      };
     }
-
-    const okxData = await okxResponse.json();
-    
-    if (okxData.code !== '0' || !okxData.data || okxData.data.length === 0) {
-      throw new Error('Dados inválidos da OKX');
-    }
-
-    const tickerData = okxData.data[0];
-    const okxPrice = parseFloat(tickerData.last);
     
     const markup = 1 + clientConfig.spread_percent / 100;
-    const clientPrice = okxPrice * markup;
+    const clientPrice = basePrice * markup;
 
-    const standardPrice = okxPrice * 1.01;
+    const standardPrice = basePrice * 1.01;
     const savings = standardPrice - clientPrice;
     const savingsPercent = ((savings / standardPrice) * 100).toFixed(2);
 
     const responseData = {
+      priceSource: priceSource,
       client: {
         slug: clientConfig.slug,
         name: clientConfig.client_name,
         spreadPercent: clientConfig.spread_percent,
       },
       prices: {
-        okxPrice: parseFloat(okxPrice.toFixed(4)),
+        basePrice: parseFloat(basePrice.toFixed(4)),
+        okxPrice: parseFloat(basePrice.toFixed(4)), // Backwards compatibility
         clientPrice: parseFloat(clientPrice.toFixed(4)),
         standardPrice: parseFloat(standardPrice.toFixed(4)),
       },
@@ -118,7 +151,7 @@ serve(async (req) => {
 
     priceCache.set(cacheKey, { data: responseData, timestamp: now });
 
-    console.log(`✅ OTC Quote para ${slug}: OKX=${okxPrice.toFixed(4)} | Cliente=${clientPrice.toFixed(4)} | Spread=${clientConfig.spread_percent}%`);
+    console.log(`✅ OTC Quote para ${slug}: Fonte=${priceSource.toUpperCase()} | Base=${basePrice.toFixed(4)} | Cliente=${clientPrice.toFixed(4)} | Spread=${clientConfig.spread_percent}%`);
 
     return new Response(
       JSON.stringify({ ...responseData, cached: false }),
