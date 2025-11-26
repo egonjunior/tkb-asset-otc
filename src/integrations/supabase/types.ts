@@ -433,6 +433,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           notes: string | null
+          price_source: string | null
           slug: string
           spread_percent: number
           updated_at: string | null
@@ -444,6 +445,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           notes?: string | null
+          price_source?: string | null
           slug: string
           spread_percent: number
           updated_at?: string | null
@@ -455,6 +457,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           notes?: string | null
+          price_source?: string | null
           slug?: string
           spread_percent?: number
           updated_at?: string | null

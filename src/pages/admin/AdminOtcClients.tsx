@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Plus, Copy, ExternalLink, Pencil, Power, PowerOff, ArrowLeft } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,6 +18,7 @@ interface OtcClient {
   slug: string;
   client_name: string;
   spread_percent: number;
+  price_source: string;
   is_active: boolean;
   notes: string | null;
   created_at: string;
@@ -32,6 +34,7 @@ export default function AdminOtcClients() {
     slug: '',
     client_name: '',
     spread_percent: '0.5',
+    price_source: 'binance' as 'binance' | 'okx',
     notes: '',
   });
 
@@ -66,6 +69,7 @@ export default function AdminOtcClients() {
           .update({
             client_name: formData.client_name,
             spread_percent: parseFloat(formData.spread_percent),
+            price_source: formData.price_source,
             notes: formData.notes,
           })
           .eq('id', editingClient.id);
@@ -79,6 +83,7 @@ export default function AdminOtcClients() {
             slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, ''),
             client_name: formData.client_name,
             spread_percent: parseFloat(formData.spread_percent),
+            price_source: formData.price_source,
             notes: formData.notes,
           });
 
@@ -88,7 +93,7 @@ export default function AdminOtcClients() {
 
       setIsDialogOpen(false);
       setEditingClient(null);
-      setFormData({ slug: '', client_name: '', spread_percent: '0.5', notes: '' });
+      setFormData({ slug: '', client_name: '', spread_percent: '0.5', price_source: 'binance', notes: '' });
       fetchClients();
     } catch (error: any) {
       toast.error(error.message || 'Erro ao salvar cliente');
@@ -124,6 +129,7 @@ export default function AdminOtcClients() {
       slug: client.slug,
       client_name: client.client_name,
       spread_percent: client.spread_percent.toString(),
+      price_source: (client.price_source as 'binance' | 'okx') || 'binance',
       notes: client.notes || '',
     });
     setIsDialogOpen(true);
@@ -132,7 +138,7 @@ export default function AdminOtcClients() {
   const closeDialog = () => {
     setIsDialogOpen(false);
     setEditingClient(null);
-    setFormData({ slug: '', client_name: '', spread_percent: '0.5', notes: '' });
+    setFormData({ slug: '', client_name: '', spread_percent: '0.5', price_source: 'binance', notes: '' });
   };
 
   return (
@@ -187,6 +193,32 @@ export default function AdminOtcClients() {
               </div>
 
               <div>
+                <Label htmlFor="price_source">⚙️ Fonte de Preço*</Label>
+                <Select 
+                  value={formData.price_source} 
+                  onValueChange={(value: 'binance' | 'okx') => setFormData({ ...formData, price_source: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a fonte" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="binance">
+                      <div className="flex flex-col">
+                        <span className="font-medium">Binance</span>
+                        <span className="text-xs text-muted-foreground">Maior liquidez, preço spot global</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="okx">
+                      <div className="flex flex-col">
+                        <span className="font-medium">OKX</span>
+                        <span className="text-xs text-muted-foreground">Melhor spread BRL, mercado local</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label htmlFor="spread_percent">Spread (%)*</Label>
                 <Input
                   id="spread_percent"
@@ -199,7 +231,7 @@ export default function AdminOtcClients() {
                   required
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Ex: 0.5 = 0.5% sobre o preço da OKX
+                  Ex: 0.5 = 0.5% sobre o preço da {formData.price_source === 'binance' ? 'Binance' : 'OKX'}
                 </p>
               </div>
 
@@ -242,6 +274,7 @@ export default function AdminOtcClients() {
                 <TableRow>
                   <TableHead>Slug</TableHead>
                   <TableHead>Cliente</TableHead>
+                  <TableHead>Fonte</TableHead>
                   <TableHead>Spread</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Criado em</TableHead>
@@ -253,6 +286,11 @@ export default function AdminOtcClients() {
                   <TableRow key={client.id}>
                     <TableCell className="font-mono text-sm">/{client.slug}</TableCell>
                     <TableCell className="font-medium">{client.client_name}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="uppercase">
+                        {client.price_source || 'binance'}
+                      </Badge>
+                    </TableCell>
                     <TableCell>{client.spread_percent}%</TableCell>
                     <TableCell>
                       <Badge variant={client.is_active ? 'default' : 'secondary'}>
