@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -23,6 +24,9 @@ export const PartnerB2BConfigModal = ({ partner, isOpen, onClose, onSuccess }: P
 
   const [markupPercent, setMarkupPercent] = useState(
     config?.markup_percent?.toString() || "0.4"
+  );
+  const [priceSource, setPriceSource] = useState<'binance' | 'okx'>(
+    (config?.price_source as 'binance' | 'okx') || "binance"
   );
   const [notes, setNotes] = useState(partner?.notes || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,6 +54,7 @@ export const PartnerB2BConfigModal = ({ partner, isOpen, onClose, onSuccess }: P
         .upsert({
           user_id: partner.user_id,
           markup_percent: parseFloat(markupPercent),
+          price_source: priceSource,
           is_active: true,
           approved_by: user.id,
           approved_at: new Date().toISOString(),
@@ -107,9 +112,33 @@ export const PartnerB2BConfigModal = ({ partner, isOpen, onClose, onSuccess }: P
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Price Source Configuration */}
+          <div className="space-y-2">
+            <Label htmlFor="priceSource">⚙️ Fonte de Preço</Label>
+            <Select value={priceSource} onValueChange={(value: 'binance' | 'okx') => setPriceSource(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a fonte" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="binance">
+                  <div className="flex flex-col">
+                    <span className="font-medium">Binance</span>
+                    <span className="text-xs text-muted-foreground">Maior liquidez, preço spot global</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="okx">
+                  <div className="flex flex-col">
+                    <span className="font-medium">OKX</span>
+                    <span className="text-xs text-muted-foreground">Melhor spread BRL, mercado local</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Markup Configuration */}
           <div className="space-y-2">
-            <Label htmlFor="markup">Configurar Markup Personalizado (%)</Label>
+            <Label htmlFor="markup">📊 Configurar Markup Personalizado (%)</Label>
             <Input
               id="markup"
               type="number"
@@ -119,16 +148,16 @@ export const PartnerB2BConfigModal = ({ partner, isOpen, onClose, onSuccess }: P
               placeholder="0.4"
             />
             <p className="text-xs text-muted-foreground">
-              Ex: 0.4 = 0.4% de markup (Binance + 0.4%)
+              Ex: 0.4 = 0.4% de markup ({priceSource === 'binance' ? 'Binance' : 'OKX'} + 0.4%)
             </p>
           </div>
 
           {/* Price Preview */}
           <div className="bg-muted p-4 rounded-lg space-y-2">
-            <h4 className="font-semibold text-sm mb-3">Preview de Preços:</h4>
+            <h4 className="font-semibold text-sm mb-3">Preview de Preços (Fonte: {priceSource === 'binance' ? 'Binance' : 'OKX'}):</h4>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Preço Binance:</span>
+                <span className="text-muted-foreground">Preço {priceSource === 'binance' ? 'Binance' : 'OKX'}:</span>
                 <span className="font-mono">R$ {mockBinancePrice.toFixed(4)}</span>
               </div>
               <div className="flex justify-between">

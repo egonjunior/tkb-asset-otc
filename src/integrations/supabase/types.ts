@@ -472,6 +472,7 @@ export type Database = {
           markup_percent: number
           markup_type: string | null
           notes: string | null
+          price_source: string | null
           trading_volume_monthly: number | null
           updated_at: string | null
           user_id: string
@@ -486,6 +487,7 @@ export type Database = {
           markup_percent: number
           markup_type?: string | null
           notes?: string | null
+          price_source?: string | null
           trading_volume_monthly?: number | null
           updated_at?: string | null
           user_id: string
@@ -500,6 +502,7 @@ export type Database = {
           markup_percent?: number
           markup_type?: string | null
           notes?: string | null
+          price_source?: string | null
           trading_volume_monthly?: number | null
           updated_at?: string | null
           user_id?: string
