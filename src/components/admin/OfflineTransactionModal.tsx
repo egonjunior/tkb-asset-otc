@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,14 +8,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+interface OfflineTransaction {
+  id: string;
+  transaction_date: string;
+  usdt_amount: number;
+  brl_amount: number;
+  usdt_rate: number;
+  operation_type: string;
+  notes?: string;
+}
+
 interface OfflineTransactionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clientId: string;
   onSuccess: () => void;
+  transactionToEdit?: OfflineTransaction;
 }
 
-export function OfflineTransactionModal({ open, onOpenChange, clientId, onSuccess }: OfflineTransactionModalProps) {
+export function OfflineTransactionModal({ open, onOpenChange, clientId, onSuccess, transactionToEdit }: OfflineTransactionModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     transaction_date: new Date().toISOString().split('T')[0],
@@ -26,34 +37,19 @@ export function OfflineTransactionModal({ open, onOpenChange, clientId, onSucces
     notes: '',
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { error } = await supabase
-        .from('offline_transactions')
-        .insert({
-          client_id: clientId,
-          transaction_date: new Date(formData.transaction_date).toISOString(),
-          usdt_amount: parseFloat(formData.usdt_amount),
-          brl_amount: parseFloat(formData.brl_amount),
-          usdt_rate: parseFloat(formData.usdt_rate),
-          operation_type: formData.operation_type,
-          notes: formData.notes || null,
-          created_by: user.id,
-        });
-
-      if (error) throw error;
-
-      toast({ title: "Transação registrada com sucesso" });
-      onSuccess();
-      onOpenChange(false);
-      
-      // Reset form
+  // Preencher form quando editar
+  useEffect(() => {
+    if (transactionToEdit) {
+      setFormData({
+        transaction_date: new Date(transactionToEdit.transaction_date).toISOString().split('T')[0],
+        usdt_amount: transactionToEdit.usdt_amount.toString(),
+        brl_amount: transactionToEdit.brl_amount.toString(),
+        usdt_rate: transactionToEdit.usdt_rate.toString(),
+        operation_type: transactionToEdit.operation_type,
+        notes: transactionToEdit.notes || '',
+      });
+    } else {
+      // Reset ao abrir para criar novo
       setFormData({
         transaction_date: new Date().toISOString().split('T')[0],
         usdt_amount: '',
@@ -62,6 +58,53 @@ export function OfflineTransactionModal({ open, onOpenChange, clientId, onSucces
         operation_type: 'compra',
         notes: '',
       });
+    }
+  }, [transactionToEdit, open]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      if (transactionToEdit) {
+        // UPDATE
+        const { error } = await supabase
+          .from('offline_transactions')
+          .update({
+            transaction_date: new Date(formData.transaction_date).toISOString(),
+            usdt_amount: parseFloat(formData.usdt_amount),
+            brl_amount: parseFloat(formData.brl_amount),
+            usdt_rate: parseFloat(formData.usdt_rate),
+            operation_type: formData.operation_type,
+            notes: formData.notes || null,
+          })
+          .eq('id', transactionToEdit.id);
+
+        if (error) throw error;
+        toast({ title: "Transação atualizada com sucesso" });
+      } else {
+        // INSERT
+        const { error } = await supabase
+          .from('offline_transactions')
+          .insert({
+            client_id: clientId,
+            transaction_date: new Date(formData.transaction_date).toISOString(),
+            usdt_amount: parseFloat(formData.usdt_amount),
+            brl_amount: parseFloat(formData.brl_amount),
+            usdt_rate: parseFloat(formData.usdt_rate),
+            operation_type: formData.operation_type,
+            notes: formData.notes || null,
+            created_by: user.id,
+          });
+
+        if (error) throw error;
+        toast({ title: "Transação registrada com sucesso" });
+      }
+      onSuccess();
+      onOpenChange(false);
     } catch (error: any) {
       console.error("Erro ao registrar transação:", error);
       toast({
@@ -86,7 +129,7 @@ export function OfflineTransactionModal({ open, onOpenChange, clientId, onSucces
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Registrar Transação</DialogTitle>
+          <DialogTitle>{transactionToEdit ? 'Editar Transação' : 'Registrar Transação'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
