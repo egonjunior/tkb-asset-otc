@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,7 @@ export default function AdminOfflineClientDetails() {
   const [selectedTransaction, setSelectedTransaction] = useState<OfflineTransaction | undefined>(undefined);
   const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
+  const [filterMonth, setFilterMonth] = useState<string>('all');
 
   useEffect(() => {
     checkAdminAndFetchData();
