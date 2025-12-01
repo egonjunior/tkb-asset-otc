@@ -29,13 +29,13 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
     // Initialize display value when value prop changes
     React.useEffect(() => {
       const numValue = typeof value === 'string' ? parseFloat(value) : value;
-      if (!isNaN(numValue) && numValue !== 0) {
+      if (!isNaN(numValue) && numValue > 0) {
         setDisplayValue(formatToBRL(numValue));
-      } else if (numValue === 0 && displayValue === "") {
-        // Keep empty if it's initial state
+      } else if (numValue === 0 || isNaN(numValue)) {
+        // Clear display when value is 0 or invalid
         setDisplayValue("");
       }
-    }, [value]);
+    }, [value, formatToBRL]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       let input = e.target.value;
