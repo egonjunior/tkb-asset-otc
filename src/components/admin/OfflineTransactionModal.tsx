@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,9 +31,9 @@ export function OfflineTransactionModal({ open, onOpenChange, clientId, onSucces
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     transaction_date: new Date().toISOString().split('T')[0],
-    usdt_amount: '',
-    brl_amount: '',
-    usdt_rate: '',
+    usdt_amount: 0,
+    brl_amount: 0,
+    usdt_rate: 0,
     operation_type: 'compra',
     notes: '',
   });
@@ -42,9 +43,9 @@ export function OfflineTransactionModal({ open, onOpenChange, clientId, onSucces
     if (transactionToEdit) {
       setFormData({
         transaction_date: new Date(transactionToEdit.transaction_date).toISOString().split('T')[0],
-        usdt_amount: transactionToEdit.usdt_amount.toString(),
-        brl_amount: transactionToEdit.brl_amount.toString(),
-        usdt_rate: transactionToEdit.usdt_rate.toString(),
+        usdt_amount: transactionToEdit.usdt_amount,
+        brl_amount: transactionToEdit.brl_amount,
+        usdt_rate: transactionToEdit.usdt_rate,
         operation_type: transactionToEdit.operation_type,
         notes: transactionToEdit.notes || '',
       });
@@ -52,9 +53,9 @@ export function OfflineTransactionModal({ open, onOpenChange, clientId, onSucces
       // Reset ao abrir para criar novo
       setFormData({
         transaction_date: new Date().toISOString().split('T')[0],
-        usdt_amount: '',
-        brl_amount: '',
-        usdt_rate: '',
+        usdt_amount: 0,
+        brl_amount: 0,
+        usdt_rate: 0,
         operation_type: 'compra',
         notes: '',
       });
@@ -75,9 +76,9 @@ export function OfflineTransactionModal({ open, onOpenChange, clientId, onSucces
           .from('offline_transactions')
           .update({
             transaction_date: new Date(formData.transaction_date).toISOString(),
-            usdt_amount: parseFloat(formData.usdt_amount),
-            brl_amount: parseFloat(formData.brl_amount),
-            usdt_rate: parseFloat(formData.usdt_rate),
+            usdt_amount: formData.usdt_amount,
+            brl_amount: formData.brl_amount,
+            usdt_rate: formData.usdt_rate,
             operation_type: formData.operation_type,
             notes: formData.notes || null,
           })
@@ -92,9 +93,9 @@ export function OfflineTransactionModal({ open, onOpenChange, clientId, onSucces
           .insert({
             client_id: clientId,
             transaction_date: new Date(formData.transaction_date).toISOString(),
-            usdt_amount: parseFloat(formData.usdt_amount),
-            brl_amount: parseFloat(formData.brl_amount),
-            usdt_rate: parseFloat(formData.usdt_rate),
+            usdt_amount: formData.usdt_amount,
+            brl_amount: formData.brl_amount,
+            usdt_rate: formData.usdt_rate,
             operation_type: formData.operation_type,
             notes: formData.notes || null,
             created_by: user.id,
@@ -118,10 +119,8 @@ export function OfflineTransactionModal({ open, onOpenChange, clientId, onSucces
   };
 
   const calculateRate = () => {
-    const usdt = parseFloat(formData.usdt_amount);
-    const brl = parseFloat(formData.brl_amount);
-    if (usdt > 0 && brl > 0) {
-      setFormData({ ...formData, usdt_rate: (brl / usdt).toFixed(4) });
+    if (formData.usdt_amount > 0 && formData.brl_amount > 0) {
+      setFormData({ ...formData, usdt_rate: parseFloat((formData.brl_amount / formData.usdt_amount).toFixed(4)) });
     }
   };
 
@@ -165,28 +164,24 @@ export function OfflineTransactionModal({ open, onOpenChange, clientId, onSucces
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="usdt_amount">Valor em USDT *</Label>
-              <Input
+              <CurrencyInput
                 id="usdt_amount"
-                type="number"
-                step="0.01"
-                min="0.01"
                 value={formData.usdt_amount}
-                onChange={(e) => setFormData({ ...formData, usdt_amount: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, usdt_amount: value })}
                 onBlur={calculateRate}
+                placeholder="Ex: 222.332,00"
                 required
               />
             </div>
 
             <div>
               <Label htmlFor="brl_amount">Valor em BRL *</Label>
-              <Input
+              <CurrencyInput
                 id="brl_amount"
-                type="number"
-                step="0.01"
-                min="0.01"
                 value={formData.brl_amount}
-                onChange={(e) => setFormData({ ...formData, brl_amount: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, brl_amount: value })}
                 onBlur={calculateRate}
+                placeholder="Ex: 1.214.999,91"
                 required
               />
             </div>
@@ -194,13 +189,12 @@ export function OfflineTransactionModal({ open, onOpenChange, clientId, onSucces
 
           <div>
             <Label htmlFor="usdt_rate">Cotação USDT/BRL *</Label>
-            <Input
+            <CurrencyInput
               id="usdt_rate"
-              type="number"
-              step="0.0001"
-              min="0.0001"
               value={formData.usdt_rate}
-              onChange={(e) => setFormData({ ...formData, usdt_rate: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, usdt_rate: value })}
+              decimals={4}
+              placeholder="Ex: 5,4648"
               required
             />
             <p className="text-xs text-muted-foreground mt-1">
