@@ -1,7 +1,8 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-interface CurrencyInputProps extends Omit<React.ComponentProps<"input">, "onChange" | "value"> {
+interface CurrencyInputProps
+  extends Omit<React.ComponentProps<"input">, "onChange" | "value"> {
   value: number | string;
   onChange: (value: number) => void;
   decimals?: number;
@@ -13,71 +14,75 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
 
     // Format number to Brazilian format
     const formatToBRL = (num: number): string => {
-      return num.toLocaleString('pt-BR', {
+      return num.toLocaleString("pt-BR", {
         minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
+        maximumFractionDigits: decimals,
       });
     };
 
     // Parse Brazilian format to number
     const parseBRLToNumber = (str: string): number => {
+      if (!str) return 0;
       // Remove all dots (thousands separator) and replace comma with dot
-      const cleaned = str.replace(/\./g, '').replace(',', '.');
-      return parseFloat(cleaned) || 0;
+      const cleaned = str.replace(/\./g, "").replace(",", ".");
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
     };
 
-    // Initialize display value when value prop changes
+    // Initialize / sync display value when value prop changes
     React.useEffect(() => {
-      const numValue = typeof value === 'string' ? parseFloat(value) : value;
+      const numValue =
+        typeof value === "string" ? parseFloat(value) : (value as number);
+
       if (!isNaN(numValue) && numValue > 0) {
         setDisplayValue(formatToBRL(numValue));
-      } else if (numValue === 0 || isNaN(numValue)) {
-        // Clear display when value is 0 or invalid
+      } else if (numValue === 0) {
+        // Mantém vazio para ficar mais confortável de editar
+        setDisplayValue("");
+      } else if (value === "" || value === null || value === undefined) {
         setDisplayValue("");
       }
-    }, [value, formatToBRL]);
+    }, [value]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       let input = e.target.value;
-      
-      // Allow only numbers, comma and dot
-      input = input.replace(/[^\\d,]/g, '');
-      
-      // Allow only one comma
+
+      // Permite apenas números, vírgula e ponto
+      input = input.replace(/[^\d.,]/g, "");
+
+      // Permite apenas uma vírgula (separador decimal)
       const commaCount = (input.match(/,/g) || []).length;
       if (commaCount > 1) {
         return;
       }
 
-      // Limit decimal places
-      const parts = input.split(',');
+      // Limita casas decimais
+      const parts = input.split(",");
       if (parts[1] && parts[1].length > decimals) {
         return;
       }
 
       setDisplayValue(input);
 
-      // Parse and send numeric value
       const numericValue = parseBRLToNumber(input);
       onChange(numericValue);
     };
 
     const handleBlur = () => {
-      // Format on blur if there's a valid number
       const numericValue = parseBRLToNumber(displayValue);
-      if (!isNaN(numericValue) && numericValue !== 0) {
+      if (!isNaN(numericValue) && numericValue > 0) {
         setDisplayValue(formatToBRL(numericValue));
-      } else if (displayValue === "" || numericValue === 0) {
+      } else {
         setDisplayValue("");
       }
     };
 
     const handleFocus = () => {
-      // Remove formatting on focus for easier editing
       const numericValue = parseBRLToNumber(displayValue);
-      if (!isNaN(numericValue) && numericValue !== 0) {
-        // Show unformatted but keep comma for decimals
-        const unformatted = numericValue.toFixed(decimals).replace('.', ',');
+      if (!isNaN(numericValue) && numericValue > 0) {
+        const unformatted = numericValue
+          .toFixed(decimals)
+          .replace(".", ",");
         setDisplayValue(unformatted);
       }
     };
@@ -103,4 +108,3 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
 CurrencyInput.displayName = "CurrencyInput";
 
 export { CurrencyInput };
-
