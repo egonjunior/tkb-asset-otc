@@ -1,14 +1,23 @@
 import { useParams } from 'react-router-dom';
+import { useState } from 'react';
 import { useOtcQuote } from '@/hooks/useOtcQuote';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Clock, Building2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Clock, Building2, Calculator, ArrowDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { formatBRL } from '@/lib/formatters';
 import tkbLogo from '@/assets/tkb-logo.png';
 
 export default function OtcQuote() {
   const { slug } = useParams<{ slug: string }>();
   const { data, isLoading, error } = useOtcQuote(slug || '');
+  const [brlAmount, setBrlAmount] = useState<number>(0);
+
+  // Cálculo preciso: BRL ÷ Cotação = USDT
+  const usdtResult = brlAmount > 0 && data?.prices.clientPrice && data.prices.clientPrice > 0
+    ? brlAmount / data.prices.clientPrice
+    : 0;
 
   if (isLoading) {
     return (
@@ -93,6 +102,50 @@ export default function OtcQuote() {
               </span>
               {data.cached && <Badge variant="outline" className="text-xs">Cache</Badge>}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-primary/20">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Calculator className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Simule sua Conversão</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">
+                Valor em Reais (BRL)
+              </label>
+              <CurrencyInput
+                value={brlAmount}
+                onChange={setBrlAmount}
+                decimals={2}
+                className="text-lg h-12"
+                placeholder="R$ 0,00"
+              />
+            </div>
+
+            {brlAmount > 0 && data?.prices.clientPrice && (
+              <>
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <ArrowDown className="h-4 w-4" />
+                  <span>na cotação R$ {data.prices.clientPrice.toFixed(4)}</span>
+                </div>
+
+                <div className="bg-primary/5 border-2 border-primary/20 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground mb-2">Você recebe aproximadamente</p>
+                  <p className="text-3xl font-bold text-primary">
+                    {formatBRL(usdtResult)} USDT
+                  </p>
+                </div>
+
+                <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">
+                  <div className="mt-0.5">ℹ️</div>
+                  <p>Valor ilustrativo - sujeito a confirmação no momento da operação</p>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
