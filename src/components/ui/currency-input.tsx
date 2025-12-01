@@ -11,80 +11,72 @@ interface CurrencyInputProps
 const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
   ({ className, value, onChange, decimals = 2, ...props }, ref) => {
     const [displayValue, setDisplayValue] = React.useState("");
+    const [isFocused, setIsFocused] = React.useState(false);
 
-    // Format number to Brazilian format
-    const formatToBRL = (num: number): string => {
+    // Parse brasileiro: "1.214.999,91" → 1214999.91
+    const parseBRL = (str: string): number => {
+      if (!str) return 0;
+      // Remove todos os pontos (separador de milhar) e substitui vírgula por ponto
+      const cleaned = str.replace(/\./g, "").replace(",", ".");
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
+    };
+
+    // Formatar: 1214999.91 → "1.214.999,91"
+    const formatBRL = (num: number): string => {
+      if (num === 0) return "";
       return num.toLocaleString("pt-BR", {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
       });
     };
 
-    // Parse Brazilian format to number
-    const parseBRLToNumber = (str: string): number => {
-      if (!str) return 0;
-      // Remove all dots (thousands separator) and replace comma with dot
-      const cleaned = str.replace(/\./g, "").replace(",", ".");
-      const parsed = parseFloat(cleaned);
-      return isNaN(parsed) ? 0 : parsed;
-    };
-
-    // Initialize / sync display value when value prop changes
+    // SÓ sincroniza quando NÃO está focado (não interfere na digitação)
     React.useEffect(() => {
-      const numValue =
-        typeof value === "string" ? parseFloat(value) : (value as number);
-
-      if (!isNaN(numValue) && numValue > 0) {
-        setDisplayValue(formatToBRL(numValue));
-      } else if (numValue === 0) {
-        // Mantém vazio para ficar mais confortável de editar
-        setDisplayValue("");
-      } else if (value === "" || value === null || value === undefined) {
-        setDisplayValue("");
+      if (!isFocused) {
+        const numValue =
+          typeof value === "number" ? value : parseFloat(value as string) || 0;
+        setDisplayValue(numValue > 0 ? formatBRL(numValue) : "");
       }
-    }, [value]);
+    }, [value, isFocused, decimals]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      let input = e.target.value;
-
-      // Permite apenas números, vírgula e ponto
-      input = input.replace(/[^\d.,]/g, "");
-
-      // Permite apenas uma vírgula (separador decimal)
-      const commaCount = (input.match(/,/g) || []).length;
+      const input = e.target.value;
+      
+      // Permite números, pontos e vírgula durante a digitação
+      const cleaned = input.replace(/[^\d.,]/g, "");
+      
+      // Limita a apenas uma vírgula
+      const commaCount = (cleaned.match(/,/g) || []).length;
       if (commaCount > 1) {
         return;
       }
 
       // Limita casas decimais
-      const parts = input.split(",");
+      const parts = cleaned.split(",");
       if (parts[1] && parts[1].length > decimals) {
         return;
       }
 
-      setDisplayValue(input);
-
-      const numericValue = parseBRLToNumber(input);
+      setDisplayValue(cleaned);
+      
+      // Envia o valor parseado para o parent
+      const numericValue = parseBRL(cleaned);
       onChange(numericValue);
     };
 
-    const handleBlur = () => {
-      const numericValue = parseBRLToNumber(displayValue);
-      if (!isNaN(numericValue) && numericValue > 0) {
-        setDisplayValue(formatToBRL(numericValue));
-      } else {
-        setDisplayValue("");
-      }
+    const handleFocus = () => {
+      setIsFocused(true);
     };
 
-    const handleFocus = () => {
-      const numericValue = parseBRLToNumber(displayValue);
-      if (!isNaN(numericValue) && numericValue > 0) {
-        const unformatted = numericValue
-          .toFixed(decimals)
-          .replace(".", ",");
-        setDisplayValue(unformatted);
-      }
+    const handleBlur = () => {
+      setIsFocused(false);
+      
+      // Formata e atualiza quando sai do campo
+      const numericValue = parseBRL(displayValue);
+      const formatted = numericValue > 0 ? formatBRL(numericValue) : "";
+      setDisplayValue(formatted);
+      onChange(numericValue);
     };
 
     return (
