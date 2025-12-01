@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Upload, FileSpreadsheet, FileText, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Upload, Loader2, Trash2, Pencil, Download } from "lucide-react";
 import { OfflineTransactionModal } from "@/components/admin/OfflineTransactionModal";
 import { OfflineDocumentUploader } from "@/components/admin/OfflineDocumentUploader";
+import { ExportFilterModal } from "@/components/admin/ExportFilterModal";
+import { formatCurrency, formatUSDT, formatRate, formatDate } from "@/lib/formatters";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 
@@ -54,6 +56,8 @@ export default function AdminOfflineClientDetails() {
   const [documents, setDocuments] = useState<OfflineDocument[]>([]);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
+  const [isExportFilterModalOpen, setIsExportFilterModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<OfflineTransaction | undefined>(undefined);
   const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
 
@@ -145,6 +149,16 @@ export default function AdminOfflineClientDetails() {
     setDocuments(data || []);
   };
 
+  const handleEditTransaction = (transaction: OfflineTransaction) => {
+    setSelectedTransaction(transaction);
+    setIsTransactionModalOpen(true);
+  };
+
+  const handleAddTransaction = () => {
+    setSelectedTransaction(undefined);
+    setIsTransactionModalOpen(true);
+  };
+
   const handleDeleteTransaction = async (transactionId: string) => {
     if (!confirm('Tem certeza que deseja excluir esta transação?')) return;
 
@@ -200,64 +214,87 @@ export default function AdminOfflineClientDetails() {
     }
   };
 
-  const exportToExcel = () => {
-    if (!client || transactions.length === 0) {
-      toast({ title: "Nenhuma transação para exportar", variant: "destructive" });
+  const handleExport = async (startDate: Date, endDate: Date, format: 'pdf' | 'excel') => {
+    if (!client) return;
+
+    // Filtrar transações pelo período
+    const filteredTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.transaction_date);
+      return transactionDate >= startDate && transactionDate <= endDate;
+    });
+
+    if (filteredTransactions.length === 0) {
+      toast({ 
+        title: "Nenhuma transação encontrada", 
+        description: "Não há transações no período selecionado",
+        variant: "destructive" 
+      });
       return;
     }
 
+    if (format === 'excel') {
+      exportToExcel(filteredTransactions, startDate, endDate);
+    } else {
+      exportToPDF(filteredTransactions, startDate, endDate);
+    }
+  };
+
+  const exportToExcel = (filteredTransactions: OfflineTransaction[], startDate: Date, endDate: Date) => {
     setExportingExcel(true);
 
     try {
       const workbook = XLSX.utils.book_new();
 
-      const totalUSDT = transactions.reduce((sum, t) => sum + t.usdt_amount, 0);
-      const totalBRL = transactions.reduce((sum, t) => sum + t.brl_amount, 0);
+      const totalUSDT = filteredTransactions.reduce((sum, t) => sum + t.usdt_amount, 0);
+      const totalBRL = filteredTransactions.reduce((sum, t) => sum + t.brl_amount, 0);
       const avgRate = totalUSDT > 0 ? totalBRL / totalUSDT : 0;
-      const compras = transactions.filter(t => t.operation_type === 'compra');
-      const vendas = transactions.filter(t => t.operation_type === 'venda');
+      const compras = filteredTransactions.filter(t => t.operation_type === 'compra');
+      const vendas = filteredTransactions.filter(t => t.operation_type === 'venda');
       const comprasUSDT = compras.reduce((sum, t) => sum + t.usdt_amount, 0);
       const vendasUSDT = vendas.reduce((sum, t) => sum + t.usdt_amount, 0);
+
+      const periodStr = `${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
 
       const summaryData = [
         ['RELATÓRIO DE CLIENTE OFFLINE - TKB ASSET'],
         [''],
-        ['Nome', client.full_name],
-        ['Documento', `${client.document_type}: ${client.document_number}`],
-        ['Email', client.email || '-'],
-        ['Telefone', client.phone || '-'],
+        ['Período', periodStr],
+        ['Nome', client!.full_name],
+        ['Documento', `${client!.document_type}: ${client!.document_number}`],
+        ['Email', client!.email || '-'],
+        ['Telefone', client!.phone || '-'],
         [''],
         ['RESUMO DO PERÍODO'],
-        ['Volume Total USDT', totalUSDT.toFixed(2)],
-        ['Volume Total BRL', `R$ ${totalBRL.toFixed(2)}`],
-        ['Cotação Média', `R$ ${avgRate.toFixed(4)}`],
-        ['Total de Operações', transactions.length],
+        ['Volume Total USDT', formatUSDT(totalUSDT)],
+        ['Volume Total BRL', formatCurrency(totalBRL)],
+        ['Cotação Média', `R$ ${formatRate(avgRate)}`],
+        ['Total de Operações', filteredTransactions.length],
         [''],
         ['COMPRAS'],
         ['Quantidade de Compras', compras.length],
-        ['Volume USDT (Compras)', comprasUSDT.toFixed(2)],
+        ['Volume USDT (Compras)', formatUSDT(comprasUSDT)],
         [''],
         ['VENDAS'],
         ['Quantidade de Vendas', vendas.length],
-        ['Volume USDT (Vendas)', vendasUSDT.toFixed(2)],
+        ['Volume USDT (Vendas)', formatUSDT(vendasUSDT)],
       ];
 
       const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
       XLSX.utils.book_append_sheet(workbook, ws1, 'Resumo');
 
-      const transactionsData = transactions.map(t => ({
+      const transactionsData = filteredTransactions.map(t => ({
         'Data': new Date(t.transaction_date).toLocaleDateString('pt-BR'),
         'Tipo': t.operation_type.toUpperCase(),
-        'USDT': t.usdt_amount.toFixed(2),
-        'BRL': `R$ ${t.brl_amount.toFixed(2)}`,
-        'Cotação (BRL/USDT)': `R$ ${t.usdt_rate.toFixed(4)}`,
+        'USDT': formatUSDT(t.usdt_amount),
+        'BRL': formatCurrency(t.brl_amount),
+        'Cotação (BRL/USDT)': `R$ ${formatRate(t.usdt_rate)}`,
         'Observações': t.notes || '-',
       }));
 
       const ws2 = XLSX.utils.json_to_sheet(transactionsData);
       XLSX.utils.book_append_sheet(workbook, ws2, 'Transações');
 
-      const fileName = `relatorio-${client.full_name.replace(/\s+/g, '-')}-${Date.now()}.xlsx`;
+      const fileName = `relatorio-${client!.full_name.replace(/\s+/g, '-')}-${Date.now()}.xlsx`;
       XLSX.writeFile(workbook, fileName);
 
       toast({ title: "Excel exportado com sucesso" });
@@ -273,124 +310,206 @@ export default function AdminOfflineClientDetails() {
     }
   };
 
-  const exportToPDF = () => {
-    if (!client || transactions.length === 0) {
-      toast({ title: "Nenhuma transação para exportar", variant: "destructive" });
-      return;
-    }
-
+  const exportToPDF = (filteredTransactions: OfflineTransaction[], startDate: Date, endDate: Date) => {
     setExportingPDF(true);
 
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
       let yPos = 20;
 
-      // Header
-      pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('RELATÓRIO DE CLIENTE OFFLINE', pageWidth / 2, yPos, { align: 'center' });
-      yPos += 8;
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('TKB ASSET', pageWidth / 2, yPos, { align: 'center' });
-      yPos += 15;
+      const periodStr = `${startDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`.toUpperCase();
 
+      // Header Premium
+      pdf.setFillColor(0, 0, 0);
+      pdf.rect(0, 0, pageWidth, 10, 'F');
+      
+      yPos = 25;
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('TKB ASSET', 15, yPos);
+      
+      yPos += 6;
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('RELATÓRIO DE OPERAÇÕES OTC', 15, yPos);
+      
+      // Período
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(periodStr, pageWidth - 15, 25, { align: 'right' });
+      
+      yPos = 40;
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(15, yPos, pageWidth - 15, yPos);
+      
       // Client Info
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Informações do Cliente', 15, yPos);
-      yPos += 8;
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Nome: ${client.full_name}`, 15, yPos);
-      yPos += 6;
-      pdf.text(`${client.document_type}: ${client.document_number}`, 15, yPos);
-      yPos += 6;
-      if (client.email) {
-        pdf.text(`Email: ${client.email}`, 15, yPos);
-        yPos += 6;
-      }
-      if (client.phone) {
-        pdf.text(`Telefone: ${client.phone}`, 15, yPos);
-        yPos += 6;
-      }
       yPos += 10;
-
-      // Summary
-      const totalUSDT = transactions.reduce((sum, t) => sum + t.usdt_amount, 0);
-      const totalBRL = transactions.reduce((sum, t) => sum + t.brl_amount, 0);
-      const avgRate = totalUSDT > 0 ? totalBRL / totalUSDT : 0;
-      const compras = transactions.filter(t => t.operation_type === 'compra');
-      const vendas = transactions.filter(t => t.operation_type === 'venda');
-
+      pdf.setFillColor(245, 245, 245);
+      pdf.roundedRect(15, yPos, pageWidth - 30, 35, 3, 3, 'F');
+      
+      yPos += 8;
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('CLIENTE', 20, yPos);
+      
+      yPos += 6;
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Resumo do Período', 15, yPos);
-      yPos += 8;
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Volume Total USDT: ${totalUSDT.toFixed(2)}`, 15, yPos);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(client!.full_name, 20, yPos);
+      
       yPos += 6;
-      pdf.text(`Volume Total BRL: R$ ${totalBRL.toFixed(2)}`, 15, yPos);
-      yPos += 6;
-      pdf.text(`Cotação Média: R$ ${avgRate.toFixed(4)}`, 15, yPos);
-      yPos += 6;
-      pdf.text(`Total de Operações: ${transactions.length} (${compras.length} compras, ${vendas.length} vendas)`, 15, yPos);
-      yPos += 12;
-
-      // Transactions Table
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Transações', 15, yPos);
-      yPos += 8;
-
-      // Table header
       pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(80, 80, 80);
+      pdf.text(`${client!.document_type}: ${client!.document_number}`, 20, yPos);
+      
+      // Resumo Executivo
+      yPos += 20;
+      pdf.setFontSize(10);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Data', 15, yPos);
-      pdf.text('Tipo', 45, yPos);
-      pdf.text('USDT', 70, yPos);
-      pdf.text('BRL', 100, yPos);
-      pdf.text('Cotação', 130, yPos);
-      pdf.text('Obs', 160, yPos);
-      yPos += 5;
-
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('RESUMO EXECUTIVO', 15, yPos);
+      
+      yPos += 8;
+      const totalUSDT = filteredTransactions.reduce((sum, t) => sum + t.usdt_amount, 0);
+      const totalBRL = filteredTransactions.reduce((sum, t) => sum + t.brl_amount, 0);
+      const avgRate = totalUSDT > 0 ? totalBRL / totalUSDT : 0;
+      const compras = filteredTransactions.filter(t => t.operation_type === 'compra');
+      const vendas = filteredTransactions.filter(t => t.operation_type === 'venda');
+      const totalCompras = compras.reduce((sum, t) => sum + t.usdt_amount, 0);
+      const totalVendas = vendas.reduce((sum, t) => sum + t.usdt_amount, 0);
+      
+      // Metrics Cards
+      const cardWidth = (pageWidth - 45) / 4;
+      const metrics = [
+        { label: 'VOLUME USDT', value: formatUSDT(totalUSDT) },
+        { label: 'VOLUME BRL', value: formatCurrency(totalBRL) },
+        { label: 'COTAÇÃO MÉDIA', value: `R$ ${formatRate(avgRate)}` },
+        { label: 'OPERAÇÕES', value: filteredTransactions.length.toString() }
+      ];
+      
+      metrics.forEach((metric, i) => {
+        const x = 15 + (i * (cardWidth + 5));
+        pdf.setDrawColor(220, 220, 220);
+        pdf.roundedRect(x, yPos, cardWidth, 20, 2, 2, 'S');
+        
+        pdf.setFontSize(7);
+        pdf.setTextColor(120, 120, 120);
+        pdf.text(metric.label, x + 3, yPos + 5);
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(metric.value, x + 3, yPos + 14);
+      });
+      
+      // Compras/Vendas
+      yPos += 30;
+      pdf.setFillColor(220, 252, 231);
+      pdf.setDrawColor(22, 163, 74);
+      pdf.rect(15, yPos, (pageWidth - 35) / 2, 20, 'FD');
+      
+      pdf.setFontSize(7);
+      pdf.setTextColor(22, 163, 74);
+      pdf.text('COMPRAS', 20, yPos + 5);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(formatUSDT(totalCompras), 20, yPos + 13);
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`${compras.length} operações`, 20, yPos + 18);
+      
+      const xVendas = 15 + (pageWidth - 35) / 2 + 5;
+      pdf.setFillColor(255, 237, 213);
+      pdf.setDrawColor(234, 88, 12);
+      pdf.rect(xVendas, yPos, (pageWidth - 35) / 2, 20, 'FD');
+      
+      pdf.setTextColor(234, 88, 12);
+      pdf.text('VENDAS', xVendas + 5, yPos + 5);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(formatUSDT(totalVendas), xVendas + 5, yPos + 13);
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`${vendas.length} operações`, xVendas + 5, yPos + 18);
+      
+      // Table
+      yPos += 30;
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('DETALHAMENTO DE OPERAÇÕES', 15, yPos);
+      
+      yPos += 8;
+      // Table header
+      pdf.setFillColor(50, 50, 50);
+      pdf.rect(15, yPos, pageWidth - 30, 8, 'F');
+      
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('DATA', 18, yPos + 5);
+      pdf.text('TIPO', 45, yPos + 5);
+      pdf.text('USDT', 95, yPos + 5, { align: 'right' });
+      pdf.text('BRL', 145, yPos + 5, { align: 'right' });
+      pdf.text('COTAÇÃO', 190, yPos + 5, { align: 'right' });
+      
+      yPos += 8;
+      
       // Table rows
       pdf.setFont('helvetica', 'normal');
-      transactions.forEach((t, index) => {
-        if (yPos > 270) {
+      pdf.setTextColor(0, 0, 0);
+      filteredTransactions.forEach((t, index) => {
+        if (yPos > pageHeight - 20) {
           pdf.addPage();
           yPos = 20;
         }
-
-        const date = new Date(t.transaction_date).toLocaleDateString('pt-BR');
-        const tipo = t.operation_type.toUpperCase();
-        const usdt = t.usdt_amount.toFixed(2);
-        const brl = `R$ ${t.brl_amount.toFixed(2)}`;
-        const rate = `R$ ${t.usdt_rate.toFixed(4)}`;
-        const obs = t.notes ? t.notes.substring(0, 20) : '-';
-
-        pdf.text(date, 15, yPos);
-        pdf.text(tipo, 45, yPos);
-        pdf.text(usdt, 70, yPos);
-        pdf.text(brl, 100, yPos);
-        pdf.text(rate, 130, yPos);
-        pdf.text(obs, 160, yPos);
-        yPos += 6;
+        
+        if (index % 2 === 0) {
+          pdf.setFillColor(250, 250, 250);
+          pdf.rect(15, yPos, pageWidth - 30, 7, 'F');
+        }
+        
+        pdf.setFontSize(8);
+        pdf.text(formatDate(t.transaction_date), 18, yPos + 5);
+        
+        if (t.operation_type === 'compra') {
+          pdf.setTextColor(22, 163, 74);
+        } else {
+          pdf.setTextColor(234, 88, 12);
+        }
+        pdf.text(t.operation_type.toUpperCase(), 45, yPos + 5);
+        
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(formatUSDT(t.usdt_amount), 95, yPos + 5, { align: 'right' });
+        pdf.text(formatCurrency(t.brl_amount), 145, yPos + 5, { align: 'right' });
+        pdf.text(`R$ ${formatRate(t.usdt_rate)}`, 190, yPos + 5, { align: 'right' });
+        
+        yPos += 7;
       });
-
+      
       // Footer
-      yPos += 10;
-      if (yPos > 270) {
-        pdf.addPage();
-        yPos = 20;
-      }
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'italic');
-      pdf.text(`Relatório gerado em ${new Date().toLocaleString('pt-BR')}`, 15, yPos);
+      const footerY = pageHeight - 15;
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(15, footerY, pageWidth - 15, footerY);
+      
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`TKB Asset © ${new Date().getFullYear()}`, pageWidth / 2, footerY + 5, { align: 'center' });
+      
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(`Gerado em ${formatDate(new Date())} às ${new Date().toLocaleTimeString('pt-BR')}`, pageWidth / 2, footerY + 9, { align: 'center' });
+      pdf.text('DOCUMENTO DE USO INTERNO E CONFIDENCIAL', pageWidth / 2, footerY + 13, { align: 'center' });
 
-      const fileName = `relatorio-${client.full_name.replace(/\s+/g, '-')}-${Date.now()}.pdf`;
+      const fileName = `relatorio-${client!.full_name.replace(/\s+/g, '-')}-${Date.now()}.pdf`;
       pdf.save(fileName);
 
       toast({ title: "PDF exportado com sucesso" });
@@ -449,32 +568,18 @@ export default function AdminOfflineClientDetails() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={exportToExcel}
-            disabled={exportingExcel || transactions.length === 0}
-            variant="outline"
-          >
-            {exportingExcel ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-            )}
-            Excel
-          </Button>
-          <Button
-            onClick={exportToPDF}
-            disabled={exportingPDF || transactions.length === 0}
-            variant="outline"
-          >
-            {exportingPDF ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <FileText className="h-4 w-4 mr-2" />
-            )}
-            PDF
-          </Button>
-        </div>
+        <Button
+          onClick={() => setIsExportFilterModalOpen(true)}
+          disabled={exportingExcel || exportingPDF || transactions.length === 0}
+          variant="outline"
+        >
+          {(exportingExcel || exportingPDF) ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4 mr-2" />
+          )}
+          Exportar Relatório
+        </Button>
       </div>
 
       {(client.email || client.phone) && (
@@ -511,7 +616,7 @@ export default function AdminOfflineClientDetails() {
             <CardTitle className="text-sm font-medium">Volume Total USDT</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{totalUSDT.toFixed(2)}</p>
+            <p className="text-2xl font-bold">{formatUSDT(totalUSDT)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -519,7 +624,7 @@ export default function AdminOfflineClientDetails() {
             <CardTitle className="text-sm font-medium">Volume Total BRL</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">R$ {totalBRL.toFixed(2)}</p>
+            <p className="text-2xl font-bold">{formatCurrency(totalBRL)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -527,7 +632,7 @@ export default function AdminOfflineClientDetails() {
             <CardTitle className="text-sm font-medium">Cotação Média</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">R$ {avgRate.toFixed(4)}</p>
+            <p className="text-2xl font-bold">R$ {formatRate(avgRate)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -547,7 +652,7 @@ export default function AdminOfflineClientDetails() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Transações</CardTitle>
-            <Button onClick={() => setIsTransactionModalOpen(true)}>
+            <Button onClick={handleAddTransaction}>
               <Plus className="h-4 w-4 mr-2" />
               Nova Transação
             </Button>
@@ -568,7 +673,7 @@ export default function AdminOfflineClientDetails() {
                   <TableHead className="text-right">BRL</TableHead>
                   <TableHead className="text-right">Cotação</TableHead>
                   <TableHead>Observações</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead className="w-[80px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -583,25 +688,34 @@ export default function AdminOfflineClientDetails() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      {transaction.usdt_amount.toFixed(2)}
+                      {formatUSDT(transaction.usdt_amount)}
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      R$ {transaction.brl_amount.toFixed(2)}
+                      {formatCurrency(transaction.brl_amount)}
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      R$ {transaction.usdt_rate.toFixed(4)}
+                      R$ {formatRate(transaction.usdt_rate)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {transaction.notes || '-'}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteTransaction(transaction.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditTransaction(transaction)}
+                        >
+                          <Pencil className="h-4 w-4 text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteTransaction(transaction.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -667,6 +781,7 @@ export default function AdminOfflineClientDetails() {
         onOpenChange={setIsTransactionModalOpen}
         clientId={clientId!}
         onSuccess={fetchTransactions}
+        transactionToEdit={selectedTransaction}
       />
 
       <OfflineDocumentUploader
@@ -674,6 +789,12 @@ export default function AdminOfflineClientDetails() {
         onOpenChange={setIsDocumentModalOpen}
         clientId={clientId!}
         onSuccess={fetchDocuments}
+      />
+
+      <ExportFilterModal
+        open={isExportFilterModalOpen}
+        onOpenChange={setIsExportFilterModalOpen}
+        onExport={handleExport}
       />
     </div>
   );
