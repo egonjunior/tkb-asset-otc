@@ -182,6 +182,54 @@ export default function AdminOfflineClientDetails() {
     }
   };
 
+  // Generate list of available months from transactions
+  const availableMonths = useMemo(() => {
+    const months = new Map<string, string>();
+    transactions.forEach(t => {
+      const date = new Date(t.transaction_date);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const label = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
+      months.set(key, capitalizedLabel);
+    });
+    return Array.from(months.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([key, label]) => ({ key, label }));
+  }, [transactions]);
+
+  // Filter transactions by selected month
+  const filteredTransactions = useMemo(() => {
+    if (filterMonth === 'all') return transactions;
+    
+    return transactions.filter(t => {
+      const date = new Date(t.transaction_date);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      return key === filterMonth;
+    });
+  }, [transactions, filterMonth]);
+
+  // Calculate summary based on filtered transactions
+  const summary = useMemo(() => {
+    const totalUSDT = filteredTransactions.reduce((sum, t) => sum + Number(t.usdt_amount), 0);
+    const totalBRL = filteredTransactions.reduce((sum, t) => sum + Number(t.brl_amount), 0);
+    const avgRate = totalUSDT > 0 ? totalBRL / totalUSDT : 0;
+    const buyTransactions = filteredTransactions.filter(t => t.operation_type === 'compra');
+    const sellTransactions = filteredTransactions.filter(t => t.operation_type === 'venda');
+    const totalBuy = buyTransactions.reduce((sum, t) => sum + Number(t.usdt_amount), 0);
+    const totalSell = sellTransactions.reduce((sum, t) => sum + Number(t.usdt_amount), 0);
+
+    return {
+      totalUSDT,
+      totalBRL,
+      avgRate,
+      totalTransactions: filteredTransactions.length,
+      totalBuy,
+      totalSell,
+      buyCount: buyTransactions.length,
+      sellCount: sellTransactions.length,
+    };
+  }, [filteredTransactions]);
+
   const handleDeleteDocument = async (documentId: string, fileUrl: string) => {
     if (!confirm('Tem certeza que deseja excluir este documento?')) return;
 
@@ -676,8 +724,15 @@ export default function AdminOfflineClientDetails() {
                   <TableHead className="w-[80px]"></TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {transactions.map((transaction) => (
+            <TableBody>
+              {filteredTransactions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    Nenhuma transação encontrada para o período selecionado
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredTransactions.map((transaction) => (
                   <TableRow key={transaction.id}>
                     <TableCell>
                       {new Date(transaction.transaction_date).toLocaleDateString('pt-BR')}
@@ -716,10 +771,10 @@ export default function AdminOfflineClientDetails() {
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
+                  </TableCell>
+                </TableRow>
+              )))}
+            </TableBody>
             </Table>
           )}
         </CardContent>
