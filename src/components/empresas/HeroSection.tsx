@@ -77,11 +77,8 @@ export function HeroSection() {
 
           {/* Trust Footer */}
           <div className="pt-12 border-t border-white/10 animate-fade-in-up animation-delay-600">
-            <p className="text-sm text-white/60 mb-4">
+            <p className="text-sm text-white/60">
               contato@tkbasset.com • tkbasset.com
-            </p>
-            <p className="text-xs text-white/50">
-              Lei 14.478/2022 | Operações 100% conformes e auditáveis
             </p>
           </div>
         </div>
