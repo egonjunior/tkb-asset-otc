@@ -133,10 +133,10 @@ const Landing = () => {
               <Button 
                 size="lg" 
                 variant="tkb"
-                onClick={scrollToForm}
+                onClick={() => navigate("/register")}
                 className="min-w-[240px] shadow-xl"
               >
-                Falar com especialista
+                Criar Conta Grátis
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button 
@@ -145,7 +145,7 @@ const Landing = () => {
                 onClick={scrollToForm}
                 className="min-w-[240px] border-neutral-600 text-white hover:bg-neutral-800"
               >
-                Conhecer soluções
+                Falar com especialista
               </Button>
             </div>
           </div>

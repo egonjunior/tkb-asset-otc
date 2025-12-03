@@ -98,10 +98,16 @@ const Register = () => {
 
       toast({
         title: "Conta criada com sucesso!",
-        description: "Você será redirecionado para fazer login.",
+        description: "Bem-vindo à TKB Asset!",
       });
 
-      setTimeout(() => navigate("/login"), 2000);
+      // Auto-login: usuário já está autenticado após signUp com auto-confirm
+      // Marcar como novo usuário para mostrar onboarding
+      localStorage.setItem("show_onboarding", "true");
+      localStorage.removeItem("onboarding_completed");
+      
+      // Redirecionar direto para o dashboard
+      navigate("/dashboard");
     } catch (error: any) {
       let errorMessage = error.message;
       
