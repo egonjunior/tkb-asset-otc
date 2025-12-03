@@ -108,13 +108,6 @@ const Landing = () => {
         
         <div className="container mx-auto px-6 py-24 lg:py-32 relative z-10">
           <div className="max-w-5xl mx-auto text-center space-y-8">
-            {/* Badge */}
-            <div className="animate-fade-in">
-              <Badge className="bg-neutral-800 text-neutral-200 border-neutral-700 px-4 py-2 text-xs">
-                Lei 14.478/2022 • CNPJ: 45.933.866/0001-93
-              </Badge>
-            </div>
-
             {/* Título */}
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-white leading-[1.1] animate-fade-in-up">
               Gestão financeira internacional onde{" "}
