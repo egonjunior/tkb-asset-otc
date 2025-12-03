@@ -9,6 +9,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import QuoteCard from "@/components/QuoteCard";
 import { StatCard } from "@/components/StatCard";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
+import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { Briefcase, LogOut, Plus, Clock, TrendingUp, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
@@ -36,6 +37,19 @@ const Dashboard = () => {
     isLoading
   } = useBinancePrice();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Check if should show onboarding
+  useEffect(() => {
+    const shouldShowOnboarding = localStorage.getItem("show_onboarding") === "true";
+    const onboardingCompleted = localStorage.getItem("onboarding_completed") === "true";
+    
+    if (shouldShowOnboarding && !onboardingCompleted) {
+      setShowOnboarding(true);
+      localStorage.removeItem("show_onboarding");
+    }
+  }, []);
+
   useEffect(() => {
     const fetchOrders = async () => {
       const {
@@ -364,6 +378,13 @@ const Dashboard = () => {
         </div>
         </div>
       </div>
+
+      {/* Onboarding Modal for new users */}
+      <OnboardingModal 
+        isOpen={showOnboarding} 
+        onClose={() => setShowOnboarding(false)} 
+        userName={userName}
+      />
     </SidebarProvider>;
 };
 

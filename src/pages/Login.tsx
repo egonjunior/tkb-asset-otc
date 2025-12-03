@@ -103,9 +103,13 @@ const Login = () => {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Senha</Label>
-                <a href="#" className="text-xs text-primary hover:underline">
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-xs text-primary hover:underline"
+                >
                   Esqueci minha senha
-                </a>
+                </button>
               </div>
               <Input
                 id="password"

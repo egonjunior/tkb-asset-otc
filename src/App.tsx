@@ -35,6 +35,8 @@ import AdminOfflineClients from "./pages/admin/AdminOfflineClients";
 import AdminOfflineClientDetails from "./pages/admin/AdminOfflineClientDetails";
 import OtcQuote from "./pages/OtcQuote";
 import AdminOtcClients from "./pages/admin/AdminOtcClients";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,8 @@ const App = () => (
             <Route path="/cotacao" element={<QuotePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/dashboard" element={
               <ProtectedRoute>
