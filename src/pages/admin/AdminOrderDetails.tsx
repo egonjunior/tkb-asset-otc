@@ -424,7 +424,10 @@ const AdminOrderDetails = () => {
                       <p className="text-sm text-muted-foreground mb-2">Status da Ordem</p>
                       {getStatusBadge(order.status)}
                     </div>
-                    {(order.status === 'paid' || (order.receipt_url && order.status === 'pending')) && (
+                    {/* Mostrar botões de confirmar/rejeitar quando há comprovante (mesmo em ordens expiradas) */}
+                    {(order.status === 'paid' || 
+                      (order.receipt_url && order.status === 'pending') || 
+                      (order.receipt_url && order.status === 'expired')) && !order.payment_confirmed_at && (
                       <div className="flex gap-2">
                         <Button
                           size="sm"
@@ -432,7 +435,7 @@ const AdminOrderDetails = () => {
                           disabled={isUpdating}
                         >
                           <CheckCircle2 className="h-4 w-4 mr-2" />
-                          Confirmar
+                          {order.status === 'expired' ? 'Reabrir e Confirmar' : 'Confirmar'}
                         </Button>
                         <Button
                           size="sm"
@@ -583,8 +586,8 @@ const AdminOrderDetails = () => {
                 </CardContent>
               </Card>
 
-              {/* Card para enviar hash da transação */}
-              {order.payment_confirmed_at && (
+              {/* Card para enviar hash da transação - aparece quando há comprovante OU pagamento confirmado OU ordem concluída */}
+              {(order.payment_confirmed_at || order.receipt_url || order.status === 'completed') && (
                 <Card className="shadow-lg border-primary/20">
                   <CardHeader>
                     <CardTitle className="text-lg">Hash da Transação</CardTitle>
@@ -600,6 +603,12 @@ const AdminOrderDetails = () => {
                           <CheckCircle2 className="h-4 w-4 text-success" />
                           <span className="text-sm text-success">Cliente pode verificar a transação</span>
                         </div>
+                      </div>
+                    ) : !order.payment_confirmed_at ? (
+                      <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                        <p className="text-sm text-warning-foreground">
+                          ⚠️ Confirme o pagamento primeiro para liberar o envio da hash
+                        </p>
                       </div>
                     ) : (
                       <div className="space-y-3">
