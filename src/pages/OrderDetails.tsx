@@ -72,11 +72,55 @@ const OrderDetails = () => {
         if (timelineData) {
           setTimelineEvents(timelineData);
         }
+
+        // Registrar visualização da hash se a ordem estiver concluída
+        if (data.status === 'completed' && data.transaction_hash) {
+          trackHashViewed(data);
+        }
       } catch (err) {
         console.error('Error fetching order:', err);
         setError('Não foi possível carregar a ordem');
       } finally {
         setLoading(false);
+      }
+    };
+
+    // Função para registrar visualização da hash
+    const trackHashViewed = async (orderData: any) => {
+      try {
+        const isFirstView = !orderData.hash_viewed_at;
+        const currentCount = orderData.hash_viewed_count || 0;
+
+        // Atualizar ordem com informações de visualização
+        const updateData: any = {
+          hash_viewed_count: currentCount + 1
+        };
+
+        // Registrar primeira visualização
+        if (isFirstView) {
+          updateData.hash_viewed_at = new Date().toISOString();
+        }
+
+        await supabase
+          .from('orders')
+          .update(updateData)
+          .eq('id', orderData.id);
+
+        // Adicionar evento na timeline apenas na primeira visualização
+        if (isFirstView) {
+          await supabase
+            .from('order_timeline')
+            .insert({
+              order_id: orderData.id,
+              event_type: 'hash_viewed',
+              message: 'Cliente visualizou a transação na plataforma',
+              actor_type: 'user'
+            });
+        }
+
+        console.log(`[OrderDetails] Hash viewed tracked for order ${orderData.id}, first view: ${isFirstView}`);
+      } catch (error) {
+        console.error('[OrderDetails] Error tracking hash view:', error);
       }
     };
 

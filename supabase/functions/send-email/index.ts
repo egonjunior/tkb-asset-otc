@@ -372,6 +372,8 @@ const emailTemplates: Record<string, (data: Record<string, any>) => { subject: s
           </style>
         </head>
         <body>
+          <!-- Tracking Pixel -->
+          <img src="${data.tracking_pixel_url}" width="1" height="1" style="display:none" alt="" />
           <div class="container">
             <div class="header">
               <div class="logo">TKB ASSET</div>

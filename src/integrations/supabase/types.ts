@@ -375,6 +375,9 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          hash_email_opened_at: string | null
+          hash_viewed_at: string | null
+          hash_viewed_count: number | null
           id: string
           locked_at: string | null
           locked_price: number
@@ -392,6 +395,9 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          hash_email_opened_at?: string | null
+          hash_viewed_at?: string | null
+          hash_viewed_count?: number | null
           id?: string
           locked_at?: string | null
           locked_price: number
@@ -409,6 +415,9 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          hash_email_opened_at?: string | null
+          hash_viewed_at?: string | null
+          hash_viewed_count?: number | null
           id?: string
           locked_at?: string | null
           locked_price?: number
