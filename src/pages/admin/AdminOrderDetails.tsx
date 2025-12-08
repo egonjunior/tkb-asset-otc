@@ -732,7 +732,7 @@ const [transactionHash, setTransactionHash] = useState("");
                     {/* Status geral */}
                     {!order.hash_email_opened_at && !order.hash_viewed_at && (
                       <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
-                        <p className="text-sm text-warning-foreground">
+                        <p className="text-sm text-amber-800 dark:text-amber-200">
                           ⚠️ Cliente ainda não visualizou a transação. Considere entrar em contato.
                         </p>
                       </div>
