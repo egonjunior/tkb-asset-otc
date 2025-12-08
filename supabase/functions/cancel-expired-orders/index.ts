@@ -13,9 +13,10 @@ Deno.serve(async (req) => {
     
     const { data: expiredOrders, error: fetchError } = await supabase
       .from('orders')
-      .select('id, locked_at, created_at, status, payment_confirmed_at')
+      .select('id, locked_at, created_at, status, payment_confirmed_at, receipt_url')
       .in('status', ['pending', 'paid'])
       .is('payment_confirmed_at', null) // CRÍTICO: Não expirar ordens já confirmadas
+      .is('receipt_url', null) // CRÍTICO: Não expirar ordens com comprovante anexado
       .lt('locked_at', fifteenMinutesAgo);
 
     if (fetchError) {
@@ -23,7 +24,7 @@ Deno.serve(async (req) => {
       throw fetchError;
     }
 
-    console.log(`Found ${expiredOrders?.length || 0} expired orders (excluding confirmed ones)`);
+    console.log(`Found ${expiredOrders?.length || 0} expired orders (excluding confirmed ones and orders with receipt)`);
 
     if (expiredOrders && expiredOrders.length > 0) {
       // Update expired orders to expired status
@@ -34,6 +35,7 @@ Deno.serve(async (req) => {
         .update({ status: 'expired' })
         .in('id', orderIds)
         .is('payment_confirmed_at', null) // Dupla verificação de segurança
+        .is('receipt_url', null) // Dupla verificação: não expirar se tiver comprovante
         .select();
 
       if (updateError) {
