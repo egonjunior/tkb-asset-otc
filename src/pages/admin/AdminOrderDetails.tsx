@@ -397,16 +397,24 @@ const [transactionHash, setTransactionHash] = useState("");
     try {
       const { error } = await supabase
         .from('orders')
-        .update({ status: 'pending' })
+        .update({ status: 'rejected' })
         .eq('id', order.id);
       
       if (error) throw error;
+
+      // Registrar rejeição no timeline
+      await supabase.from('order_timeline').insert({
+        order_id: order.id,
+        event_type: 'payment_rejected',
+        message: 'Pagamento rejeitado pelo administrador',
+        actor_type: 'admin'
+      });
       
-      setOrder({ ...order, status: 'pending' });
+      setOrder({ ...order, status: 'rejected' });
       
       toast({
         title: "Pagamento rejeitado",
-        description: "Ordem retornou para status pendente",
+        description: "Ordem marcada como rejeitada",
       });
     } catch (error) {
       console.error('Error rejecting payment:', error);
@@ -427,6 +435,7 @@ const [transactionHash, setTransactionHash] = useState("");
       processing: { label: "Aguardando Envio USDT", className: "bg-blue-500 text-white" },
       completed: { label: "Concluído", className: "bg-success text-success-foreground" },
       expired: { label: "Expirado", className: "bg-muted text-muted-foreground" },
+      rejected: { label: "Rejeitado", className: "bg-destructive text-destructive-foreground" },
     };
     
     const variant = variants[status] || variants.pending;
