@@ -494,8 +494,8 @@ const [transactionHash, setTransactionHash] = useState("");
                     </div>
                     {/* Mostrar botões de confirmar/rejeitar quando há comprovante (mesmo em ordens expiradas) */}
                     {(order.status === 'paid' || 
-                      (order.receipt_url && order.status === 'pending') || 
-                      (order.receipt_url && order.status === 'expired')) && !order.payment_confirmed_at && (
+                      order.status === 'expired' ||
+                      (order.receipt_url && order.status === 'pending')) && !order.payment_confirmed_at && (
                       <div className="flex flex-col sm:flex-row gap-2">
                         <Button
                           size="sm"
