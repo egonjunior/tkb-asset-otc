@@ -162,8 +162,8 @@ const [transactionHash, setTransactionHash] = useState("");
       }
     };
 
-    fetchOrder();
-  }, [orderId]);
+    checkAdminAndFetchOrder();
+  }, [orderId, navigate]);
 
   const handleDownloadReceipt = async () => {
     if (!order.receipt_url) return;
@@ -496,11 +496,12 @@ const [transactionHash, setTransactionHash] = useState("");
                     {(order.status === 'paid' || 
                       (order.receipt_url && order.status === 'pending') || 
                       (order.receipt_url && order.status === 'expired')) && !order.payment_confirmed_at && (
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Button
                           size="sm"
                           onClick={handleConfirmPayment}
                           disabled={isUpdating}
+                          className="w-full sm:w-auto"
                         >
                           <CheckCircle2 className="h-4 w-4 mr-2" />
                           {order.status === 'expired' ? 'Reabrir e Confirmar' : 'Confirmar'}
@@ -510,6 +511,7 @@ const [transactionHash, setTransactionHash] = useState("");
                           variant="destructive"
                           onClick={handleRejectPayment}
                           disabled={isUpdating}
+                          className="w-full sm:w-auto"
                         >
                           Rejeitar
                         </Button>
