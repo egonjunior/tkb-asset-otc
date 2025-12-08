@@ -18,8 +18,66 @@ const AdminOrderDetails = () => {
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [receiptError, setReceiptError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [transactionHash, setTransactionHash] = useState("");
+const [transactionHash, setTransactionHash] = useState("");
   const [isSendingHash, setIsSendingHash] = useState(false);
+  const [hashError, setHashError] = useState<string | null>(null);
+
+  // Função para extrair hash de URL ou validar formato
+  const extractHash = (input: string): string => {
+    const trimmed = input.trim();
+    
+    // Se for URL do TronScan
+    if (trimmed.includes('tronscan.org')) {
+      const match = trimmed.match(/transaction\/([a-fA-F0-9]{64})/);
+      return match ? match[1] : trimmed;
+    }
+    
+    // Se for URL do Etherscan
+    if (trimmed.includes('etherscan.io')) {
+      const match = trimmed.match(/tx\/(0x[a-fA-F0-9]{64})/);
+      return match ? match[1] : trimmed;
+    }
+    
+    // Se for URL do BscScan
+    if (trimmed.includes('bscscan.com')) {
+      const match = trimmed.match(/tx\/(0x[a-fA-F0-9]{64})/);
+      return match ? match[1] : trimmed;
+    }
+    
+    // Retorna o input limpo
+    return trimmed;
+  };
+
+  // Validar formato da hash
+  const validateHash = (hash: string): boolean => {
+    // TRC20: 64 caracteres hexadecimais
+    if (/^[a-fA-F0-9]{64}$/.test(hash)) return true;
+    // ERC20/BEP20: 0x + 64 caracteres hexadecimais
+    if (/^0x[a-fA-F0-9]{64}$/.test(hash)) return true;
+    return false;
+  };
+
+  // Gerar link do explorer
+  const getExplorerLink = (hash: string, network: string): string => {
+    const links: Record<string, string> = {
+      'TRC20': `https://tronscan.org/#/transaction/${hash}`,
+      'ERC20': `https://etherscan.io/tx/${hash}`,
+      'BEP20': `https://bscscan.com/tx/${hash}`
+    };
+    return links[network] || '#';
+  };
+
+  // Handler para mudança no input de hash
+  const handleHashChange = (value: string) => {
+    const extracted = extractHash(value);
+    setTransactionHash(extracted);
+    
+    if (extracted && !validateHash(extracted)) {
+      setHashError('Formato inválido. Hash deve ter 64 caracteres hexadecimais');
+    } else {
+      setHashError(null);
+    }
+  };
 
   useEffect(() => {
   const checkAdminAndFetchOrder = async () => {
@@ -144,11 +202,11 @@ const AdminOrderDetails = () => {
     setIsUpdating(true);
     
     try {
-      // Atualizar status e payment_confirmed_at
+      // Atualizar status para 'processing' (aguardando envio USDT) e payment_confirmed_at
       const { error: updateError } = await supabase
         .from('orders')
         .update({ 
-          status: 'completed',
+          status: 'processing',
           payment_confirmed_at: new Date().toISOString()
         })
         .eq('id', order.id);
@@ -167,7 +225,7 @@ const AdminOrderDetails = () => {
 
       if (timelineError) throw timelineError;
       
-      setOrder({ ...order, status: 'completed', payment_confirmed_at: new Date().toISOString() });
+      setOrder({ ...order, status: 'processing', payment_confirmed_at: new Date().toISOString() });
 
       // Buscar email do cliente
       const { data: profileData } = await supabase
@@ -221,15 +279,28 @@ const AdminOrderDetails = () => {
   };
 
   const handleSendHash = async () => {
-    if (!order || !transactionHash.trim()) return;
+    const cleanHash = extractHash(transactionHash);
+    if (!order || !cleanHash) return;
+    
+    if (!validateHash(cleanHash)) {
+      toast({
+        title: "Hash inválida",
+        description: "A hash deve ter 64 caracteres hexadecimais (ou 66 com prefixo 0x)",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsSendingHash(true);
     
     try {
-      // Atualizar ordem com hash
+      // Atualizar ordem com hash e status para completed
       const { error: updateError } = await supabase
         .from('orders')
-        .update({ transaction_hash: transactionHash.trim() })
+        .update({ 
+          transaction_hash: cleanHash,
+          status: 'completed'
+        })
         .eq('id', order.id);
       
       if (updateError) throw updateError;
@@ -242,12 +313,12 @@ const AdminOrderDetails = () => {
           event_type: 'usdt_sent',
           actor_type: 'admin',
           message: 'USDT enviado para sua carteira',
-          metadata: { transaction_hash: transactionHash.trim() }
+          metadata: { transaction_hash: cleanHash }
         });
 
       if (timelineError) throw timelineError;
       
-      setOrder({ ...order, transaction_hash: transactionHash.trim() });
+      setOrder({ ...order, transaction_hash: cleanHash, status: 'completed' });
       setTransactionHash("");
 
       // Buscar email do cliente
@@ -265,11 +336,7 @@ const AdminOrderDetails = () => {
           variant: "destructive",
         });
       } else {
-        const explorerLinks: Record<string, string> = {
-          'TRC20': `https://tronscan.org/#/transaction/${transactionHash.trim()}`,
-          'ERC20': `https://etherscan.io/tx/${transactionHash.trim()}`,
-          'BEP20': `https://bscscan.com/tx/${transactionHash.trim()}`
-        };
+        const explorerLink = getExplorerLink(cleanHash, order.network);
         
         console.log('Enviando email usdt-sent para:', profileData.email);
         
@@ -282,8 +349,8 @@ const AdminOrderDetails = () => {
               ordem_id: order.id,
               quantidade_usdt: order.amount,
               carteira_destino: order.wallet_address,
-              transaction_hash: transactionHash.trim(),
-              link_explorer: explorerLinks[order.network] || '#',
+              transaction_hash: cleanHash,
+              link_explorer: explorerLink,
               link_ordem: `${window.location.origin}/order/${order.id}`,
               valor_brl: order.total.toFixed(2),
               rede: order.network,
@@ -355,8 +422,9 @@ const AdminOrderDetails = () => {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { label: string; className: string }> = {
-      pending: { label: "Aguardando", className: "bg-warning text-warning-foreground" },
-      paid: { label: "Pago", className: "bg-primary text-primary-foreground" },
+      pending: { label: "Aguardando Pagamento", className: "bg-warning text-warning-foreground" },
+      paid: { label: "Comprovante Enviado", className: "bg-primary text-primary-foreground" },
+      processing: { label: "Aguardando Envio USDT", className: "bg-blue-500 text-white" },
       completed: { label: "Concluído", className: "bg-success text-success-foreground" },
       expired: { label: "Expirado", className: "bg-muted text-muted-foreground" },
     };
@@ -616,22 +684,43 @@ const AdminOrderDetails = () => {
                           <Label htmlFor="hash">Hash da transação USDT</Label>
                           <Input
                             id="hash"
-                            placeholder="Cole o hash da transação aqui"
+                            placeholder="Cole o hash ou URL do explorer aqui"
                             value={transactionHash}
-                            onChange={(e) => setTransactionHash(e.target.value)}
+                            onChange={(e) => handleHashChange(e.target.value)}
                             disabled={isSendingHash}
+                            className={hashError ? "border-destructive" : ""}
                           />
-                          <p className="text-xs text-muted-foreground">
-                            Após enviar o USDT, cole aqui o hash da transação para o cliente verificar
-                          </p>
+                          {hashError ? (
+                            <p className="text-xs text-destructive">{hashError}</p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">
+                              Cole a hash ou URL completa do explorer - extraímos a hash automaticamente
+                            </p>
+                          )}
                         </div>
+                        
+                        {/* Preview do link que será gerado */}
+                        {transactionHash && !hashError && (
+                          <div className="p-3 bg-muted rounded-lg">
+                            <p className="text-xs text-muted-foreground mb-1">Link que será enviado ao cliente:</p>
+                            <a 
+                              href={getExplorerLink(transactionHash, order.network)} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline break-all"
+                            >
+                              {getExplorerLink(transactionHash, order.network)}
+                            </a>
+                          </div>
+                        )}
+                        
                         <Button
                           className="w-full"
                           onClick={handleSendHash}
-                          disabled={!transactionHash.trim() || isSendingHash}
+                          disabled={!transactionHash.trim() || !!hashError || isSendingHash}
                         >
                           <Send className="h-4 w-4 mr-2" />
-                          {isSendingHash ? "Enviando..." : "Enviar Hash"}
+                          {isSendingHash ? "Enviando..." : "Enviar Hash e Concluir Ordem"}
                         </Button>
                       </div>
                     )}

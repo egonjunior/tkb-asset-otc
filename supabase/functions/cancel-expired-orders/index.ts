@@ -8,28 +8,32 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Usar função otimizada com índices ao invés de query manual
+    // Buscar ordens expiradas diretamente - NÃO expirar ordens que já foram confirmadas
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    
     const { data: expiredOrders, error: fetchError } = await supabase
-      .rpc('get_expired_orders') as { 
-        data: Array<{ order_id: string; locked_at: string | null; created_at: string }> | null; 
-        error: any 
-      };
+      .from('orders')
+      .select('id, locked_at, created_at, status, payment_confirmed_at')
+      .in('status', ['pending', 'paid'])
+      .is('payment_confirmed_at', null) // CRÍTICO: Não expirar ordens já confirmadas
+      .lt('locked_at', fifteenMinutesAgo);
 
     if (fetchError) {
       console.error('Error fetching expired orders:', fetchError);
       throw fetchError;
     }
 
-    console.log(`Found ${expiredOrders?.length || 0} expired orders`);
+    console.log(`Found ${expiredOrders?.length || 0} expired orders (excluding confirmed ones)`);
 
     if (expiredOrders && expiredOrders.length > 0) {
-      // Update expired orders to cancelled status
-      const orderIds = expiredOrders.map((order: { order_id: string }) => order.order_id);
+      // Update expired orders to expired status
+      const orderIds = expiredOrders.map((order) => order.id);
       
       const { data: updatedOrders, error: updateError } = await supabase
         .from('orders')
         .update({ status: 'expired' })
         .in('id', orderIds)
+        .is('payment_confirmed_at', null) // Dupla verificação de segurança
         .select();
 
       if (updateError) {
