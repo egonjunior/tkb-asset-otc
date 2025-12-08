@@ -321,18 +321,40 @@ const [transactionHash, setTransactionHash] = useState("");
       setOrder({ ...order, transaction_hash: cleanHash, status: 'completed' });
       setTransactionHash("");
 
-      // Buscar email do cliente
+      // Buscar email do cliente - primeiro do profile, depois do auth.users via edge function
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', order.user_id)
         .single();
 
-      if (!profileData?.email) {
-        console.warn('Perfil sem email; não foi possível enviar usdt-sent', { user_id: order.user_id, order_id: order.id });
+      let clientEmail = profileData?.email;
+      const clientName = profileData?.full_name || 'Cliente';
+
+      // Se não tem email no profile, buscar do auth.users via edge function
+      if (!clientEmail) {
+        console.log('Email não encontrado no profile, buscando via edge function...');
+        try {
+          const { data: authData, error: authError } = await supabase.functions.invoke('get-user-email', {
+            body: { user_id: order.user_id }
+          });
+          
+          if (authError) {
+            console.error('Erro ao buscar email via edge function:', authError);
+          } else if (authData?.email) {
+            clientEmail = authData.email;
+            console.log('Email recuperado via edge function:', clientEmail);
+          }
+        } catch (err) {
+          console.error('Erro na chamada get-user-email:', err);
+        }
+      }
+
+      if (!clientEmail) {
+        console.warn('Não foi possível encontrar email do cliente', { user_id: order.user_id, order_id: order.id });
         toast({
           title: "⚠️ Hash enviada",
-          description: "Email do cliente não cadastrado. Atualize o perfil para enviar notificações.",
+          description: "Email do cliente não encontrado. Verifique o cadastro do usuário.",
           variant: "destructive",
         });
       } else {
@@ -342,14 +364,14 @@ const [transactionHash, setTransactionHash] = useState("");
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const trackingPixelUrl = `${supabaseUrl}/functions/v1/track-email-open?order_id=${order.id}`;
         
-        console.log('Enviando email usdt-sent para:', profileData.email);
+        console.log('Enviando email usdt-sent para:', clientEmail);
         
         const { data: emailData, error: emailError } = await supabase.functions.invoke('send-email', {
           body: {
             type: 'usdt-sent',
-            to: profileData.email,
+            to: clientEmail,
             data: {
-              nome_cliente: profileData.full_name,
+              nome_cliente: clientName,
               ordem_id: order.id,
               quantidade_usdt: order.amount,
               carteira_destino: order.wallet_address,
@@ -375,6 +397,10 @@ const [transactionHash, setTransactionHash] = useState("");
           });
         } else {
           console.log('Email usdt-sent enviado com sucesso:', emailData);
+          toast({
+            title: "✅ Email enviado!",
+            description: `Notificação enviada para ${clientEmail}`,
+          });
         }
       }
       
