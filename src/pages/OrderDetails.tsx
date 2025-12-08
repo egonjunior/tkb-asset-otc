@@ -101,14 +101,19 @@ const OrderDetails = () => {
           updateData.hash_viewed_at = new Date().toISOString();
         }
 
-        await supabase
+        const { error: updateError } = await supabase
           .from('orders')
           .update(updateData)
           .eq('id', orderData.id);
 
+        if (updateError) {
+          console.error('[OrderDetails] Error updating hash view count:', updateError);
+          return; // Não continua se falhou
+        }
+
         // Adicionar evento na timeline apenas na primeira visualização
         if (isFirstView) {
-          await supabase
+          const { error: timelineError } = await supabase
             .from('order_timeline')
             .insert({
               order_id: orderData.id,
@@ -116,9 +121,15 @@ const OrderDetails = () => {
               message: 'Cliente visualizou a transação na plataforma',
               actor_type: 'user'
             });
+
+          if (timelineError) {
+            console.error('[OrderDetails] Error inserting timeline event:', timelineError);
+          } else {
+            console.log(`[OrderDetails] Timeline event created for hash view on order ${orderData.id}`);
+          }
         }
 
-        console.log(`[OrderDetails] Hash viewed tracked for order ${orderData.id}, first view: ${isFirstView}`);
+        console.log(`[OrderDetails] Hash viewed tracked for order ${orderData.id}, first view: ${isFirstView}, count: ${currentCount + 1}`);
       } catch (error) {
         console.error('[OrderDetails] Error tracking hash view:', error);
       }
