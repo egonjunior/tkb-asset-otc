@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Download, CheckCircle2, AlertCircle, FileText, Send } from "lucide-react";
+import { ArrowLeft, Download, CheckCircle2, AlertCircle, FileText, Send, Mail, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -338,6 +338,10 @@ const [transactionHash, setTransactionHash] = useState("");
       } else {
         const explorerLink = getExplorerLink(cleanHash, order.network);
         
+        // Gerar URL do tracking pixel
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const trackingPixelUrl = `${supabaseUrl}/functions/v1/track-email-open?order_id=${order.id}`;
+        
         console.log('Enviando email usdt-sent para:', profileData.email);
         
         const { data: emailData, error: emailError } = await supabase.functions.invoke('send-email', {
@@ -356,7 +360,8 @@ const [transactionHash, setTransactionHash] = useState("");
               rede: order.network,
               data_hora: new Date().toLocaleString('pt-BR'),
               link_plataforma: `${window.location.origin}/trading-order`,
-              whatsapp: '(11) 9XXXX-XXXX'
+              whatsapp: '(11) 9XXXX-XXXX',
+              tracking_pixel_url: trackingPixelUrl
             }
           }
         });
@@ -664,6 +669,77 @@ const [transactionHash, setTransactionHash] = useState("");
                   )}
                 </CardContent>
               </Card>
+
+              {/* Card de Rastreamento de Visualização */}
+              {order.status === 'completed' && order.transaction_hash && (
+                <Card className="shadow-lg border-blue-500/20">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Eye className="h-5 w-5 text-blue-500" />
+                      Rastreamento de Visualização
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {/* Email aberto */}
+                    <div className={`flex items-center gap-3 p-3 rounded-lg ${
+                      order.hash_email_opened_at 
+                        ? 'bg-success/10 border border-success/20' 
+                        : 'bg-muted border border-border'
+                    }`}>
+                      <Mail className={`h-5 w-5 ${order.hash_email_opened_at ? 'text-success' : 'text-muted-foreground'}`} />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Email Aberto</p>
+                        {order.hash_email_opened_at ? (
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(order.hash_email_opened_at).toLocaleString('pt-BR')}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Ainda não abriu o email</p>
+                        )}
+                      </div>
+                      {order.hash_email_opened_at && (
+                        <CheckCircle2 className="h-5 w-5 text-success" />
+                      )}
+                    </div>
+
+                    {/* Visualização na plataforma */}
+                    <div className={`flex items-center gap-3 p-3 rounded-lg ${
+                      order.hash_viewed_at 
+                        ? 'bg-success/10 border border-success/20' 
+                        : 'bg-muted border border-border'
+                    }`}>
+                      <Eye className={`h-5 w-5 ${order.hash_viewed_at ? 'text-success' : 'text-muted-foreground'}`} />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Visualizado na Plataforma</p>
+                        {order.hash_viewed_at ? (
+                          <>
+                            <p className="text-xs text-muted-foreground">
+                              Primeira visualização: {new Date(order.hash_viewed_at).toLocaleString('pt-BR')}
+                            </p>
+                            <p className="text-xs text-blue-500 font-medium">
+                              Total de visualizações: {order.hash_viewed_count || 1}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Ainda não acessou a página</p>
+                        )}
+                      </div>
+                      {order.hash_viewed_at && (
+                        <CheckCircle2 className="h-5 w-5 text-success" />
+                      )}
+                    </div>
+
+                    {/* Status geral */}
+                    {!order.hash_email_opened_at && !order.hash_viewed_at && (
+                      <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                        <p className="text-sm text-warning-foreground">
+                          ⚠️ Cliente ainda não visualizou a transação. Considere entrar em contato.
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Card para enviar hash da transação - aparece quando há comprovante OU pagamento confirmado OU ordem concluída */}
               {(order.payment_confirmed_at || order.receipt_url || order.status === 'completed') && (
