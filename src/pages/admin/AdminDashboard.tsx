@@ -345,7 +345,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Parceiros B2B Card */}
-          <div className="grid sm:grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
             <Card 
               className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-indigo-500" 
               onClick={() => navigate('/admin/partners-b2b')}
@@ -391,6 +391,22 @@ const AdminDashboard = () => {
                   <TrendingUp className="h-8 w-8 text-teal-600" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">Cotações exclusivas com spreads personalizados</p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-emerald-500" 
+              onClick={() => navigate('/admin/pld-compliance')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">🛡️ Compliance PLD</p>
+                    <p className="text-xl font-bold text-emerald-600">Verificar →</p>
+                  </div>
+                  <Shield className="h-8 w-8 text-emerald-600" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Aceites de Política PLD para auditoria</p>
               </CardContent>
             </Card>
           </div>
