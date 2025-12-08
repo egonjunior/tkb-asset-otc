@@ -84,6 +84,15 @@ const Register = () => {
 
       if (error) throw error;
 
+      // Atualizar profile com email (trigger não inclui email)
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        await supabase
+          .from('profiles')
+          .update({ email: data.email })
+          .eq('id', userData.user.id);
+      }
+
       // Enviar email de boas-vindas
       await supabase.functions.invoke('send-email', {
         body: {
