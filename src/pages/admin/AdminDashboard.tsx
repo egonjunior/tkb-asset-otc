@@ -190,15 +190,16 @@ const AdminDashboard = () => {
     navigate("/admin/login");
   };
 
-  const getStatusBadge = (status: Order["status"]) => {
-    const variants = {
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, { label: string; className: string }> = {
       pending: { label: "Aguardando", className: "bg-warning text-warning-foreground" },
       paid: { label: "Pago", className: "bg-primary text-primary-foreground" },
       completed: { label: "Concluído", className: "bg-success text-success-foreground" },
       expired: { label: "Expirado", className: "bg-muted text-muted-foreground" },
+      rejected: { label: "Rejeitado", className: "bg-destructive text-destructive-foreground" },
     };
     
-    const variant = variants[status];
+    const variant = variants[status] || { label: status, className: "bg-muted text-muted-foreground" };
     return <Badge className={variant.className}>{variant.label}</Badge>;
   };
 
