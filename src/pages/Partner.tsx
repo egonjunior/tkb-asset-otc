@@ -303,7 +303,7 @@ export default function Partner() {
                     <ul className="text-sm space-y-2">
                       <li className="flex items-start gap-2">
                         <span className="text-primary mt-0.5">✓</span>
-                        <span>Markup personalizado a partir de 0.4% sobre o preço Binance</span>
+                        <span>Margem atrativa para lucrar com seus clientes</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-primary mt-0.5">✓</span>
