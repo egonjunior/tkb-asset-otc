@@ -46,11 +46,13 @@ import {
   Edit2,
   Filter,
   Wallet,
+  TrendingUp,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { GrowthProjectionCard } from "@/components/admin/GrowthProjectionCard";
 
 interface Deposit {
   id: string;
@@ -227,6 +229,13 @@ const AdminOkxOperations = () => {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    // For growth tab, load withdrawals if not already loaded
+    if (value === 'growth') {
+      if (withdrawals.length === 0) {
+        fetchOperations('withdrawals');
+      }
+      return;
+    }
     const typeMap: Record<string, string> = {
       deposits: 'deposits',
       purchases: 'purchases',
@@ -589,7 +598,7 @@ const AdminOkxOperations = () => {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="deposits" className="flex items-center gap-2">
                 <Download className="h-4 w-4" />
                 Depósitos BRL
@@ -600,6 +609,10 @@ const AdminOkxOperations = () => {
               <TabsTrigger value="withdrawals" className="flex items-center gap-2">
                 <Upload className="h-4 w-4" />
                 Saques USDT
+              </TabsTrigger>
+              <TabsTrigger value="growth" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Crescimento
               </TabsTrigger>
             </TabsList>
 
@@ -919,6 +932,14 @@ const AdminOkxOperations = () => {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            {/* Growth Projection Tab */}
+            <TabsContent value="growth">
+              <GrowthProjectionCard 
+                withdrawals={withdrawals} 
+                loading={loading && activeTab === 'growth'} 
+              />
             </TabsContent>
           </Tabs>
         </div>
