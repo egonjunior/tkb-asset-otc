@@ -333,6 +333,33 @@ export type Database = {
           },
         ]
       }
+      okx_wallet_aliases: {
+        Row: {
+          alias: string
+          created_at: string
+          id: string
+          notes: string | null
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          alias: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          alias?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       order_timeline: {
         Row: {
           actor_type: string
