@@ -217,32 +217,35 @@ serve(async (req) => {
         console.log(`[OKX] Crypto deposits error: ${e}`);
       }
 
-      // Also try BRL deposits (fiat)
-      console.log('[OKX] Fetching fiat deposits (BRL)...');
+      // Also try BRL deposits (fiat) - Using correct endpoint
+      console.log('[OKX] Fetching fiat orders (BRL)...');
       try {
-        const fiatDeposits = await fetchOkxApi('/api/v5/fiat/deposit-history', {});
-        console.log(`[OKX] Fiat deposits found: ${fiatDeposits?.length || 0}`);
+        // Use /api/v5/fiat/orders for fiat deposit/withdraw orders
+        const fiatOrders = await fetchOkxApi('/api/v5/fiat/orders', {});
+        console.log(`[OKX] Fiat orders found: ${fiatOrders?.length || 0}`);
         
-        if (fiatDeposits && fiatDeposits.length > 0) {
-          console.log(`[OKX] Sample fiat deposit:`, JSON.stringify(fiatDeposits[0]));
+        if (fiatOrders && fiatOrders.length > 0) {
+          console.log(`[OKX] Sample fiat order:`, JSON.stringify(fiatOrders[0]));
           
-          const brlDeposits = fiatDeposits
-            .filter((d: any) => d.ccy === 'BRL')
+          // Filter only BRL deposits (side = 'buy' means deposit into OKX)
+          const brlDeposits = fiatOrders
+            .filter((d: any) => d.ccy === 'BRL' && d.side === 'buy')
             .map((d: any) => ({
-              id: d.depId || d.ordId,
-              amount: parseFloat(d.amt),
+              id: d.ordId,
+              amount: parseFloat(d.amt || d.quoteSz || 0),
               currency: 'BRL',
-              status: mapDepositStatus(d.state),
-              timestamp: new Date(parseInt(d.ts || d.uTime)).toISOString(),
-              txId: d.txId || null,
-              from: d.from || 'Fiat',
+              status: mapFiatOrderStatus(d.state),
+              timestamp: new Date(parseInt(d.uTime || d.cTime)).toISOString(),
+              txId: null,
+              from: 'PIX/TED',
               network: 'Fiat',
             }));
           
+          console.log(`[OKX] BRL deposits mapped: ${brlDeposits.length}`);
           result = result.concat(brlDeposits);
         }
       } catch (e) {
-        console.log(`[OKX] Fiat deposits error: ${e}`);
+        console.log(`[OKX] Fiat orders error: ${e}`);
       }
       
     } else if (type === 'purchases') {
@@ -301,6 +304,16 @@ serve(async (req) => {
       } catch (e) {
         console.log(`[OKX] Archived trades error: ${e}`);
       }
+      
+      // DEDUPLICATE by ordId to avoid showing same order twice
+      const uniqueOrdersMap = new Map<string, any>();
+      result.forEach(order => {
+        if (!uniqueOrdersMap.has(order.id)) {
+          uniqueOrdersMap.set(order.id, order);
+        }
+      });
+      result = Array.from(uniqueOrdersMap.values());
+      console.log(`[OKX] After deduplication: ${result.length} unique orders`);
       
       // Also try to get fills/trades history
       console.log('[OKX] Fetching fills history...');
@@ -416,6 +429,18 @@ function mapWithdrawalStatus(state: string): string {
     '7': 'approved',
     '10': 'waiting transfer',
     '11': 'waiting for confirmation',
+  };
+  return statusMap[state] || state;
+}
+
+// Map OKX fiat order states to readable status
+function mapFiatOrderStatus(state: string): string {
+  const statusMap: Record<string, string> = {
+    'pending': 'pending',
+    'processing': 'processing',
+    'completed': 'completed',
+    'failed': 'failed',
+    'cancelled': 'cancelled',
   };
   return statusMap[state] || state;
 }
