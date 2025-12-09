@@ -13,9 +13,10 @@ interface OkxRequestParams {
   method: string;
   path: string;
   params?: Record<string, string>;
+  body?: string;
 }
 
-async function signOkxRequest({ method, path, params }: OkxRequestParams): Promise<{
+async function signOkxRequest({ method, path, params, body }: OkxRequestParams): Promise<{
   signature: string;
   timestamp: string;
 }> {
@@ -34,7 +35,10 @@ async function signOkxRequest({ method, path, params }: OkxRequestParams): Promi
     queryString = '?' + new URLSearchParams(params).toString();
   }
   
-  const preHash = timestamp + method.toUpperCase() + path + queryString;
+  // OKX signature: timestamp + method + requestPath + body
+  const preHash = timestamp + method.toUpperCase() + path + queryString + (body || '');
+  
+  console.log(`[OKX] PreHash string: ${preHash}`);
   
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secretKey);
@@ -69,7 +73,8 @@ async function fetchOkxApi(path: string, params: Record<string, string> = {}): P
     url += '?' + new URLSearchParams(params).toString();
   }
   
-  console.log(`[OKX] Fetching: ${path}`);
+  console.log(`[OKX] Fetching: ${url}`);
+  console.log(`[OKX] Params: ${JSON.stringify(params)}`);
   
   const response = await fetch(url, {
     method: 'GET',
@@ -84,12 +89,54 @@ async function fetchOkxApi(path: string, params: Record<string, string> = {}): P
   
   const data = await response.json();
   
+  console.log(`[OKX] Response code: ${data.code}, msg: ${data.msg}`);
+  console.log(`[OKX] Data count: ${data.data?.length || 0}`);
+  
   if (data.code !== '0') {
-    console.error(`[OKX] API Error:`, data);
-    throw new Error(`OKX API Error: ${data.msg || 'Unknown error'}`);
+    console.error(`[OKX] API Error:`, JSON.stringify(data));
+    throw new Error(`OKX API Error: ${data.msg || 'Unknown error'} (code: ${data.code})`);
   }
   
   return data.data;
+}
+
+// Fetch all pages of data from OKX API
+async function fetchAllOkxData(path: string, baseParams: Record<string, string> = {}): Promise<any[]> {
+  let allData: any[] = [];
+  let lastId: string | undefined;
+  let hasMore = true;
+  let pageCount = 0;
+  const maxPages = 10; // Safety limit
+  
+  while (hasMore && pageCount < maxPages) {
+    const params = { ...baseParams };
+    if (lastId) {
+      params.after = lastId; // OKX uses 'after' for pagination (older records)
+    }
+    
+    console.log(`[OKX] Fetching page ${pageCount + 1}, after: ${lastId || 'none'}`);
+    
+    const data = await fetchOkxApi(path, params);
+    
+    if (!data || data.length === 0) {
+      hasMore = false;
+    } else {
+      allData = allData.concat(data);
+      // Get the last ID for pagination
+      const lastRecord = data[data.length - 1];
+      lastId = lastRecord.depId || lastRecord.wdId || lastRecord.ordId || lastRecord.billId;
+      
+      // If we got less than 100 records, we've reached the end
+      if (data.length < 100) {
+        hasMore = false;
+      }
+    }
+    
+    pageCount++;
+  }
+  
+  console.log(`[OKX] Total records fetched: ${allData.length} in ${pageCount} pages`);
+  return allData;
 }
 
 serve(async (req) => {
@@ -130,7 +177,9 @@ serve(async (req) => {
 
     const { type, startDate, endDate } = await req.json();
     
-    console.log(`[OKX] Request type: ${type}, from ${startDate} to ${endDate}`);
+    console.log(`[OKX] ========== NEW REQUEST ==========`);
+    console.log(`[OKX] Request type: ${type}`);
+    console.log(`[OKX] Date range: ${startDate || 'none'} to ${endDate || 'none'}`);
 
     // Fetch wallet aliases for withdrawal mapping
     const { data: aliases } = await supabaseClient
@@ -141,79 +190,182 @@ serve(async (req) => {
 
     let result: any[] = [];
 
-    // Calculate date range (OKX uses milliseconds timestamp)
-    const after = startDate ? new Date(startDate).getTime().toString() : undefined;
-    const before = endDate ? new Date(endDate).getTime().toString() : undefined;
-
     if (type === 'deposits') {
-      // Fetch BRL deposits (fiat deposits)
-      const params: Record<string, string> = { ccy: 'BRL' };
-      if (after) params.after = after;
-      if (before) params.before = before;
+      // Try crypto deposits first
+      console.log('[OKX] Fetching crypto deposits (USDT)...');
+      const cryptoParams: Record<string, string> = { ccy: 'USDT' };
       
-      const deposits = await fetchOkxApi('/api/v5/asset/deposit-history', params);
-      
-      result = deposits?.map((d: any) => ({
-        id: d.depId,
-        amount: parseFloat(d.amt),
-        currency: d.ccy,
-        status: d.state,
-        timestamp: new Date(parseInt(d.ts)).toISOString(),
-        txId: d.txId,
-        from: d.from,
-      })) || [];
+      try {
+        const cryptoDeposits = await fetchAllOkxData('/api/v5/asset/deposit-history', cryptoParams);
+        console.log(`[OKX] Crypto deposits found: ${cryptoDeposits?.length || 0}`);
+        
+        if (cryptoDeposits && cryptoDeposits.length > 0) {
+          console.log(`[OKX] Sample crypto deposit:`, JSON.stringify(cryptoDeposits[0]));
+        }
+        
+        result = cryptoDeposits?.map((d: any) => ({
+          id: d.depId,
+          amount: parseFloat(d.amt),
+          currency: d.ccy,
+          status: mapDepositStatus(d.state),
+          timestamp: new Date(parseInt(d.ts)).toISOString(),
+          txId: d.txId,
+          from: d.from,
+          network: d.chain,
+        })) || [];
+      } catch (e) {
+        console.log(`[OKX] Crypto deposits error: ${e}`);
+      }
+
+      // Also try BRL deposits (fiat)
+      console.log('[OKX] Fetching fiat deposits (BRL)...');
+      try {
+        const fiatDeposits = await fetchOkxApi('/api/v5/fiat/deposit-history', {});
+        console.log(`[OKX] Fiat deposits found: ${fiatDeposits?.length || 0}`);
+        
+        if (fiatDeposits && fiatDeposits.length > 0) {
+          console.log(`[OKX] Sample fiat deposit:`, JSON.stringify(fiatDeposits[0]));
+          
+          const brlDeposits = fiatDeposits
+            .filter((d: any) => d.ccy === 'BRL')
+            .map((d: any) => ({
+              id: d.depId || d.ordId,
+              amount: parseFloat(d.amt),
+              currency: 'BRL',
+              status: mapDepositStatus(d.state),
+              timestamp: new Date(parseInt(d.ts || d.uTime)).toISOString(),
+              txId: d.txId || null,
+              from: d.from || 'Fiat',
+              network: 'Fiat',
+            }));
+          
+          result = result.concat(brlDeposits);
+        }
+      } catch (e) {
+        console.log(`[OKX] Fiat deposits error: ${e}`);
+      }
       
     } else if (type === 'purchases') {
-      // Fetch USDT/BRL spot trades (filled orders)
-      const params: Record<string, string> = { 
+      // Fetch recent trades first (last 3 months)
+      console.log('[OKX] Fetching recent USDT-BRL trades...');
+      const tradeParams: Record<string, string> = { 
         instType: 'SPOT',
         instId: 'USDT-BRL'
       };
-      if (after) params.after = after;
-      if (before) params.before = before;
       
-      const trades = await fetchOkxApi('/api/v5/trade/orders-history-archive', params);
+      try {
+        // Try recent orders first
+        const recentTrades = await fetchAllOkxData('/api/v5/trade/orders-history', tradeParams);
+        console.log(`[OKX] Recent trades found: ${recentTrades?.length || 0}`);
+        
+        if (recentTrades && recentTrades.length > 0) {
+          console.log(`[OKX] Sample trade:`, JSON.stringify(recentTrades[0]));
+        }
+        
+        result = (recentTrades || [])
+          .filter((t: any) => t.state === 'filled')
+          .map((t: any) => ({
+            id: t.ordId,
+            side: t.side,
+            amount: parseFloat(t.sz),
+            price: parseFloat(t.avgPx || t.px || 0),
+            total: parseFloat(t.sz) * parseFloat(t.avgPx || t.px || 0),
+            currency: 'USDT',
+            status: t.state,
+            timestamp: new Date(parseInt(t.uTime || t.cTime)).toISOString(),
+          }));
+      } catch (e) {
+        console.log(`[OKX] Recent trades error: ${e}`);
+      }
       
-      result = (trades || [])
-        .filter((t: any) => t.state === 'filled')
-        .map((t: any) => ({
-          id: t.ordId,
-          side: t.side,
-          amount: parseFloat(t.sz),
-          price: parseFloat(t.avgPx),
-          total: parseFloat(t.sz) * parseFloat(t.avgPx),
-          currency: 'USDT',
-          status: t.state,
-          timestamp: new Date(parseInt(t.uTime)).toISOString(),
-        }));
+      // Also try archived orders (older than 3 months)
+      console.log('[OKX] Fetching archived USDT-BRL trades...');
+      try {
+        const archivedTrades = await fetchAllOkxData('/api/v5/trade/orders-history-archive', tradeParams);
+        console.log(`[OKX] Archived trades found: ${archivedTrades?.length || 0}`);
+        
+        const archivedMapped = (archivedTrades || [])
+          .filter((t: any) => t.state === 'filled')
+          .map((t: any) => ({
+            id: t.ordId,
+            side: t.side,
+            amount: parseFloat(t.sz),
+            price: parseFloat(t.avgPx || t.px || 0),
+            total: parseFloat(t.sz) * parseFloat(t.avgPx || t.px || 0),
+            currency: 'USDT',
+            status: t.state,
+            timestamp: new Date(parseInt(t.uTime || t.cTime)).toISOString(),
+          }));
+        
+        result = result.concat(archivedMapped);
+      } catch (e) {
+        console.log(`[OKX] Archived trades error: ${e}`);
+      }
+      
+      // Also try to get fills/trades history
+      console.log('[OKX] Fetching fills history...');
+      try {
+        const fills = await fetchAllOkxData('/api/v5/trade/fills', { instType: 'SPOT', instId: 'USDT-BRL' });
+        console.log(`[OKX] Fills found: ${fills?.length || 0}`);
+        
+        if (fills && fills.length > 0) {
+          console.log(`[OKX] Sample fill:`, JSON.stringify(fills[0]));
+        }
+      } catch (e) {
+        console.log(`[OKX] Fills error: ${e}`);
+      }
         
     } else if (type === 'withdrawals') {
       // Fetch USDT withdrawals
-      const params: Record<string, string> = { ccy: 'USDT' };
-      if (after) params.after = after;
-      if (before) params.before = before;
+      console.log('[OKX] Fetching USDT withdrawals...');
+      const withdrawParams: Record<string, string> = { ccy: 'USDT' };
       
-      const withdrawals = await fetchOkxApi('/api/v5/asset/withdrawal-history', params);
-      
-      result = withdrawals?.map((w: any) => {
-        const address = w.toAddr?.toLowerCase() || '';
-        const alias = aliasMap.get(address);
+      try {
+        const withdrawals = await fetchAllOkxData('/api/v5/asset/withdrawal-history', withdrawParams);
+        console.log(`[OKX] Withdrawals found: ${withdrawals?.length || 0}`);
         
-        return {
-          id: w.wdId,
-          amount: parseFloat(w.amt),
-          fee: parseFloat(w.fee || 0),
-          currency: w.ccy,
-          network: w.chain,
-          status: w.state,
-          timestamp: new Date(parseInt(w.ts)).toISOString(),
-          txId: w.txId,
-          toAddress: w.toAddr,
-          alias: alias || null,
-        };
-      }) || [];
+        if (withdrawals && withdrawals.length > 0) {
+          console.log(`[OKX] Sample withdrawal:`, JSON.stringify(withdrawals[0]));
+        }
+        
+        result = withdrawals?.map((w: any) => {
+          const address = w.toAddr?.toLowerCase() || '';
+          const alias = aliasMap.get(address);
+          
+          return {
+            id: w.wdId,
+            amount: parseFloat(w.amt),
+            fee: parseFloat(w.fee || 0),
+            currency: w.ccy,
+            network: w.chain,
+            status: mapWithdrawalStatus(w.state),
+            timestamp: new Date(parseInt(w.ts)).toISOString(),
+            txId: w.txId,
+            toAddress: w.toAddr,
+            alias: alias || null,
+          };
+        }) || [];
+      } catch (e) {
+        console.log(`[OKX] Withdrawals error: ${e}`);
+      }
     } else {
       throw new Error('Invalid operation type');
+    }
+
+    // Sort by timestamp descending
+    result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    // Filter by date range if provided
+    if (startDate || endDate) {
+      const start = startDate ? new Date(startDate) : new Date(0);
+      const end = endDate ? new Date(endDate + 'T23:59:59') : new Date();
+      
+      result = result.filter(item => {
+        const itemDate = new Date(item.timestamp);
+        return itemDate >= start && itemDate <= end;
+      });
+      
+      console.log(`[OKX] After date filter: ${result.length} records`);
     }
 
     console.log(`[OKX] Returning ${result.length} records`);
@@ -234,3 +386,36 @@ serve(async (req) => {
     );
   }
 });
+
+// Map OKX deposit states to readable status
+function mapDepositStatus(state: string): string {
+  const statusMap: Record<string, string> = {
+    '0': 'waiting',
+    '1': 'credited',
+    '2': 'successful',
+    '8': 'pending',
+    '11': 'match',
+    '12': 'complete',
+  };
+  return statusMap[state] || state;
+}
+
+// Map OKX withdrawal states to readable status
+function mapWithdrawalStatus(state: string): string {
+  const statusMap: Record<string, string> = {
+    '-3': 'canceling',
+    '-2': 'canceled',
+    '-1': 'failed',
+    '0': 'pending',
+    '1': 'sending',
+    '2': 'sent',
+    '3': 'awaiting email',
+    '4': 'awaiting verification',
+    '5': 'awaiting identity',
+    '6': 'awaiting withdrawal',
+    '7': 'approved',
+    '10': 'waiting transfer',
+    '11': 'waiting for confirmation',
+  };
+  return statusMap[state] || state;
+}
