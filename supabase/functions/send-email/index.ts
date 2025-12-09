@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.0";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 
 const corsHeaders = {
@@ -10,7 +11,35 @@ interface EmailRequest {
   type: string;
   to: string;
   data: Record<string, any>;
-  internal?: boolean;
+  internal_secret?: string; // For internal edge function calls
+}
+
+// Validate the caller - either authenticated user or internal edge function
+async function validateCaller(req: Request): Promise<{ valid: boolean; isInternal: boolean; userId?: string }> {
+  const authHeader = req.headers.get('Authorization');
+  
+  // Check for internal secret (used by other edge functions)
+  const body = await req.clone().json().catch(() => ({}));
+  if (body.internal_secret === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
+    return { valid: true, isInternal: true };
+  }
+  
+  // Check for valid user authentication
+  if (authHeader) {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+    
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (!error && user) {
+      return { valid: true, isInternal: false, userId: user.id };
+    }
+  }
+  
+  return { valid: false, isInternal: false };
 }
 
 const emailTemplates: Record<string, (data: Record<string, any>) => { subject: string; html: string }> = {
@@ -581,6 +610,41 @@ const internalNotifications: Record<string, (data: Record<string, any>) => { sub
         </body>
       </html>
     `
+  }),
+  
+  'new-lead': (data) => ({
+    subject: `🔥 [TKB] Novo Lead Empresas - ${data.nome_completo}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+            .container { max-width: 600px; margin: 0 auto; background: white; border: 2px solid #ff9800; }
+            .header { background: #ff9800; padding: 20px; text-align: center; color: white; font-size: 24px; font-weight: bold; }
+            .content { padding: 30px; }
+            .info-box { background: #fff3e0; padding: 20px; margin: 15px 0; border-radius: 8px; border: 2px solid #ff9800; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">🔥 NOVO LEAD EMPRESAS</div>
+            <div class="content">
+              <h2 style="color: #ff9800; margin-top: 0;">Lead via /empresas</h2>
+              <div class="info-box">
+                <p style="margin: 5px 0;"><strong>Nome:</strong> ${data.nome_completo}</p>
+                <p style="margin: 5px 0;"><strong>Email:</strong> ${data.email_corporativo}</p>
+                <p style="margin: 5px 0;"><strong>Volume Mensal:</strong> ${data.volume_mensal}</p>
+                <p style="margin: 5px 0;"><strong>Necessidade:</strong> ${data.necessidade}</p>
+                ${data.necessidade_outro ? `<p style="margin: 5px 0;"><strong>Detalhes:</strong> ${data.necessidade_outro}</p>` : ''}
+                <p style="margin: 5px 0;"><strong>Data:</strong> ${data.data}</p>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
   })
 };
 
@@ -590,22 +654,37 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { type, to, data, internal = false }: EmailRequest = await req.json();
+    // Validate caller - must be authenticated user or internal edge function
+    const validation = await validateCaller(req);
     
-    console.log(`[send-email] Processing ${internal ? 'internal' : 'client'} email: ${type} to ${to}`);
+    if (!validation.valid) {
+      console.error('[send-email] Unauthorized request rejected');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized', success: false }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
+    const { type, to, data, internal_secret }: EmailRequest = await req.json();
+    const isInternal = validation.isInternal;
+    
+    console.log(`[send-email] Processing ${isInternal ? 'internal' : 'client'} email: ${type} to ${to}${validation.userId ? ` by user ${validation.userId}` : ''}`);
     
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
     
-    const templateFunction = internal ? internalNotifications[type] : emailTemplates[type];
+    const templateFunction = isInternal ? internalNotifications[type] : emailTemplates[type];
     
     if (!templateFunction) {
-      throw new Error(`Template not found: ${type} (internal: ${internal})`);
+      throw new Error(`Template not found: ${type} (internal: ${isInternal})`);
     }
     
     const template = templateFunction(data);
     
     const emailPayload = {
-      from: internal ? 'TKB Alert <gestao@tkbasset.com>' : 'TKB Asset <gestao@tkbasset.com>',
+      from: isInternal ? 'TKB Alert <gestao@tkbasset.com>' : 'TKB Asset <gestao@tkbasset.com>',
       to: [to],
       subject: template.subject,
       html: template.html
