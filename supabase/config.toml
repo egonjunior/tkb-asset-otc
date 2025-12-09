@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.get-user-email]
 verify_jwt = true
+
+[functions.okx-operations]
+verify_jwt = true

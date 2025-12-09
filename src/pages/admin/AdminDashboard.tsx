@@ -407,6 +407,22 @@ const AdminDashboard = () => {
                 <p className="text-xs text-muted-foreground mt-2">Aceites de Política PLD para auditoria</p>
               </CardContent>
             </Card>
+
+            <Card 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-orange-500" 
+              onClick={() => navigate('/admin/okx-operations')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">📊 Operações OKX</p>
+                    <p className="text-xl font-bold text-orange-600">Ver Movimentação →</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-orange-600" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Depósitos BRL, compras e saques USDT</p>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Volume Card */}
