@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +44,8 @@ import {
   Plus,
   Trash2,
   Edit2,
+  Filter,
+  Wallet,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,6 +111,9 @@ const AdminOkxOperations = () => {
   const [aliases, setAliases] = useState<WalletAlias[]>([]);
   const [aliasModalOpen, setAliasModalOpen] = useState(false);
   const [editingAlias, setEditingAlias] = useState<WalletAlias | null>(null);
+  
+  // Wallet filter for withdrawals
+  const [walletFilter, setWalletFilter] = useState<string>('all');
   const [newAlias, setNewAlias] = useState({ wallet_address: '', alias: '', notes: '' });
 
   useEffect(() => {
@@ -304,6 +322,60 @@ const AdminOkxOperations = () => {
     }
     return `${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${currency}`;
   };
+
+  // Filter withdrawals by wallet
+  const filteredWithdrawals = useMemo(() => {
+    if (walletFilter === 'all') return withdrawals;
+    if (walletFilter === 'unknown') return withdrawals.filter(w => !w.alias);
+    return withdrawals.filter(w => 
+      w.toAddress?.toLowerCase() === walletFilter.toLowerCase()
+    );
+  }, [withdrawals, walletFilter]);
+
+  // Group withdrawals by wallet/alias for summary
+  const withdrawalsByWallet = useMemo(() => {
+    const grouped = new Map<string, { 
+      alias: string; 
+      address: string;
+      count: number; 
+      total: number;
+      fees: number;
+    }>();
+    
+    withdrawals.forEach(w => {
+      const key = w.alias || 'Não identificado';
+      const address = w.toAddress || '';
+      const current = grouped.get(key) || { 
+        alias: key, 
+        address: w.alias ? address : '',
+        count: 0, 
+        total: 0,
+        fees: 0
+      };
+      grouped.set(key, {
+        ...current,
+        count: current.count + 1,
+        total: current.total + (w.amount || 0),
+        fees: current.fees + (w.fee || 0)
+      });
+    });
+    
+    return Array.from(grouped.values()).sort((a, b) => b.total - a.total);
+  }, [withdrawals]);
+
+  // Wallet filter options
+  const walletFilterOptions = useMemo(() => {
+    const options = [
+      { value: 'all', label: 'Todas as carteiras' },
+      { value: 'unknown', label: 'Não identificadas' },
+    ];
+    
+    aliases.forEach(a => {
+      options.push({ value: a.wallet_address, label: a.alias });
+    });
+    
+    return options;
+  }, [aliases]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -667,86 +739,186 @@ const AdminOkxOperations = () => {
 
             {/* Withdrawals Tab */}
             <TabsContent value="withdrawals">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Saques de USDT</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-                      <p className="text-muted-foreground mt-3">Carregando saques...</p>
-                    </div>
-                  ) : error ? (
-                    <div className="text-center py-8">
-                      <div className="text-destructive mb-2">⚠️</div>
-                      <p className="text-destructive font-medium">Erro ao carregar dados</p>
-                      <p className="text-muted-foreground text-sm mt-1">{error}</p>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="mt-4"
-                        onClick={() => fetchOperations('withdrawals')}
+              <div className="space-y-4">
+                {/* Summary Cards by Wallet */}
+                {!loading && !error && withdrawalsByWallet.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                    {withdrawalsByWallet.map((wallet) => (
+                      <Card 
+                        key={wallet.alias} 
+                        className={`cursor-pointer transition-all hover:shadow-md ${
+                          walletFilter === (wallet.alias === 'Não identificado' ? 'unknown' : 
+                            aliases.find(a => a.alias === wallet.alias)?.wallet_address || 'all')
+                            ? 'ring-2 ring-primary'
+                            : ''
+                        }`}
+                        onClick={() => {
+                          if (wallet.alias === 'Não identificado') {
+                            setWalletFilter(walletFilter === 'unknown' ? 'all' : 'unknown');
+                          } else {
+                            const aliasData = aliases.find(a => a.alias === wallet.alias);
+                            if (aliasData) {
+                              setWalletFilter(
+                                walletFilter === aliasData.wallet_address ? 'all' : aliasData.wallet_address
+                              );
+                            }
+                          }
+                        }}
                       >
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Tentar novamente
-                      </Button>
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-2">
+                            <Wallet className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-sm truncate" title={wallet.alias}>
+                                {wallet.alias}
+                              </p>
+                              <p className="text-lg font-bold text-orange-600">
+                                {formatCurrency(wallet.total, 'USDT')}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {wallet.count} {wallet.count === 1 ? 'operação' : 'operações'}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {/* Filter and Table */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <CardTitle>Saques de USDT</CardTitle>
+                      
+                      {/* Wallet Filter */}
+                      {!loading && !error && withdrawals.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Filter className="h-4 w-4 text-muted-foreground" />
+                          <Select value={walletFilter} onValueChange={setWalletFilter}>
+                            <SelectTrigger className="w-[200px]">
+                              <SelectValue placeholder="Filtrar por carteira" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {walletFilterOptions.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {walletFilter !== 'all' && (
+                            <Badge variant="secondary" className="text-xs">
+                              {filteredWithdrawals.length} de {withdrawals.length}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  ) : withdrawals.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>Nenhum saque encontrado no período</p>
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Data/Hora</TableHead>
-                          <TableHead>Destino</TableHead>
-                          <TableHead>Quantidade</TableHead>
-                          <TableHead>Taxa</TableHead>
-                          <TableHead>Rede</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {withdrawals.map((w) => (
-                          <TableRow key={w.id}>
-                            <TableCell>
-                              {w.timestamp ? format(new Date(w.timestamp), "dd/MM/yyyy HH:mm", { locale: ptBR }) : '-'}
-                            </TableCell>
-                            <TableCell>
-                              {w.alias ? (
-                                <div>
-                                  <Badge className="bg-primary mb-1">{w.alias}</Badge>
-                                  <p className="font-mono text-xs text-muted-foreground">
-                                    {w.toAddress ? `${w.toAddress.slice(0, 8)}...${w.toAddress.slice(-6)}` : '-'}
-                                  </p>
-                                </div>
-                              ) : w.toAddress ? (
-                                <span className="font-mono text-xs">
-                                  {w.toAddress.slice(0, 10)}...{w.toAddress.slice(-8)}
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {formatCurrency(w.amount || 0, 'USDT')}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {formatCurrency(w.fee || 0, 'USDT')}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{w.network || '-'}</Badge>
-                            </TableCell>
-                            <TableCell>{getStatusBadge(w.status || 'unknown')}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent>
+                    {loading ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+                        <p className="text-muted-foreground mt-3">Carregando saques...</p>
+                      </div>
+                    ) : error ? (
+                      <div className="text-center py-8">
+                        <div className="text-destructive mb-2">⚠️</div>
+                        <p className="text-destructive font-medium">Erro ao carregar dados</p>
+                        <p className="text-muted-foreground text-sm mt-1">{error}</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-4"
+                          onClick={() => fetchOperations('withdrawals')}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Tentar novamente
+                        </Button>
+                      </div>
+                    ) : filteredWithdrawals.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p>
+                          {walletFilter !== 'all' 
+                            ? 'Nenhum saque encontrado para esta carteira'
+                            : 'Nenhum saque encontrado no período'
+                          }
+                        </p>
+                        {walletFilter !== 'all' && (
+                          <Button 
+                            variant="link" 
+                            size="sm"
+                            onClick={() => setWalletFilter('all')}
+                          >
+                            Limpar filtro
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <TooltipProvider>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Data/Hora</TableHead>
+                              <TableHead>Destino</TableHead>
+                              <TableHead>Quantidade</TableHead>
+                              <TableHead>Taxa</TableHead>
+                              <TableHead>Rede</TableHead>
+                              <TableHead>Status</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredWithdrawals.map((w) => (
+                              <TableRow key={w.id}>
+                                <TableCell>
+                                  {w.timestamp ? format(new Date(w.timestamp), "dd/MM/yyyy HH:mm", { locale: ptBR }) : '-'}
+                                </TableCell>
+                                <TableCell>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="cursor-help">
+                                        {w.alias ? (
+                                          <div>
+                                            <Badge className="bg-primary mb-1">{w.alias}</Badge>
+                                            <p className="font-mono text-xs text-muted-foreground">
+                                              {w.toAddress ? `${w.toAddress.slice(0, 8)}...${w.toAddress.slice(-6)}` : '-'}
+                                            </p>
+                                          </div>
+                                        ) : w.toAddress ? (
+                                          <span className="font-mono text-xs">
+                                            {w.toAddress.slice(0, 10)}...{w.toAddress.slice(-8)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-muted-foreground">-</span>
+                                        )}
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-xs">
+                                      <p className="font-mono text-xs break-all">{w.toAddress || 'Endereço não disponível'}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TableCell>
+                                <TableCell className="font-medium">
+                                  {formatCurrency(w.amount || 0, 'USDT')}
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">
+                                  {formatCurrency(w.fee || 0, 'USDT')}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="outline">{w.network || '-'}</Badge>
+                                </TableCell>
+                                <TableCell>{getStatusBadge(w.status || 'unknown')}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TooltipProvider>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
