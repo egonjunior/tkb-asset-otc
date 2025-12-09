@@ -81,10 +81,12 @@ interface WalletAlias {
 const AdminOkxOperations = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("deposits");
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [dateRange, setDateRange] = useState({
     start: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     end: format(new Date(), 'yyyy-MM-dd'),
@@ -97,8 +99,14 @@ const AdminOkxOperations = () => {
   const [newAlias, setNewAlias] = useState({ wallet_address: '', alias: '', notes: '' });
 
   useEffect(() => {
-    checkAdminAccess();
-    fetchAliases();
+    const init = async () => {
+      await checkAdminAccess();
+      await fetchAliases();
+      // Auto-load first tab data
+      fetchOperations('deposits');
+      setInitialLoadDone(true);
+    };
+    init();
   }, []);
 
   const checkAdminAccess = async () => {
@@ -140,9 +148,13 @@ const AdminOkxOperations = () => {
 
   const fetchOperations = async (type: string) => {
     setLoading(true);
+    setError(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      if (!session) throw new Error('Sessão expirada. Faça login novamente.');
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
       const response = await supabase.functions.invoke('okx-operations', {
         body: {
@@ -152,7 +164,12 @@ const AdminOkxOperations = () => {
         },
       });
 
-      if (response.error) throw response.error;
+      clearTimeout(timeoutId);
+
+      if (response.error) {
+        const errorMsg = response.error.message || 'Erro ao conectar com OKX';
+        throw new Error(errorMsg);
+      }
 
       const result = response.data?.data || [];
 
@@ -164,17 +181,27 @@ const AdminOkxOperations = () => {
         setWithdrawals(result);
       }
 
-      toast({
-        title: "Dados atualizados",
-        description: `${result.length} registros carregados`,
-      });
+      if (initialLoadDone) {
+        toast({
+          title: "Dados atualizados",
+          description: `${result.length} registros carregados`,
+        });
+      }
     } catch (error: any) {
       console.error('Error fetching OKX operations:', error);
-      toast({
-        title: "Erro ao carregar dados",
-        description: error.message || "Verifique as credenciais OKX",
-        variant: "destructive",
-      });
+      const errorMessage = error.name === 'AbortError' 
+        ? 'Tempo limite excedido. Tente novamente.'
+        : error.message || 'Erro ao carregar dados. Verifique as credenciais OKX.';
+      
+      setError(errorMessage);
+      
+      if (initialLoadDone) {
+        toast({
+          title: "Erro ao carregar dados",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -514,11 +541,26 @@ const AdminOkxOperations = () => {
                   {loading ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-                      <p className="text-muted-foreground mt-3">Carregando...</p>
+                      <p className="text-muted-foreground mt-3">Carregando depósitos...</p>
+                    </div>
+                  ) : error ? (
+                    <div className="text-center py-8">
+                      <div className="text-destructive mb-2">⚠️</div>
+                      <p className="text-destructive font-medium">Erro ao carregar dados</p>
+                      <p className="text-muted-foreground text-sm mt-1">{error}</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-4"
+                        onClick={() => fetchOperations('deposits')}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Tentar novamente
+                      </Button>
                     </div>
                   ) : deposits.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
-                      <p>Clique em "Atualizar" para carregar os depósitos</p>
+                      <p>Nenhum depósito encontrado no período</p>
                     </div>
                   ) : (
                     <Table>
@@ -562,11 +604,26 @@ const AdminOkxOperations = () => {
                   {loading ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-                      <p className="text-muted-foreground mt-3">Carregando...</p>
+                      <p className="text-muted-foreground mt-3">Carregando compras...</p>
+                    </div>
+                  ) : error ? (
+                    <div className="text-center py-8">
+                      <div className="text-destructive mb-2">⚠️</div>
+                      <p className="text-destructive font-medium">Erro ao carregar dados</p>
+                      <p className="text-muted-foreground text-sm mt-1">{error}</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-4"
+                        onClick={() => fetchOperations('purchases')}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Tentar novamente
+                      </Button>
                     </div>
                   ) : purchases.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
-                      <p>Clique em "Atualizar" para carregar as compras</p>
+                      <p>Nenhuma compra encontrada no período</p>
                     </div>
                   ) : (
                     <Table>
@@ -618,11 +675,26 @@ const AdminOkxOperations = () => {
                   {loading ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-                      <p className="text-muted-foreground mt-3">Carregando...</p>
+                      <p className="text-muted-foreground mt-3">Carregando saques...</p>
+                    </div>
+                  ) : error ? (
+                    <div className="text-center py-8">
+                      <div className="text-destructive mb-2">⚠️</div>
+                      <p className="text-destructive font-medium">Erro ao carregar dados</p>
+                      <p className="text-muted-foreground text-sm mt-1">{error}</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-4"
+                        onClick={() => fetchOperations('withdrawals')}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Tentar novamente
+                      </Button>
                     </div>
                   ) : withdrawals.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
-                      <p>Clique em "Atualizar" para carregar os saques</p>
+                      <p>Nenhum saque encontrado no período</p>
                     </div>
                   ) : (
                     <Table>
@@ -640,32 +712,34 @@ const AdminOkxOperations = () => {
                         {withdrawals.map((w) => (
                           <TableRow key={w.id}>
                             <TableCell>
-                              {format(new Date(w.timestamp), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                              {w.timestamp ? format(new Date(w.timestamp), "dd/MM/yyyy HH:mm", { locale: ptBR }) : '-'}
                             </TableCell>
                             <TableCell>
                               {w.alias ? (
                                 <div>
                                   <Badge className="bg-primary mb-1">{w.alias}</Badge>
                                   <p className="font-mono text-xs text-muted-foreground">
-                                    {w.toAddress.slice(0, 8)}...{w.toAddress.slice(-6)}
+                                    {w.toAddress ? `${w.toAddress.slice(0, 8)}...${w.toAddress.slice(-6)}` : '-'}
                                   </p>
                                 </div>
-                              ) : (
+                              ) : w.toAddress ? (
                                 <span className="font-mono text-xs">
                                   {w.toAddress.slice(0, 10)}...{w.toAddress.slice(-8)}
                                 </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
                               )}
                             </TableCell>
                             <TableCell className="font-medium">
-                              {formatCurrency(w.amount, 'USDT')}
+                              {formatCurrency(w.amount || 0, 'USDT')}
                             </TableCell>
                             <TableCell className="text-muted-foreground">
-                              {formatCurrency(w.fee, 'USDT')}
+                              {formatCurrency(w.fee || 0, 'USDT')}
                             </TableCell>
                             <TableCell>
-                              <Badge variant="outline">{w.network}</Badge>
+                              <Badge variant="outline">{w.network || '-'}</Badge>
                             </TableCell>
-                            <TableCell>{getStatusBadge(w.status)}</TableCell>
+                            <TableCell>{getStatusBadge(w.status || 'unknown')}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
