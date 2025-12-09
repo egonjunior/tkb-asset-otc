@@ -28,7 +28,7 @@ interface Order {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, loading: authLoading } = useAuth();
   const userName = profile?.full_name || user?.email?.split("@")[0] || "Usuário";
   const {
     binancePrice,
@@ -39,6 +39,17 @@ const Dashboard = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
+  // Show loading state while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)]">
+        <div className="text-center">
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-r-transparent"></div>
+          <p className="mt-4 text-sm text-muted-foreground font-medium">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
   // Check if should show onboarding
   useEffect(() => {
     const shouldShowOnboarding = localStorage.getItem("show_onboarding") === "true";
