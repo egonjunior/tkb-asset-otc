@@ -34,20 +34,20 @@ serve(async (req) => {
 
     if (insertError) throw insertError;
 
-    // Enviar email de notificação para TKB
+    // Enviar email de notificação para TKB usando internal_secret
     await supabaseClient.functions.invoke('send-email', {
       body: {
+        type: 'new-lead',
         to: 'contato@tkbasset.com',
-        subject: `🔥 Novo Lead Empresas - ${nome_completo}`,
-        html: `
-          <h2>Novo Lead via /empresas</h2>
-          <p><strong>Nome:</strong> ${nome_completo}</p>
-          <p><strong>Email:</strong> ${email_corporativo}</p>
-          <p><strong>Volume Mensal:</strong> ${volume_mensal}</p>
-          <p><strong>Necessidade:</strong> ${necessidade}</p>
-          ${necessidade_outro ? `<p><strong>Detalhes:</strong> ${necessidade_outro}</p>` : ''}
-          <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
-        `
+        data: {
+          nome_completo,
+          email_corporativo,
+          volume_mensal,
+          necessidade,
+          necessidade_outro,
+          data: new Date().toLocaleString('pt-BR')
+        },
+        internal_secret: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
       }
     });
 
