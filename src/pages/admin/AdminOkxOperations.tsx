@@ -405,6 +405,58 @@ const AdminOkxOperations = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto space-y-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border-l-4 border-l-success">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Depósitos BRL</p>
+                    <p className="text-2xl font-bold text-success">
+                      {formatCurrency(deposits.reduce((sum, d) => sum + d.amount, 0), 'BRL')}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">{deposits.length} operações</p>
+                  </div>
+                  <Download className="h-8 w-8 text-success opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-primary">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Compras USDT</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {formatCurrency(purchases.filter(p => p.side === 'buy').reduce((sum, p) => sum + p.amount, 0), 'USDT')}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatCurrency(purchases.filter(p => p.side === 'buy').reduce((sum, p) => sum + p.total, 0), 'BRL')} em BRL
+                    </p>
+                  </div>
+                  <span className="text-3xl opacity-50">🛒</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-orange-500">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Saques USDT</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {formatCurrency(withdrawals.reduce((sum, w) => sum + w.amount, 0), 'USDT')}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Taxas: {formatCurrency(withdrawals.reduce((sum, w) => sum + w.fee, 0), 'USDT')}
+                    </p>
+                  </div>
+                  <Upload className="h-8 w-8 text-orange-500 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Date Filters */}
           <Card>
             <CardContent className="pt-6">
