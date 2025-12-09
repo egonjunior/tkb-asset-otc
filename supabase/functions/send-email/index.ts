@@ -675,9 +675,24 @@ serve(async (req: Request): Promise<Response> => {
     
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
     
-    const templateFunction = isInternal ? internalNotifications[type] : emailTemplates[type];
+    // Templates internos permitidos para usuários autenticados (ex: cliente envia comprovante)
+    const allowedInternalTemplatesForAuthenticatedUsers = [
+      'receipt-uploaded',
+      'new-signup'
+    ];
+
+    // Tenta primeiro na categoria normal baseado em isInternal
+    let templateFunction = isInternal ? internalNotifications[type] : emailTemplates[type];
+    
+    // Se não encontrou E é usuário autenticado E o template está na lista permitida
+    // Busca em internalNotifications (para casos como receipt-uploaded chamado pelo cliente)
+    if (!templateFunction && validation.userId && allowedInternalTemplatesForAuthenticatedUsers.includes(type)) {
+      console.log(`[send-email] Template '${type}' not in emailTemplates, checking internalNotifications for authenticated user`);
+      templateFunction = internalNotifications[type];
+    }
     
     if (!templateFunction) {
+      console.error(`[send-email] Template not found: ${type} | isInternal: ${isInternal} | hasUserId: ${!!validation.userId}`);
       throw new Error(`Template not found: ${type} (internal: ${isInternal})`);
     }
     
