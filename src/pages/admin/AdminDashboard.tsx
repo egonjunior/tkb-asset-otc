@@ -41,32 +41,7 @@ const AdminDashboard = () => {
   const [pendingB2BCount, setPendingB2BCount] = useState(0);
 
   useEffect(() => {
-    const checkAdminAndFetchOrders = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/admin/login');
-        return;
-      }
-
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
-
-      if (!roles) {
-        toast({
-          title: "Acesso negado",
-          description: "Você não tem permissão de administrador",
-          variant: "destructive",
-        });
-        navigate('/dashboard');
-        return;
-      }
-
-      fetchOrders();
-    };
+    let isMounted = true;
 
     const fetchOrders = async () => {
       const { data: ordersData, error: ordersError } = await supabase
@@ -76,13 +51,17 @@ const AdminDashboard = () => {
       
       if (ordersError) {
         console.error('Erro ao buscar ordens:', ordersError);
-        toast({
-          title: "Erro ao carregar ordens",
-          description: "Tente recarregar a página",
-          variant: "destructive",
-        });
+        if (isMounted) {
+          toast({
+            title: "Erro ao carregar ordens",
+            description: "Tente recarregar a página",
+            variant: "destructive",
+          });
+        }
         return;
       }
+
+      if (!isMounted) return;
 
       // Buscar os perfis dos usuários
       if (ordersData && ordersData.length > 0) {
@@ -99,39 +78,76 @@ const AdminDashboard = () => {
           full_name: profilesMap.get(order.user_id) || 'N/A'
         }));
         
-        setOrders(ordersWithNames as Order[]);
+        if (isMounted) {
+          setOrders(ordersWithNames as Order[]);
+        }
       } else {
-        setOrders([]);
+        if (isMounted) {
+          setOrders([]);
+        }
       }
       
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
+    };
+
+    const checkAdminAndFetchOrders = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/admin/login');
+        return;
+      }
+
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (!roles) {
+        if (isMounted) {
+          toast({
+            title: "Acesso negado",
+            description: "Você não tem permissão de administrador",
+            variant: "destructive",
+          });
+        }
+        navigate('/dashboard');
+        return;
+      }
+
+      fetchOrders();
     };
 
     const fetchMetrics = async () => {
+      if (!isMounted) return;
+      
       const { count: partnersCount } = await supabase
         .from('partner_requests')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending');
-      setPendingPartnersCount(partnersCount || 0);
+      if (isMounted) setPendingPartnersCount(partnersCount || 0);
 
       const { count: ticketsCount } = await supabase
         .from('support_tickets')
         .select('*', { count: 'exact', head: true })
         .in('status', ['open', 'in_progress']);
-      setOpenTicketsCount(ticketsCount || 0);
+      if (isMounted) setOpenTicketsCount(ticketsCount || 0);
 
       const { count: leadsCount } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'novo');
-      setNewLeadsCount(leadsCount || 0);
+      if (isMounted) setNewLeadsCount(leadsCount || 0);
 
       const { count: b2bCount } = await supabase
         .from('partner_requests')
         .select('*', { count: 'exact', head: true })
         .eq('request_type', 'b2b_otc')
         .eq('status', 'pending');
-      setPendingB2BCount(b2bCount || 0);
+      if (isMounted) setPendingB2BCount(b2bCount || 0);
     };
     
     checkAdminAndFetchOrders();
@@ -143,34 +159,15 @@ const AdminDashboard = () => {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'orders' },
         () => {
-          const fetchOrders = async () => {
-            const { data: ordersData } = await supabase
-              .from('orders')
-              .select('*')
-              .order('created_at', { ascending: false });
-            
-            if (ordersData && ordersData.length > 0) {
-              const userIds = [...new Set(ordersData.map(o => o.user_id))];
-              const { data: profilesData } = await supabase
-                .from('profiles')
-                .select('id, full_name')
-                .in('id', userIds);
-              
-              const profilesMap = new Map(profilesData?.map(p => [p.id, p.full_name]));
-              const ordersWithNames = ordersData.map(order => ({
-                ...order,
-                full_name: profilesMap.get(order.user_id) || 'N/A'
-              }));
-              
-              setOrders(ordersWithNames as Order[]);
-            }
-          };
-          fetchOrders();
+          if (isMounted) {
+            fetchOrders();
+          }
         }
       )
       .subscribe();
     
     return () => {
+      isMounted = false;
       supabase.removeChannel(channel);
     };
   }, [navigate]);
