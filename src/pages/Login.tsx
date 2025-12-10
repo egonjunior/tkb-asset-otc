@@ -15,12 +15,26 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Check if already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Check if already logged in and redirect based on role
+    const checkSessionAndRole = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/dashboard");
+        // Check if user is admin
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        
+        if (roles) {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/dashboard");
+        }
       }
-    });
+    };
+    checkSessionAndRole();
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
