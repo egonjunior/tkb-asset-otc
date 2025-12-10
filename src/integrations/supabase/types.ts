@@ -360,6 +360,41 @@ export type Database = {
         }
         Relationships: []
       }
+      order_receipts: {
+        Row: {
+          file_name: string
+          file_url: string
+          id: string
+          order_id: string
+          uploaded_at: string | null
+          uploaded_by: string
+        }
+        Insert: {
+          file_name: string
+          file_url: string
+          id?: string
+          order_id: string
+          uploaded_at?: string | null
+          uploaded_by: string
+        }
+        Update: {
+          file_name?: string
+          file_url?: string
+          id?: string
+          order_id?: string
+          uploaded_at?: string | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_receipts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_timeline: {
         Row: {
           actor_type: string
