@@ -9,6 +9,15 @@ import { ArrowLeft, Clock, Upload, Copy, CheckCircle2, AlertCircle, Package, Sen
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+interface OrderReceipt {
+  id: string;
+  order_id: string;
+  file_url: string;
+  file_name: string;
+  uploaded_at: string;
+  uploaded_by: string;
+}
+
 const OrderDetails = () => {
   const navigate = useNavigate();
   const { orderId } = useParams();
@@ -19,6 +28,7 @@ const OrderDetails = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
+  const [receipts, setReceipts] = useState<OrderReceipt[]>([]);
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
@@ -71,6 +81,17 @@ const OrderDetails = () => {
 
         if (timelineData) {
           setTimelineEvents(timelineData);
+        }
+
+        // Buscar comprovantes da nova tabela
+        const { data: receiptsData } = await supabase
+          .from('order_receipts')
+          .select('*')
+          .eq('order_id', orderId)
+          .order('uploaded_at', { ascending: true });
+
+        if (receiptsData) {
+          setReceipts(receiptsData);
         }
 
         // Registrar visualização da hash se a ordem estiver concluída
@@ -164,6 +185,18 @@ const OrderDetails = () => {
           setTimelineEvents((prev) => [...prev, payload.new]);
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'order_receipts',
+          filter: `order_id=eq.${orderId}`,
+        },
+        (payload) => {
+          setReceipts((prev) => [...prev, payload.new as OrderReceipt]);
+        }
+      )
       .subscribe();
 
     return () => {
@@ -253,7 +286,7 @@ const OrderDetails = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Não autenticado');
       
-      // 1. PRIMEIRO: Upload para Supabase Storage
+      // 1. Upload para Supabase Storage
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${user.id}/${order.id}_${Date.now()}.${fileExt}`;
       
@@ -263,40 +296,52 @@ const OrderDetails = () => {
       
       if (uploadError) throw uploadError;
       
-      // 2. DEPOIS: Atualizar ordem com URL do comprovante (só se upload funcionou)
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({ 
-          receipt_url: fileName,
-          status: 'paid'
-        })
-        .eq('id', order.id);
-      
-      if (updateError) {
+      // 2. Inserir na nova tabela order_receipts
+      const { error: insertError } = await supabase
+        .from('order_receipts')
+        .insert({
+          order_id: order.id,
+          file_url: fileName,
+          file_name: selectedFile.name,
+          uploaded_by: user.id
+        });
+
+      if (insertError) {
         // Rollback: deletar arquivo se falhar ao salvar no banco
         await supabase.storage.from('receipts').remove([fileName]);
-        throw updateError;
+        throw insertError;
       }
 
-      // 3. Registrar evento na timeline
+      // 3. Se é o primeiro comprovante, atualizar status para 'paid'
+      const isFirstReceipt = receipts.length === 0 && !order.receipt_url;
+      if (isFirstReceipt) {
+        await supabase
+          .from('orders')
+          .update({ status: 'paid' })
+          .eq('id', order.id);
+      }
+
+      // 4. Registrar evento na timeline
+      const receiptNumber = receipts.length + 1;
       await supabase
         .from('order_timeline')
         .insert({
           order_id: order.id,
           event_type: 'receipt_uploaded',
-          message: 'Comprovante de pagamento enviado',
+          message: `Comprovante de pagamento ${receiptNumber} enviado`,
           actor_type: 'user',
           metadata: {
-            file_name: fileName
+            file_name: selectedFile.name,
+            receipt_number: receiptNumber
           }
         });
       
       toast({
-        title: "Comprovante enviado com sucesso!",
-        description: "Aguarde a análise do admin para confirmação do pagamento",
+        title: "Comprovante enviado!",
+        description: "Você pode anexar mais comprovantes se necessário",
       });
 
-      // 🚨 NOTIFICAÇÃO CRÍTICA: Comprovante enviado
+      // 5. Notificação para admin
       await supabase.functions.invoke('send-email', {
         body: {
           type: 'receipt-uploaded',
@@ -311,13 +356,16 @@ const OrderDetails = () => {
             carteira_destino: order.wallet_address,
             hora_envio_comprovante: new Date().toLocaleTimeString('pt-BR'),
             link_comprovante: `${window.location.origin}/admin/order/${order.id}`,
-            link_admin_ordem: `${window.location.origin}/admin/order/${order.id}`
+            link_admin_ordem: `${window.location.origin}/admin/order/${order.id}`,
+            numero_comprovante: receiptNumber
           }
         }
       }).catch(err => console.error('Error sending critical notification:', err));
       
+      // Limpar input de arquivo
       setSelectedFile(null);
-      setOrder({ ...order, receipt_url: fileName });
+      const fileInput = document.getElementById('receipt') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
       
     } catch (error: any) {
       console.error('Erro ao enviar comprovante:', error);
@@ -330,6 +378,19 @@ const OrderDetails = () => {
       setIsUploading(false);
     }
   };
+
+  // Combinar comprovantes antigos (receipt_url) com novos (order_receipts) para retrocompatibilidade
+  const allReceipts = [
+    ...(order?.receipt_url && receipts.length === 0 ? [{
+      id: 'legacy',
+      order_id: order.id,
+      file_url: order.receipt_url,
+      file_name: 'Comprovante',
+      uploaded_at: order.updated_at,
+      uploaded_by: order.user_id
+    }] : []),
+    ...receipts
+  ];
 
   const isExpiringSoon = timeRemaining > 0 && timeRemaining < 120; // últimos 2 minutos
   const isExpired = timeRemaining === 0;
@@ -634,48 +695,58 @@ const OrderDetails = () => {
 
                   {/* Upload Area */}
                   <div className="border-t pt-4 space-y-3">
-                    <Label htmlFor="receipt" className="text-sm font-medium block">
-                      Anexar Comprovante
+                    <Label className="text-sm font-medium block">
+                      Comprovantes de Pagamento ({allReceipts.length} enviado{allReceipts.length !== 1 ? 's' : ''})
                     </Label>
                     
-                    {/* Input de arquivo */}
-                    <Input
-                      id="receipt"
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={handleFileSelect}
-                      disabled={['completed', 'expired'].includes(order.status) || isUploading || order.receipt_url !== null}
-                      className="cursor-pointer"
-                    />
+                    {/* Lista de comprovantes já enviados */}
+                    {allReceipts.length > 0 && (
+                      <div className="space-y-2">
+                        {allReceipts.map((receipt, index) => (
+                          <div key={receipt.id || index} className="flex items-center gap-2 p-2 bg-success/10 border border-success/20 rounded-lg">
+                            <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                            <span className="text-sm flex-1 truncate">{receipt.file_name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(receipt.uploaded_at).toLocaleTimeString('pt-BR')}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     
-                    {/* Preview do arquivo selecionado */}
-                    {selectedFile && !order.receipt_url && (
-                      <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <Upload className="h-4 w-4 text-primary" />
-                          <span className="text-sm">{selectedFile.name}</span>
-                        </div>
-                        <Button 
-                          size="sm" 
-                          onClick={handleSendReceipt}
+                    {/* Input para novo comprovante - sempre habilitado se ordem não está completa/expirada */}
+                    {!['completed', 'expired'].includes(order.status) && (
+                      <>
+                        <Input
+                          id="receipt"
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={handleFileSelect}
                           disabled={isUploading}
-                        >
-                          {isUploading ? "Enviando..." : "Enviar Comprovante"}
-                        </Button>
-                      </div>
+                          className="cursor-pointer"
+                        />
+                        
+                        {selectedFile && (
+                          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <Upload className="h-4 w-4 text-primary" />
+                              <span className="text-sm">{selectedFile.name}</span>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              onClick={handleSendReceipt}
+                              disabled={isUploading}
+                            >
+                              {isUploading ? "Enviando..." : "Enviar"}
+                            </Button>
+                          </div>
+                        )}
+                        
+                        <p className="text-xs text-muted-foreground">
+                          Aceita imagens (JPG, PNG) e PDFs • Você pode anexar múltiplos comprovantes
+                        </p>
+                      </>
                     )}
-                    
-                    {/* Confirmação visual após envio */}
-                    {order.receipt_url && (
-                      <div className="flex items-center gap-2 p-3 bg-success/10 border border-success/20 rounded-lg">
-                        <CheckCircle2 className="h-4 w-4 text-success" />
-                        <span className="text-sm text-success">Comprovante enviado com sucesso</span>
-                      </div>
-                    )}
-                    
-                    <p className="text-xs text-muted-foreground">
-                      Aceita imagens (JPG, PNG) e PDFs
-                    </p>
                   </div>
                 </CardContent>
               </Card>
