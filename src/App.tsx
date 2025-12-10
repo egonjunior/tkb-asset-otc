@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AdminProtectedRoute } from "./components/AdminProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
@@ -97,20 +98,20 @@ const App = () => (
                 <Support />
               </ProtectedRoute>
             } />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/partners" element={<AdminPartners />} />
-            <Route path="/admin/partners-b2b" element={<AdminPartnersB2B />} />
-            <Route path="/admin/support" element={<AdminSupport />} />
-            <Route path="/admin/leads" element={<AdminLeads />} />
-            <Route path="/admin/documents" element={<AdminDocuments />} />
-            <Route path="/admin/order/:orderId" element={<AdminOrderDetails />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/users/:userId" element={<AdminUserDetails />} />
-            <Route path="/admin/offline-clients" element={<AdminOfflineClients />} />
-            <Route path="/admin/offline-clients/:clientId" element={<AdminOfflineClientDetails />} />
-            <Route path="/admin/otc-clients" element={<AdminOtcClients />} />
-            <Route path="/admin/pld-compliance" element={<AdminPLDCompliance />} />
-            <Route path="/admin/okx-operations" element={<AdminOkxOperations />} />
+            <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+            <Route path="/admin/partners" element={<AdminProtectedRoute><AdminPartners /></AdminProtectedRoute>} />
+            <Route path="/admin/partners-b2b" element={<AdminProtectedRoute><AdminPartnersB2B /></AdminProtectedRoute>} />
+            <Route path="/admin/support" element={<AdminProtectedRoute><AdminSupport /></AdminProtectedRoute>} />
+            <Route path="/admin/leads" element={<AdminProtectedRoute><AdminLeads /></AdminProtectedRoute>} />
+            <Route path="/admin/documents" element={<AdminProtectedRoute><AdminDocuments /></AdminProtectedRoute>} />
+            <Route path="/admin/order/:orderId" element={<AdminProtectedRoute><AdminOrderDetails /></AdminProtectedRoute>} />
+            <Route path="/admin/users" element={<AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>} />
+            <Route path="/admin/users/:userId" element={<AdminProtectedRoute><AdminUserDetails /></AdminProtectedRoute>} />
+            <Route path="/admin/offline-clients" element={<AdminProtectedRoute><AdminOfflineClients /></AdminProtectedRoute>} />
+            <Route path="/admin/offline-clients/:clientId" element={<AdminProtectedRoute><AdminOfflineClientDetails /></AdminProtectedRoute>} />
+            <Route path="/admin/otc-clients" element={<AdminProtectedRoute><AdminOtcClients /></AdminProtectedRoute>} />
+            <Route path="/admin/pld-compliance" element={<AdminProtectedRoute><AdminPLDCompliance /></AdminProtectedRoute>} />
+            <Route path="/admin/okx-operations" element={<AdminProtectedRoute><AdminOkxOperations /></AdminProtectedRoute>} />
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="/:slug" element={<OtcQuote />} />
