@@ -15,10 +15,10 @@ const AdminOrderDetails = () => {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
-  const [receiptError, setReceiptError] = useState<string | null>(null);
+  const [receipts, setReceipts] = useState<any[]>([]);
+  const [receiptPreviews, setReceiptPreviews] = useState<Record<string, string>>({});
   const [isUpdating, setIsUpdating] = useState(false);
-const [transactionHash, setTransactionHash] = useState("");
+  const [transactionHash, setTransactionHash] = useState("");
   const [isSendingHash, setIsSendingHash] = useState(false);
   const [hashError, setHashError] = useState<string | null>(null);
 
@@ -139,19 +139,40 @@ const [transactionHash, setTransactionHash] = useState("");
 
         setOrder(orderWithProfile);
 
-        // Se tem comprovante, buscar URL assinada
-        if (orderData.receipt_url) {
-          const { data: signedData, error: storageError } = await supabase.storage
+        // Buscar comprovantes da tabela order_receipts
+        const { data: receiptsData } = await supabase
+          .from('order_receipts')
+          .select('*')
+          .eq('order_id', orderId)
+          .order('uploaded_at', { ascending: false });
+
+        setReceipts(receiptsData || []);
+
+        // Para cada comprovante, buscar URL assinada
+        if (receiptsData && receiptsData.length > 0) {
+          const previews: Record<string, string> = {};
+          
+          for (const receipt of receiptsData) {
+            const { data: signedData } = await supabase.storage
+              .from('receipts')
+              .createSignedUrl(receipt.file_url, 3600);
+            
+            if (signedData) {
+              previews[receipt.id] = signedData.signedUrl;
+            }
+          }
+          
+          setReceiptPreviews(previews);
+        }
+
+        // Retrocompatibilidade: buscar URL assinada do receipt_url legado se não houver receipts na tabela nova
+        if (orderData.receipt_url && (!receiptsData || receiptsData.length === 0)) {
+          const { data: signedData } = await supabase.storage
             .from('receipts')
             .createSignedUrl(orderData.receipt_url, 3600);
           
-          if (storageError) {
-            console.error('Erro ao buscar comprovante:', storageError);
-            setReceiptPreview(null);
-            setReceiptError('Arquivo não encontrado no storage. Solicite reenvio ao cliente.');
-          } else if (signedData) {
-            setReceiptPreview(signedData.signedUrl);
-            setReceiptError(null);
+          if (signedData) {
+            setReceiptPreviews(prev => ({ ...prev, legacy: signedData.signedUrl }));
           }
         }
       } catch (err) {
@@ -165,20 +186,18 @@ const [transactionHash, setTransactionHash] = useState("");
     checkAdminAndFetchOrder();
   }, [orderId, navigate]);
 
-  const handleDownloadReceipt = async () => {
-    if (!order.receipt_url) return;
-    
+  const handleDownloadReceipt = async (receipt: { file_url: string; file_name?: string }) => {
     try {
       const { data, error } = await supabase.storage
         .from('receipts')
-        .download(order.receipt_url);
+        .download(receipt.file_url);
       
       if (error) throw error;
       
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
-      a.download = order.receipt_url.split('/').pop() || 'comprovante';
+      a.download = receipt.file_name || receipt.file_url.split('/').pop() || 'comprovante';
       a.click();
       URL.revokeObjectURL(url);
 
@@ -195,6 +214,17 @@ const [transactionHash, setTransactionHash] = useState("");
       });
     }
   };
+
+  // Combinar comprovantes: retrocompatibilidade com receipt_url legado
+  const allReceipts = [
+    ...(order?.receipt_url && receipts.length === 0 ? [{
+      id: 'legacy',
+      file_name: order.receipt_url.split('/').pop() || 'comprovante',
+      file_url: order.receipt_url,
+      uploaded_at: order.updated_at
+    }] : []),
+    ...receipts
+  ];
 
   const handleConfirmPayment = async () => {
     if (!order) return;
@@ -535,6 +565,7 @@ const [transactionHash, setTransactionHash] = useState("");
                     {/* Mostrar botões de confirmar/rejeitar quando há comprovante (mesmo em ordens expiradas) */}
                     {(order.status === 'paid' || 
                       order.status === 'expired' ||
+                      allReceipts.length > 0 ||
                       (order.receipt_url && order.status === 'pending')) && !order.payment_confirmed_at && (
                       <div className="flex flex-col sm:flex-row gap-2">
                         <Button
@@ -621,67 +652,60 @@ const [transactionHash, setTransactionHash] = useState("");
             <div className="space-y-6">
               <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-lg">Comprovante de Pagamento</CardTitle>
+                  <CardTitle className="text-lg">
+                    Comprovantes de Pagamento ({allReceipts.length})
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {order.receipt_url ? (
-                    <>
-                      {/* Preview do comprovante */}
-                      {receiptError ? (
-                        <div className="flex flex-col items-center justify-center p-8 text-center space-y-3 border-2 border-dashed border-destructive rounded-lg bg-destructive/5">
-                          <AlertCircle className="h-12 w-12 text-destructive" />
-                          <div>
-                            <p className="font-medium text-destructive">Erro ao carregar comprovante</p>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {receiptError}
-                            </p>
+                  {allReceipts.length > 0 ? (
+                    <div className="space-y-4">
+                      {allReceipts.map((receipt, index) => (
+                        <div key={receipt.id} className="border rounded-lg p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium truncate">
+                              #{index + 1} - {receipt.file_name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(receipt.uploaded_at).toLocaleString('pt-BR')}
+                            </span>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="border rounded-lg overflow-hidden bg-muted">
-                          {receiptPreview ? (
-                            order.receipt_url.toLowerCase().endsWith('.pdf') ? (
-                              <div className="flex flex-col items-center justify-center p-8 space-y-3">
-                                <FileText className="h-16 w-16 text-primary" />
-                                <p className="text-sm text-muted-foreground">Arquivo PDF</p>
-                                <Button size="sm" onClick={handleDownloadReceipt}>
-                                  <Download className="h-4 w-4 mr-2" />
-                                  Baixar PDF
-                                </Button>
+                          
+                          {/* Preview da imagem ou ícone de PDF */}
+                          {receiptPreviews[receipt.id] && (
+                            receipt.file_url.toLowerCase().endsWith('.pdf') ? (
+                              <div className="flex items-center gap-3 p-4 bg-muted rounded">
+                                <FileText className="h-8 w-8 text-primary" />
+                                <span className="text-sm">Arquivo PDF</span>
                               </div>
                             ) : (
                               <img 
-                                src={receiptPreview} 
-                                alt="Comprovante" 
-                                className="w-full h-auto"
+                                src={receiptPreviews[receipt.id]} 
+                                alt={`Comprovante ${index + 1}`}
+                                className="w-full h-auto rounded border"
                               />
                             )
-                          ) : (
-                            <div className="flex items-center justify-center p-8">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                            </div>
                           )}
+                          
+                          {/* Botão de download */}
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="w-full"
+                            onClick={() => handleDownloadReceipt(receipt)}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Baixar
+                          </Button>
                         </div>
-                      )}
-
-                      {/* Botão de download */}
-                      {receiptPreview && !order.receipt_url.toLowerCase().endsWith('.pdf') && (
-                        <Button 
-                          className="w-full" 
-                          onClick={handleDownloadReceipt}
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Baixar Comprovante
-                        </Button>
-                      )}
-
-                      {!receiptError && (
-                        <div className="flex items-center gap-2 p-3 bg-success/10 border border-success/20 rounded-lg">
-                          <CheckCircle2 className="h-4 w-4 text-success" />
-                          <span className="text-sm text-success">Comprovante recebido</span>
-                        </div>
-                      )}
-                    </>
+                      ))}
+                      
+                      <div className="flex items-center gap-2 p-3 bg-success/10 border border-success/20 rounded-lg">
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                        <span className="text-sm text-success">
+                          {allReceipts.length} comprovante{allReceipts.length > 1 ? 's' : ''} recebido{allReceipts.length > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center p-8 text-center space-y-3 border-2 border-dashed rounded-lg">
                       <AlertCircle className="h-12 w-12 text-muted-foreground" />
@@ -768,7 +792,7 @@ const [transactionHash, setTransactionHash] = useState("");
               )}
 
               {/* Card para enviar hash da transação - aparece quando há comprovante OU pagamento confirmado OU ordem concluída */}
-              {(order.payment_confirmed_at || order.receipt_url || order.status === 'completed') && (
+              {(order.payment_confirmed_at || allReceipts.length > 0 || order.status === 'completed') && (
                 <Card className="shadow-lg border-primary/20">
                   <CardHeader>
                     <CardTitle className="text-lg">Hash da Transação</CardTitle>
