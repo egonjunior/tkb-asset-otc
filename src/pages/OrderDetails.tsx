@@ -18,6 +18,8 @@ interface OrderReceipt {
   uploaded_by: string;
 }
 
+const MAX_RECEIPTS = 7;
+
 const OrderDetails = () => {
   const navigate = useNavigate();
   const { orderId } = useParams();
@@ -695,9 +697,14 @@ const OrderDetails = () => {
 
                   {/* Upload Area */}
                   <div className="border-t pt-4 space-y-3">
-                    <Label className="text-sm font-medium block">
-                      Comprovantes de Pagamento ({allReceipts.length} enviado{allReceipts.length !== 1 ? 's' : ''})
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">
+                        Comprovantes de Pagamento ({allReceipts.length}/{MAX_RECEIPTS})
+                      </Label>
+                      {allReceipts.length >= MAX_RECEIPTS && (
+                        <Badge variant="secondary">Limite atingido</Badge>
+                      )}
+                    </div>
                     
                     {/* Lista de comprovantes já enviados */}
                     {allReceipts.length > 0 && (
@@ -714,38 +721,75 @@ const OrderDetails = () => {
                       </div>
                     )}
                     
-                    {/* Input para novo comprovante - sempre habilitado se ordem não está completa/expirada */}
-                    {!['completed', 'expired'].includes(order.status) && (
+                    {/* Área de upload - habilitada se ordem não está completa/expirada E menos de 7 comprovantes */}
+                    {!['completed', 'expired'].includes(order.status) && allReceipts.length < MAX_RECEIPTS && (
                       <>
+                        {/* Botão para adicionar mais comprovantes (após o primeiro) */}
+                        {allReceipts.length > 0 && !selectedFile && (
+                          <Button 
+                            variant="outline" 
+                            className="w-full" 
+                            onClick={() => document.getElementById('receipt')?.click()}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Adicionar outro comprovante ({allReceipts.length}/{MAX_RECEIPTS})
+                          </Button>
+                        )}
+                        
+                        {/* Input de arquivo */}
                         <Input
                           id="receipt"
                           type="file"
                           accept="image/*,.pdf"
                           onChange={handleFileSelect}
                           disabled={isUploading}
-                          className="cursor-pointer"
+                          className={`cursor-pointer ${allReceipts.length > 0 && !selectedFile ? 'hidden' : ''}`}
                         />
                         
+                        {/* Preview do arquivo selecionado */}
                         {selectedFile && (
                           <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                             <div className="flex items-center gap-2">
                               <Upload className="h-4 w-4 text-primary" />
-                              <span className="text-sm">{selectedFile.name}</span>
+                              <span className="text-sm truncate max-w-[200px]">{selectedFile.name}</span>
                             </div>
-                            <Button 
-                              size="sm" 
-                              onClick={handleSendReceipt}
-                              disabled={isUploading}
-                            >
-                              {isUploading ? "Enviando..." : "Enviar"}
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => {
+                                  setSelectedFile(null);
+                                  const fileInput = document.getElementById('receipt') as HTMLInputElement;
+                                  if (fileInput) fileInput.value = '';
+                                }}
+                              >
+                                Cancelar
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                onClick={handleSendReceipt}
+                                disabled={isUploading}
+                              >
+                                {isUploading ? "Enviando..." : "Enviar"}
+                              </Button>
+                            </div>
                           </div>
                         )}
                         
                         <p className="text-xs text-muted-foreground">
-                          Aceita imagens (JPG, PNG) e PDFs • Você pode anexar múltiplos comprovantes
+                          {allReceipts.length === 0 
+                            ? "Aceita imagens (JPG, PNG) e PDFs • Máximo 7 comprovantes"
+                            : `Você pode anexar mais ${MAX_RECEIPTS - allReceipts.length} comprovante${MAX_RECEIPTS - allReceipts.length !== 1 ? 's' : ''}`
+                          }
                         </p>
                       </>
+                    )}
+                    
+                    {/* Mensagem quando atingir limite */}
+                    {allReceipts.length >= MAX_RECEIPTS && !['completed', 'expired'].includes(order.status) && (
+                      <p className="text-xs text-muted-foreground">
+                        Limite de 7 comprovantes atingido
+                      </p>
                     )}
                   </div>
                 </CardContent>
