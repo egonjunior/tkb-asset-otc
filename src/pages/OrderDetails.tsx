@@ -59,16 +59,34 @@ const OrderDetails = () => {
 
       try {
         setLoading(true);
+        
+        // Primeiro verificar se o usuário está autenticado
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          setError('Você precisa estar logado para ver esta ordem');
+          return;
+        }
+        
         const { data, error } = await supabase
           .from('orders')
           .select('*')
           .eq('id', orderId)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching order:', error);
+          // PGRST116 = no rows returned (RLS blocking or order doesn't exist)
+          if (error.code === 'PGRST116') {
+            setError('Ordem não encontrada ou você não tem permissão para visualizá-la');
+          } else {
+            throw error;
+          }
+          return;
+        }
         
         if (!data) {
-          setError('Ordem não encontrada');
+          setError('Ordem não encontrada ou você não tem permissão para visualizá-la');
           return;
         }
 
@@ -102,7 +120,7 @@ const OrderDetails = () => {
         }
       } catch (err) {
         console.error('Error fetching order:', err);
-        setError('Não foi possível carregar a ordem');
+        setError('Não foi possível carregar a ordem. Tente recarregar a página.');
       } finally {
         setLoading(false);
       }
@@ -435,15 +453,29 @@ const OrderDetails = () => {
 
   if (error || !order) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardContent className="pt-6 text-center space-y-3">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 text-center space-y-4">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
             <h2 className="text-xl font-bold">Ordem não encontrada</h2>
-            <p className="text-muted-foreground">{error || 'Esta ordem não existe ou você não tem permissão para visualizá-la'}</p>
-            <Button onClick={() => navigate('/dashboard')}>
-              Voltar ao Dashboard
-            </Button>
+            <p className="text-muted-foreground text-sm">
+              {error || 'Esta ordem não existe ou você não tem permissão para visualizá-la'}
+            </p>
+            <div className="pt-2 space-y-2">
+              <Button 
+                className="w-full"
+                onClick={() => window.location.reload()}
+              >
+                Tentar Novamente
+              </Button>
+              <Button 
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate('/dashboard')}
+              >
+                Voltar ao Dashboard
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
