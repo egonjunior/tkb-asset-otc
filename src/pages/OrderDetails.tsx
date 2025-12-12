@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Clock, Upload, Copy, CheckCircle2, AlertCircle, Package, Send, ExternalLink } from "lucide-react";
+import { ArrowLeft, Clock, Upload, Copy, CheckCircle2, AlertCircle, Package, Send, ExternalLink, X, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,7 +27,7 @@ const OrderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
   const [receipts, setReceipts] = useState<OrderReceipt[]>([]);
@@ -275,12 +275,31 @@ const OrderDetails = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
+      // Verificar se já não atingiu o limite total
+      const totalReceipts = allReceipts.length + selectedFiles.length;
+      if (totalReceipts >= MAX_RECEIPTS) {
+        toast({
+          title: "Limite atingido",
+          description: `Máximo de ${MAX_RECEIPTS} comprovantes permitidos`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Adicionar à fila (não substituir)
+      setSelectedFiles(prev => [...prev, file]);
+      
+      // Limpar input para permitir selecionar outro arquivo
+      e.target.value = '';
     }
   };
 
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSendReceipt = async () => {
-    if (!selectedFile || !order) return;
+    if (selectedFiles.length === 0 || !order) return;
     
     setIsUploading(true);
     
@@ -288,33 +307,56 @@ const OrderDetails = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Não autenticado');
       
-      // 1. Upload para Supabase Storage
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${user.id}/${order.id}_${Date.now()}.${fileExt}`;
+      const uploadedFiles: string[] = [];
       
-      const { error: uploadError } = await supabase.storage
-        .from('receipts')
-        .upload(fileName, selectedFile);
-      
-      if (uploadError) throw uploadError;
-      
-      // 2. Inserir na nova tabela order_receipts
-      const { error: insertError } = await supabase
-        .from('order_receipts')
-        .insert({
-          order_id: order.id,
-          file_url: fileName,
-          file_name: selectedFile.name,
-          uploaded_by: user.id
-        });
+      // Processar cada arquivo da fila
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        const receiptNumber = receipts.length + i + 1;
+        
+        // 1. Upload para Supabase Storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${order.id}_${Date.now()}_${i}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('receipts')
+          .upload(fileName, file);
+        
+        if (uploadError) throw uploadError;
+        uploadedFiles.push(fileName);
+        
+        // 2. Inserir na tabela order_receipts
+        const { error: insertError } = await supabase
+          .from('order_receipts')
+          .insert({
+            order_id: order.id,
+            file_url: fileName,
+            file_name: file.name,
+            uploaded_by: user.id
+          });
 
-      if (insertError) {
-        // Rollback: deletar arquivo se falhar ao salvar no banco
-        await supabase.storage.from('receipts').remove([fileName]);
-        throw insertError;
+        if (insertError) {
+          // Rollback: deletar arquivos enviados se falhar
+          await supabase.storage.from('receipts').remove(uploadedFiles);
+          throw insertError;
+        }
+
+        // 3. Registrar evento na timeline
+        await supabase
+          .from('order_timeline')
+          .insert({
+            order_id: order.id,
+            event_type: 'receipt_uploaded',
+            message: `Comprovante de pagamento ${receiptNumber} enviado`,
+            actor_type: 'user',
+            metadata: {
+              file_name: file.name,
+              receipt_number: receiptNumber
+            }
+          });
       }
 
-      // 3. Se é o primeiro comprovante, atualizar status para 'paid'
+      // 4. Se é o primeiro comprovante, atualizar status para 'paid'
       const isFirstReceipt = receipts.length === 0 && !order.receipt_url;
       if (isFirstReceipt) {
         await supabase
@@ -322,25 +364,10 @@ const OrderDetails = () => {
           .update({ status: 'paid' })
           .eq('id', order.id);
       }
-
-      // 4. Registrar evento na timeline
-      const receiptNumber = receipts.length + 1;
-      await supabase
-        .from('order_timeline')
-        .insert({
-          order_id: order.id,
-          event_type: 'receipt_uploaded',
-          message: `Comprovante de pagamento ${receiptNumber} enviado`,
-          actor_type: 'user',
-          metadata: {
-            file_name: selectedFile.name,
-            receipt_number: receiptNumber
-          }
-        });
       
       toast({
-        title: "Comprovante enviado!",
-        description: "Você pode anexar mais comprovantes se necessário",
+        title: "Comprovantes enviados!",
+        description: `${selectedFiles.length} arquivo(s) enviado(s) com sucesso`,
       });
 
       // 5. Notificação para admin
@@ -359,15 +386,13 @@ const OrderDetails = () => {
             hora_envio_comprovante: new Date().toLocaleTimeString('pt-BR'),
             link_comprovante: `${window.location.origin}/admin/order/${order.id}`,
             link_admin_ordem: `${window.location.origin}/admin/order/${order.id}`,
-            numero_comprovante: receiptNumber
+            numero_comprovante: receipts.length + selectedFiles.length
           }
         }
       }).catch(err => console.error('Error sending critical notification:', err));
       
-      // Limpar input de arquivo
-      setSelectedFile(null);
-      const fileInput = document.getElementById('receipt') as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
+      // Limpar fila de arquivos
+      setSelectedFiles([]);
       
     } catch (error: any) {
       console.error('Erro ao enviar comprovante:', error);
@@ -722,67 +747,87 @@ const OrderDetails = () => {
                     )}
                     
                     {/* Área de upload - habilitada se ordem não está completa/expirada E menos de 7 comprovantes */}
-                    {!['completed', 'expired'].includes(order.status) && allReceipts.length < MAX_RECEIPTS && (
+                    {!['completed', 'expired'].includes(order.status) && allReceipts.length + selectedFiles.length < MAX_RECEIPTS && (
                       <>
-                        {/* Botão para adicionar mais comprovantes (após o primeiro) */}
-                        {allReceipts.length > 0 && !selectedFile && (
-                          <Button 
-                            variant="outline" 
-                            className="w-full" 
-                            onClick={() => document.getElementById('receipt')?.click()}
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            Adicionar outro comprovante ({allReceipts.length}/{MAX_RECEIPTS})
-                          </Button>
-                        )}
-                        
-                        {/* Input de arquivo */}
+                        {/* Input de arquivo (sempre oculto, acionado por botão) */}
                         <Input
                           id="receipt"
                           type="file"
                           accept="image/*,.pdf"
                           onChange={handleFileSelect}
                           disabled={isUploading}
-                          className={`cursor-pointer ${allReceipts.length > 0 && !selectedFile ? 'hidden' : ''}`}
+                          className="hidden"
                         />
                         
-                        {/* Preview do arquivo selecionado */}
-                        {selectedFile && (
-                          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                            <div className="flex items-center gap-2">
-                              <Upload className="h-4 w-4 text-primary" />
-                              <span className="text-sm truncate max-w-[200px]">{selectedFile.name}</span>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                onClick={() => {
-                                  setSelectedFile(null);
-                                  const fileInput = document.getElementById('receipt') as HTMLInputElement;
-                                  if (fileInput) fileInput.value = '';
-                                }}
-                              >
-                                Cancelar
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                onClick={handleSendReceipt}
-                                disabled={isUploading}
-                              >
-                                {isUploading ? "Enviando..." : "Enviar"}
-                              </Button>
-                            </div>
-                          </div>
-                        )}
+                        {/* Botão para adicionar comprovante */}
+                        <Button 
+                          variant="outline" 
+                          className="w-full" 
+                          onClick={() => document.getElementById('receipt')?.click()}
+                          disabled={isUploading}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          {allReceipts.length === 0 && selectedFiles.length === 0
+                            ? "Selecionar comprovante"
+                            : `Adicionar mais comprovante (${allReceipts.length + selectedFiles.length}/${MAX_RECEIPTS})`
+                          }
+                        </Button>
                         
                         <p className="text-xs text-muted-foreground">
-                          {allReceipts.length === 0 
-                            ? "Aceita imagens (JPG, PNG) e PDFs • Máximo 7 comprovantes"
-                            : `Você pode anexar mais ${MAX_RECEIPTS - allReceipts.length} comprovante${MAX_RECEIPTS - allReceipts.length !== 1 ? 's' : ''}`
-                          }
+                          Aceita imagens (JPG, PNG) e PDFs • Máximo {MAX_RECEIPTS} comprovantes
                         </p>
                       </>
+                    )}
+                    
+                    {/* Fila de arquivos selecionados (antes de enviar) */}
+                    {selectedFiles.length > 0 && (
+                      <div className="space-y-2 p-3 border border-primary/30 bg-primary/5 rounded-lg">
+                        <Label className="text-sm font-medium">
+                          Na fila para envio ({selectedFiles.length})
+                        </Label>
+                        {selectedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-background rounded">
+                            <div className="flex items-center gap-2">
+                              <Upload className="h-4 w-4 text-primary" />
+                              <span className="text-sm truncate max-w-[180px]">{file.name}</span>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleRemoveFile(index)}
+                              disabled={isUploading}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        
+                        {/* Botão para adicionar mais (se não atingiu limite) */}
+                        {allReceipts.length + selectedFiles.length < MAX_RECEIPTS && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => document.getElementById('receipt')?.click()}
+                            disabled={isUploading}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Adicionar mais arquivo
+                          </Button>
+                        )}
+                        
+                        {/* Botão de enviar todos */}
+                        <Button 
+                          className="w-full"
+                          onClick={handleSendReceipt}
+                          disabled={isUploading}
+                        >
+                          {isUploading 
+                            ? "Enviando..." 
+                            : `Enviar ${selectedFiles.length} comprovante${selectedFiles.length > 1 ? 's' : ''}`
+                          }
+                        </Button>
+                      </div>
                     )}
                     
                     {/* Mensagem quando atingir limite */}
