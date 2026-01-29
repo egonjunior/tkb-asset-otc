@@ -10,7 +10,9 @@ import QuoteCard from "@/components/QuoteCard";
 import { StatCard } from "@/components/StatCard";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
-import { Briefcase, LogOut, Plus, Clock, TrendingUp, Settings } from "lucide-react";
+import { OperationalNoteModal } from "@/components/operational-notes/OperationalNoteModal";
+import { OperationalNotesList } from "@/components/operational-notes/OperationalNotesList";
+import { Briefcase, LogOut, Plus, Clock, TrendingUp, Settings, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +40,8 @@ const Dashboard = () => {
   } = useBinancePrice();
   const [orders, setOrders] = useState<Order[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOperationalNoteModal, setShowOperationalNoteModal] = useState(false);
+  const [operationalNotesRefresh, setOperationalNotesRefresh] = useState(0);
 
   // Check if should show onboarding
   useEffect(() => {
@@ -302,9 +306,21 @@ const Dashboard = () => {
                   <Plus className="h-5 w-5 mr-2" />
                   {orders.length === 0 ? "Criar Minha Primeira Ordem" : "Solicitar Operação"}
                 </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="w-full mt-3"
+                  onClick={() => setShowOperationalNoteModal(true)}
+                >
+                  <FileText className="h-5 w-5 mr-2" />
+                  Solicitar Nota Operacional
+                </Button>
               </CardContent>
             </Card>
           </div>
+
+          {/* Notas Operacionais do Usuário */}
+          <OperationalNotesList refreshTrigger={operationalNotesRefresh} />
 
           {/* Histórico */}
           <div>
@@ -396,6 +412,13 @@ const Dashboard = () => {
         isOpen={showOnboarding} 
         onClose={() => setShowOnboarding(false)} 
         userName={userName}
+      />
+
+      {/* Operational Note Modal */}
+      <OperationalNoteModal 
+        isOpen={showOperationalNoteModal}
+        onClose={() => setShowOperationalNoteModal(false)}
+        onSuccess={() => setOperationalNotesRefresh(prev => prev + 1)}
       />
     </SidebarProvider>;
 };

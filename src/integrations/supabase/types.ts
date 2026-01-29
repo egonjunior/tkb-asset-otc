@@ -360,6 +360,98 @@ export type Database = {
         }
         Relationships: []
       }
+      operational_notes: {
+        Row: {
+          bank_details: Json | null
+          created_at: string
+          currency_deposited: string
+          currency_purchased: string
+          deposited_amount: number
+          id: string
+          note_number: string
+          operation_date: string
+          operation_type: string
+          pdf_url: string | null
+          purchased_amount: number
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          verification_code: string | null
+        }
+        Insert: {
+          bank_details?: Json | null
+          created_at?: string
+          currency_deposited: string
+          currency_purchased: string
+          deposited_amount: number
+          id?: string
+          note_number?: string
+          operation_date: string
+          operation_type: string
+          pdf_url?: string | null
+          purchased_amount: number
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          verification_code?: string | null
+        }
+        Update: {
+          bank_details?: Json | null
+          created_at?: string
+          currency_deposited?: string
+          currency_purchased?: string
+          deposited_amount?: number
+          id?: string
+          note_number?: string
+          operation_date?: string
+          operation_type?: string
+          pdf_url?: string | null
+          purchased_amount?: number
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verification_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operational_notes_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operational_notes_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "user_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "operational_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operational_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_stats"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       order_receipts: {
         Row: {
           file_name: string
