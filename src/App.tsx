@@ -38,6 +38,7 @@ import OtcQuote from "./pages/OtcQuote";
 import AdminOtcClients from "./pages/admin/AdminOtcClients";
 import AdminPLDCompliance from "./pages/admin/AdminPLDCompliance";
 import AdminOkxOperations from "./pages/admin/AdminOkxOperations";
+import AdminOperationalNotes from "./pages/admin/AdminOperationalNotes";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
@@ -112,6 +113,7 @@ const App = () => (
             <Route path="/admin/otc-clients" element={<AdminProtectedRoute><AdminOtcClients /></AdminProtectedRoute>} />
             <Route path="/admin/pld-compliance" element={<AdminProtectedRoute><AdminPLDCompliance /></AdminProtectedRoute>} />
             <Route path="/admin/okx-operations" element={<AdminProtectedRoute><AdminOkxOperations /></AdminProtectedRoute>} />
+            <Route path="/admin/operational-notes" element={<AdminProtectedRoute><AdminOperationalNotes /></AdminProtectedRoute>} />
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="/:slug" element={<OtcQuote />} />

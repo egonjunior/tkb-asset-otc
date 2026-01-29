@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users, Handshake, MessageCircle, Building2, UserCog } from "lucide-react";
+import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users, Handshake, MessageCircle, Building2, UserCog, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VolumeCard } from "@/components/admin/VolumeCard";
@@ -39,6 +39,7 @@ const AdminDashboard = () => {
   const [openTicketsCount, setOpenTicketsCount] = useState(0);
   const [newLeadsCount, setNewLeadsCount] = useState(0);
   const [pendingB2BCount, setPendingB2BCount] = useState(0);
+  const [pendingNotesCount, setPendingNotesCount] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -148,6 +149,12 @@ const AdminDashboard = () => {
         .eq('request_type', 'b2b_otc')
         .eq('status', 'pending');
       if (isMounted) setPendingB2BCount(b2bCount || 0);
+
+      const { count: notesCount } = await supabase
+        .from('operational_notes')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      if (isMounted) setPendingNotesCount(notesCount || 0);
     };
     
     checkAdminAndFetchOrders();
@@ -421,6 +428,22 @@ const AdminDashboard = () => {
                   <TrendingUp className="h-8 w-8 text-orange-600" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">Depósitos BRL, compras e saques USDT</p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-amber-500" 
+              onClick={() => navigate('/admin/operational-notes')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">📋 Notas Operacionais</p>
+                    <p className="text-xl font-bold text-amber-600">{pendingNotesCount} Pendentes →</p>
+                  </div>
+                  <FileText className="h-8 w-8 text-amber-600" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Solicitações de comprovantes para aprovação</p>
               </CardContent>
             </Card>
           </div>
