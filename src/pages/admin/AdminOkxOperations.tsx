@@ -47,12 +47,30 @@ import {
   Filter,
   Wallet,
   TrendingUp,
+  Users,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { GrowthProjectionCard } from "@/components/admin/GrowthProjectionCard";
+import { RecurringClientModal } from "@/components/admin/RecurringClientModal";
+import { RecurringClientCard } from "@/components/admin/RecurringClientCard";
+import { ClientReportModal } from "@/components/admin/ClientReportModal";
+
+interface ClientWallet {
+  id?: string;
+  wallet_address: string;
+  network: string;
+  label: string;
+}
+
+interface RecurringClient {
+  id: string;
+  name: string;
+  notes: string | null;
+  wallets: ClientWallet[];
+}
 
 interface Deposit {
   id: string;
@@ -118,10 +136,17 @@ const AdminOkxOperations = () => {
   const [walletFilter, setWalletFilter] = useState<string>('all');
   const [newAlias, setNewAlias] = useState({ wallet_address: '', alias: '', notes: '' });
 
+  // Recurring clients
+  const [recurringClients, setRecurringClients] = useState<RecurringClient[]>([]);
+  const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<RecurringClient | null>(null);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [selectedClientForReport, setSelectedClientForReport] = useState<RecurringClient | null>(null);
+
   useEffect(() => {
     const init = async () => {
       await checkAdminAccess();
-      await fetchAliases();
+      await Promise.all([fetchAliases(), fetchRecurringClients()]);
       // Auto-load first tab data
       fetchOperations('deposits');
       setInitialLoadDone(true);
@@ -166,7 +191,65 @@ const AdminOkxOperations = () => {
     }
   };
 
-  const fetchOperations = async (type: string) => {
+  const fetchRecurringClients = async () => {
+    try {
+      // Fetch clients
+      const { data: clientsData, error: clientsError } = await supabase
+        .from('okx_recurring_clients')
+        .select('*')
+        .order('name');
+      
+      if (clientsError) throw clientsError;
+
+      // Fetch wallets for all clients
+      const { data: walletsData, error: walletsError } = await supabase
+        .from('okx_client_wallets')
+        .select('*');
+      
+      if (walletsError) throw walletsError;
+
+      // Map wallets to clients
+      const clientsWithWallets = (clientsData || []).map(client => ({
+        ...client,
+        wallets: (walletsData || []).filter(w => w.client_id === client.id),
+      }));
+
+      setRecurringClients(clientsWithWallets);
+    } catch (error) {
+      console.error('Error fetching recurring clients:', error);
+    }
+  };
+
+  const handleDeleteRecurringClient = async (client: RecurringClient) => {
+    if (!confirm(`Deseja excluir o cliente "${client.name}" e todas as suas carteiras?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('okx_recurring_clients')
+        .delete()
+        .eq('id', client.id);
+
+      if (error) throw error;
+
+      toast({ title: "Cliente excluído" });
+      fetchRecurringClients();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleOpenReport = (client: RecurringClient) => {
+    setSelectedClientForReport(client);
+    setReportModalOpen(true);
+    // Make sure withdrawals are loaded
+    if (withdrawals.length === 0) {
+      fetchOperations('withdrawals');
+    }
+  };
     setLoading(true);
     setError(null);
     try {
@@ -229,8 +312,8 @@ const AdminOkxOperations = () => {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    // For growth tab, load withdrawals if not already loaded
-    if (value === 'growth') {
+    // For growth tab or recurring clients, load withdrawals if not already loaded
+    if (value === 'growth' || value === 'recurring') {
       if (withdrawals.length === 0) {
         fetchOperations('withdrawals');
       }
@@ -241,7 +324,9 @@ const AdminOkxOperations = () => {
       purchases: 'purchases',
       withdrawals: 'withdrawals',
     };
-    fetchOperations(typeMap[value]);
+    if (typeMap[value]) {
+      fetchOperations(typeMap[value]);
+    }
   };
 
   const handleSaveAlias = async () => {
@@ -598,21 +683,30 @@ const AdminOkxOperations = () => {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="deposits" className="flex items-center gap-2">
                 <Download className="h-4 w-4" />
-                Depósitos BRL
+                <span className="hidden sm:inline">Depósitos BRL</span>
+                <span className="sm:hidden">Depósitos</span>
               </TabsTrigger>
               <TabsTrigger value="purchases" className="flex items-center gap-2">
-                🛒 Compras USDT
+                🛒 <span className="hidden sm:inline">Compras USDT</span>
+                <span className="sm:hidden">Compras</span>
               </TabsTrigger>
               <TabsTrigger value="withdrawals" className="flex items-center gap-2">
                 <Upload className="h-4 w-4" />
-                Saques USDT
+                <span className="hidden sm:inline">Saques USDT</span>
+                <span className="sm:hidden">Saques</span>
               </TabsTrigger>
               <TabsTrigger value="growth" className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Crescimento
+                <span className="hidden sm:inline">Crescimento</span>
+                <span className="sm:hidden">Cresc.</span>
+              </TabsTrigger>
+              <TabsTrigger value="recurring" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Clientes</span>
+                <span className="sm:hidden">Clientes</span>
               </TabsTrigger>
             </TabsList>
 
@@ -941,9 +1035,76 @@ const AdminOkxOperations = () => {
                 loading={loading && activeTab === 'growth'} 
               />
             </TabsContent>
+
+            {/* Recurring Clients Tab */}
+            <TabsContent value="recurring">
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Clientes Recorrentes
+                    </CardTitle>
+                    <Button
+                      onClick={() => {
+                        setEditingClient(null);
+                        setClientModalOpen(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Cliente
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {recurringClients.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Nenhum cliente recorrente cadastrado</p>
+                      <p className="text-sm mt-1">
+                        Adicione clientes para gerar relatórios mensais de saques
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {recurringClients.map((client) => (
+                        <RecurringClientCard
+                          key={client.id}
+                          client={client}
+                          onViewReport={handleOpenReport}
+                          onEdit={(c) => {
+                            setEditingClient(c);
+                            setClientModalOpen(true);
+                          }}
+                          onDelete={handleDeleteRecurringClient}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </main>
+
+      {/* Recurring Client Modal */}
+      <RecurringClientModal
+        open={clientModalOpen}
+        onOpenChange={setClientModalOpen}
+        client={editingClient}
+        onSave={fetchRecurringClients}
+      />
+
+      {/* Client Report Modal */}
+      <ClientReportModal
+        open={reportModalOpen}
+        onOpenChange={setReportModalOpen}
+        client={selectedClientForReport}
+        withdrawals={withdrawals}
+        onRefresh={() => fetchOperations('withdrawals')}
+        loading={loading}
+      />
     </div>
   );
 };
