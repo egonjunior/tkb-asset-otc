@@ -333,6 +333,65 @@ export type Database = {
           },
         ]
       }
+      okx_client_wallets: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          label: string | null
+          network: string
+          wallet_address: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          network: string
+          wallet_address: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          network?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okx_client_wallets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "okx_recurring_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      okx_recurring_clients: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       okx_wallet_aliases: {
         Row: {
           alias: string
