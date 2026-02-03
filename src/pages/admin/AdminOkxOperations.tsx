@@ -142,6 +142,7 @@ const AdminOkxOperations = () => {
   const [editingClient, setEditingClient] = useState<RecurringClient | null>(null);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedClientForReport, setSelectedClientForReport] = useState<RecurringClient | null>(null);
+  const [loadingReport, setLoadingReport] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -303,13 +304,38 @@ const AdminOkxOperations = () => {
     }
   };
 
+  const fetchWithdrawalsForReport = async () => {
+    setLoadingReport(true);
+    try {
+      const response = await supabase.functions.invoke('okx-operations', {
+        body: {
+          type: 'withdrawals',
+          // Buscar últimos 365 dias para ter dados de todos os meses
+          startDate: format(subDays(new Date(), 365), 'yyyy-MM-dd'),
+          endDate: format(new Date(), 'yyyy-MM-dd'),
+        },
+      });
+
+      if (response.error) throw new Error(response.error.message);
+
+      const result = response.data?.data || [];
+      setWithdrawals(result);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar saques",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingReport(false);
+    }
+  };
+
   const handleOpenReport = (client: RecurringClient) => {
     setSelectedClientForReport(client);
     setReportModalOpen(true);
-    // Make sure withdrawals are loaded
-    if (withdrawals.length === 0) {
-      fetchOperations('withdrawals');
-    }
+    // Buscar saques dos últimos 12 meses para o relatório
+    fetchWithdrawalsForReport();
   };
 
   const handleTabChange = (value: string) => {
@@ -1104,8 +1130,8 @@ const AdminOkxOperations = () => {
         onOpenChange={setReportModalOpen}
         client={selectedClientForReport}
         withdrawals={withdrawals}
-        onRefresh={() => fetchOperations('withdrawals')}
-        loading={loading}
+        onRefresh={fetchWithdrawalsForReport}
+        loading={loadingReport}
       />
     </div>
   );
