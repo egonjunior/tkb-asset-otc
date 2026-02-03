@@ -106,7 +106,7 @@ async function fetchAllOkxData(path: string, baseParams: Record<string, string> 
   let lastId: string | undefined;
   let hasMore = true;
   let pageCount = 0;
-  const maxPages = 10; // Safety limit
+  const maxPages = 50; // Increased to fetch more historical data for reports
   
   while (hasMore && pageCount < maxPages) {
     const params = { ...baseParams };
@@ -342,7 +342,7 @@ serve(async (req) => {
         }
         
         result = withdrawals?.map((w: any) => {
-          const address = w.toAddr?.toLowerCase() || '';
+          const address = w.to?.toLowerCase() || '';
           const alias = aliasMap.get(address);
           
           return {
@@ -354,7 +354,7 @@ serve(async (req) => {
             status: mapWithdrawalStatus(w.state),
             timestamp: new Date(parseInt(w.ts)).toISOString(),
             txId: w.txId,
-            toAddress: w.toAddr,
+            toAddress: w.to,
             alias: alias || null,
           };
         }) || [];
