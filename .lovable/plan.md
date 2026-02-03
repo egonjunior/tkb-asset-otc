@@ -1,149 +1,128 @@
 
 
-# Correção do Relatório de Clientes Recorrentes
+# Correção do Relatório de Clientes Recorrentes - Problema Identificado
 
-## Problema Identificado
+## Diagnóstico
 
-O relatório não mostra dados porque:
+Após investigar os logs da API OKX e os dados do banco, identifiquei **dois problemas**:
 
-1. **Período de busca limitado**: A API está buscando apenas os últimos 30 dias de saques (configuração padrão do `dateRange`)
-2. **Filtro do modal é diferente**: O modal filtra por mês específico (ex: Janeiro 2026), mas se a API só buscou fevereiro, não há dados de janeiro
+### Problema 1: Campo incorreto na Edge Function
 
-### Fluxo Atual (Problema)
+A API OKX retorna o endereço de destino no campo **`to`**, mas a edge function está tentando ler de **`toAddr`** (que não existe):
 
-```text
-AdminOkxOperations
-  ├── dateRange = últimos 30 dias (ex: 04/01 a 03/02)
-  │
-  ├── handleOpenReport("Virtual Pay")
-  │   └── fetchOperations('withdrawals') com dateRange atual
-  │       └── API retorna saques de 04/01 a 03/02
-  │
-  └── ClientReportModal
-      ├── selectedPeriod = "2026-02" (Fevereiro)
-      └── filteredWithdrawals = []  ← SEM DADOS de fevereiro completo!
+**Resposta real da OKX (dos logs):**
+```json
+{
+  "to": "0x594543f1e45168103f2b3226e5bb028f63a0cdb3",
+  "chain": "USDT-ERC20",
+  "amt": "3761.1",
+  ...
+}
 ```
 
----
-
-## Solução Proposta
-
-Quando abrir o modal de relatório de cliente, buscar os saques dos **últimos 12 meses** (sem usar o dateRange padrão).
-
-### Fluxo Corrigido
-
-```text
-AdminOkxOperations
-  │
-  ├── handleOpenReport("Virtual Pay")
-  │   └── fetchWithdrawalsForReport() ← NOVO
-  │       └── API busca últimos 12 meses
-  │
-  └── ClientReportModal
-      ├── selectedPeriod = "2026-02" (Fevereiro)
-      └── filteredWithdrawals = [dados encontrados!]
+**Código atual (ERRADO):**
+```typescript
+return {
+  id: w.wdId,
+  toAddress: w.toAddr,  // ← ERRO! Campo não existe
+  ...
+}
 ```
+
+**Código corrigido:**
+```typescript
+return {
+  id: w.wdId,
+  toAddress: w.to,  // ← CORRETO!
+  ...
+}
+```
+
+### Problema 2: Paginação insuficiente
+
+A API está buscando apenas 100 saques (2 páginas), mas com limite de 10 páginas. Para um histórico completo de 12 meses, precisamos aumentar o limite de páginas.
 
 ---
 
 ## Alterações Necessárias
 
-### `src/pages/admin/AdminOkxOperations.tsx`
+### Arquivo: `supabase/functions/okx-operations/index.ts`
 
-1. **Nova função `fetchWithdrawalsForReport`**:
-   - Busca saques dos últimos 365 dias (12 meses)
-   - Não usa o `dateRange` da interface (que é para as outras abas)
-   - Chamada quando abre o modal de relatório
+1. **Corrigir mapeamento de campo** (linha 357):
+   - Mudar de `w.toAddr` para `w.to`
 
-2. **Modificar `handleOpenReport`**:
-   - Chamar a nova função em vez de `fetchOperations('withdrawals')`
-   - Mostrar loading no modal enquanto busca
+2. **Aumentar limite de paginação** (linha 109):
+   - Aumentar `maxPages` de 10 para 50 para buscar mais histórico
 
-3. **Passar estado de loading correto para o modal**:
-   - Criar um estado separado `loadingReport` para não conflitar com o loading geral
+### Código da Correção
 
-### Código das Alterações
-
-**Nova função:**
+**Linha 109 - Aumentar limite de páginas:**
 ```typescript
-const fetchWithdrawalsForReport = async () => {
-  setLoadingReport(true);
-  try {
-    const response = await supabase.functions.invoke('okx-operations', {
-      body: {
-        type: 'withdrawals',
-        // Buscar últimos 365 dias para ter dados de todos os meses
-        startDate: format(subDays(new Date(), 365), 'yyyy-MM-dd'),
-        endDate: format(new Date(), 'yyyy-MM-dd'),
-      },
-    });
-
-    if (response.error) throw new Error(response.error.message);
-
-    const result = response.data?.data || [];
-    setWithdrawals(result);
-    
-    toast({
-      title: "Dados carregados",
-      description: `${result.length} saques encontrados`,
-    });
-  } catch (error: any) {
-    toast({
-      title: "Erro ao carregar saques",
-      description: error.message,
-      variant: "destructive",
-    });
-  } finally {
-    setLoadingReport(false);
-  }
-};
+const maxPages = 50; // Increased to fetch more historical data
 ```
 
-**Modificar handleOpenReport:**
+**Linha 344-359 - Corrigir mapeamento:**
 ```typescript
-const handleOpenReport = (client: RecurringClient) => {
-  setSelectedClientForReport(client);
-  setReportModalOpen(true);
-  // Buscar saques dos últimos 12 meses para o relatório
-  fetchWithdrawalsForReport();
-};
+result = withdrawals?.map((w: any) => {
+  const address = w.to?.toLowerCase() || '';  // ← Usar 'to' em vez de 'toAddr'
+  const alias = aliasMap.get(address);
+  
+  return {
+    id: w.wdId,
+    amount: parseFloat(w.amt),
+    fee: parseFloat(w.fee || 0),
+    currency: w.ccy,
+    network: w.chain,
+    status: mapWithdrawalStatus(w.state),
+    timestamp: new Date(parseInt(w.ts)).toISOString(),
+    txId: w.txId,
+    toAddress: w.to,  // ← Campo correto
+    alias: alias || null,
+  };
+}) || [];
 ```
 
-**Novo estado:**
-```typescript
-const [loadingReport, setLoadingReport] = useState(false);
-```
+---
 
-**Passar para o modal:**
-```typescript
-<ClientReportModal
-  open={reportModalOpen}
-  onOpenChange={setReportModalOpen}
-  client={selectedClientForReport}
-  withdrawals={withdrawals}
-  onRefresh={fetchWithdrawalsForReport}
-  loading={loadingReport}
-/>
+## Fluxo Após Correção
+
+```text
+OKX API Response
+├── to: "0x6318...CC9"  ← Campo correto
+├── chain: "USDT-ERC20"
+└── amt: "5000"
+        │
+        ▼
+Edge Function (corrigida)
+├── toAddress: w.to  ← Agora lê do campo correto
+        │
+        ▼
+ClientReportModal
+├── clientWalletAddresses: ["0x6318...cc9"]
+├── withdrawal.toAddress: "0x6318...CC9"
+├── Match: true! ← Agora encontra!
+        │
+        ▼
+Relatório mostra os saques ✓
 ```
 
 ---
 
 ## Resumo das Mudanças
 
-| Arquivo | Mudança |
-|---------|---------|
-| `AdminOkxOperations.tsx` | Adicionar função `fetchWithdrawalsForReport()` que busca 365 dias |
-| `AdminOkxOperations.tsx` | Novo estado `loadingReport` |
-| `AdminOkxOperations.tsx` | Modificar `handleOpenReport()` para usar nova função |
-| `AdminOkxOperations.tsx` | Passar `loadingReport` ao `ClientReportModal` |
+| Arquivo | Linha | Alteração |
+|---------|-------|-----------|
+| `supabase/functions/okx-operations/index.ts` | 109 | Aumentar `maxPages` de 10 para 50 |
+| `supabase/functions/okx-operations/index.ts` | 345 | Mudar `w.toAddr?.toLowerCase()` para `w.to?.toLowerCase()` |
+| `supabase/functions/okx-operations/index.ts` | 357 | Mudar `toAddress: w.toAddr` para `toAddress: w.to` |
 
 ---
 
 ## Resultado Esperado
 
 Após a correção:
-1. Ao clicar em "Ver Relatório" de um cliente, a API buscará os saques dos últimos 12 meses
-2. O modal filtrará corretamente por mês (Janeiro, Dezembro, etc.)
-3. Todas as transações para as carteiras do cliente aparecerão no relatório
-4. A exportação para Excel funcionará com os dados corretos
+1. A edge function lerá o endereço de destino corretamente do campo `to`
+2. O matching entre carteiras cadastradas e saques funcionará
+3. O relatório mostrará todos os saques enviados para as carteiras do cliente
+4. A paginação buscará mais registros históricos (até 5000 saques)
 
