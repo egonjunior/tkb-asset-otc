@@ -25,7 +25,7 @@ import { validateWalletAddress, type NetworkType } from "@/lib/walletValidation"
 interface ClientWallet {
   id?: string;
   wallet_address: string;
-  network: NetworkType;
+  network: string;
   label: string;
 }
 
@@ -43,7 +43,7 @@ interface RecurringClientModalProps {
   onSave: () => void;
 }
 
-const NETWORKS: { value: NetworkType; label: string }[] = [
+const NETWORKS: { value: string; label: string }[] = [
   { value: "ERC20", label: "ERC20 (Ethereum)" },
   { value: "TRC20", label: "TRC20 (Tron)" },
   { value: "BEP20", label: "BEP20 (BSC)" },
@@ -95,7 +95,7 @@ export const RecurringClientModal = ({
     if (field === "wallet_address" || field === "network") {
       const wallet = updated[index];
       if (wallet.wallet_address) {
-        const validation = validateWalletAddress(wallet.wallet_address, wallet.network);
+        const validation = validateWalletAddress(wallet.wallet_address, wallet.network as NetworkType);
         if (!validation.isValid) {
           setErrors({ ...errors, [index]: validation.error || "Endereço inválido" });
         } else {
@@ -131,7 +131,7 @@ export const RecurringClientModal = ({
 
     // Check for validation errors
     const hasErrors = validWallets.some((w, i) => {
-      const validation = validateWalletAddress(w.wallet_address, w.network);
+      const validation = validateWalletAddress(w.wallet_address, w.network as NetworkType);
       if (!validation.isValid) {
         setErrors({ ...errors, [i]: validation.error || "Endereço inválido" });
         return true;

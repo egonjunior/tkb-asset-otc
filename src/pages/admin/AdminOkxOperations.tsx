@@ -242,14 +242,7 @@ const AdminOkxOperations = () => {
     }
   };
 
-  const handleOpenReport = (client: RecurringClient) => {
-    setSelectedClientForReport(client);
-    setReportModalOpen(true);
-    // Make sure withdrawals are loaded
-    if (withdrawals.length === 0) {
-      fetchOperations('withdrawals');
-    }
-  };
+  const fetchOperations = async (type: 'deposits' | 'purchases' | 'withdrawals') => {
     setLoading(true);
     setError(null);
     try {
@@ -310,6 +303,15 @@ const AdminOkxOperations = () => {
     }
   };
 
+  const handleOpenReport = (client: RecurringClient) => {
+    setSelectedClientForReport(client);
+    setReportModalOpen(true);
+    // Make sure withdrawals are loaded
+    if (withdrawals.length === 0) {
+      fetchOperations('withdrawals');
+    }
+  };
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     // For growth tab or recurring clients, load withdrawals if not already loaded
@@ -319,7 +321,7 @@ const AdminOkxOperations = () => {
       }
       return;
     }
-    const typeMap: Record<string, string> = {
+    const typeMap: Record<string, 'deposits' | 'purchases' | 'withdrawals'> = {
       deposits: 'deposits',
       purchases: 'purchases',
       withdrawals: 'withdrawals',
@@ -671,7 +673,7 @@ const AdminOkxOperations = () => {
                   />
                 </div>
                 <Button
-                  onClick={() => fetchOperations(activeTab)}
+                  onClick={() => fetchOperations(activeTab as 'deposits' | 'purchases' | 'withdrawals')}
                   disabled={loading}
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
