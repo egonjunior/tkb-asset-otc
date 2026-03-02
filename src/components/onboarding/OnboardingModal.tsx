@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  FileText, 
-  ShieldCheck, 
-  TrendingUp, 
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
+  FileText,
+  TrendingUp,
   ArrowRight,
   CheckCircle,
-  Sparkles
+  Sparkles,
+  Loader2
 } from "lucide-react";
 
 interface OnboardingModalProps {
@@ -18,74 +21,84 @@ interface OnboardingModalProps {
   userName: string;
 }
 
-const steps = [
-  {
-    icon: Sparkles,
-    title: "Bem-vindo à TKB Asset!",
-    description: "Sua conta foi criada com sucesso. Vamos mostrar como funciona a plataforma em 3 passos rápidos.",
-    badge: "Passo 1 de 3",
-    color: "text-primary",
-    bgColor: "bg-primary/10"
-  },
-  {
-    icon: FileText,
-    title: "Complete seu cadastro",
-    description: "Para operar, precisamos validar alguns documentos. É rápido e garante a segurança das suas transações.",
-    badge: "Passo 2 de 3",
-    color: "text-tkb-cyan",
-    bgColor: "bg-tkb-cyan/10",
-    action: {
-      label: "Ir para Documentos",
-      path: "/documents"
-    }
-  },
-  {
-    icon: TrendingUp,
-    title: "Pronto para operar!",
-    description: "Após a aprovação dos documentos, você pode solicitar operações de compra/venda de USDT com as melhores taxas do mercado.",
-    badge: "Passo 3 de 3",
-    color: "text-success",
-    bgColor: "bg-success/10",
-    features: [
-      "Cotações em tempo real",
-      "Spread 30% menor que mercado",
-      "Liquidação em até 60 minutos"
-    ]
-  }
-];
-
 export function OnboardingModal({ isOpen, onClose, userName }: OnboardingModalProps) {
-  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
+  const [commercialDetails, setCommercialDetails] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const steps = [
+    {
+      icon: Sparkles,
+      title: "Bem-vindo à TKB Asset!",
+      description: "Sua conta foi criada. Para garantirmos a melhor taxa (Spread) nas suas operações OTC, precisamos de alguns detalhes sobre o seu perfil.",
+      badge: "Passo 1 de 2",
+      color: "text-primary",
+      bgColor: "bg-primary/10"
+    },
+    {
+      icon: FileText,
+      title: "Perfil Operacional",
+      description: "Descreva brevemente qual será o seu volume esperado, se atua como B2B repassando liquidez, ou se veio de alguma indicação da nossa diretoria.",
+      badge: "Passo 2 de 2",
+      color: "text-tkb-cyan",
+      bgColor: "bg-tkb-cyan/10",
+      isForm: true
+    }
+  ];
+
   const step = steps[currentStep];
   const Icon = step.icon;
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
-    } else {
-      // Mark onboarding as complete
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!commercialDetails.trim()) {
+      toast.error("Por favor, descreva seu perfil operacional para prosseguirmos.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado.");
+
+      // Set user pricing status to pending and save their story
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          commercial_details: commercialDetails,
+          pricing_status: 'pending'
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast.success("Perfil enviado para análise da mesa!");
       localStorage.setItem("onboarding_completed", "true");
       onClose();
-    }
-  };
+      // Force reload to update UI state
+      window.location.reload();
 
-  const handleAction = () => {
-    localStorage.setItem("onboarding_completed", "true");
-    onClose();
-    if (step.action?.path) {
-      navigate(step.action.path);
+    } catch (error: any) {
+      console.error("Erro no onboarding:", error);
+      toast.error("Erro ao salvar perfil.");
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const handleSkip = () => {
-    localStorage.setItem("onboarding_completed", "true");
-    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0 overflow-hidden border-0 shadow-2xl">
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      // Don't allow closing by clicking outside if they haven't submitted
+      if (!open && localStorage.getItem("onboarding_completed") === "true") {
+        onClose();
+      }
+    }}>
+      <DialogContent className="max-w-md p-0 overflow-hidden border-0 shadow-2xl [&>button]:hidden">
         {/* Header with gradient */}
         <div className={`${step.bgColor} p-8 text-center space-y-4`}>
           <Badge variant="secondary" className="bg-white/80 text-foreground">
@@ -107,74 +120,56 @@ export function OnboardingModal({ isOpen, onClose, userName }: OnboardingModalPr
             </p>
           </div>
 
-          {/* Features list for last step */}
-          {step.features && (
-            <div className="space-y-3">
-              {step.features.map((feature, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
-                  <span className="text-sm font-medium">{feature}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Progress dots */}
           <div className="flex justify-center gap-2">
             {steps.map((_, index) => (
               <div
                 key={index}
-                className={`h-2 rounded-full transition-all ${
-                  index === currentStep 
-                    ? "w-8 bg-primary" 
-                    : index < currentStep 
-                      ? "w-2 bg-primary/50" 
+                className={`h-2 rounded-full transition-all ${index === currentStep
+                    ? "w-8 bg-primary"
+                    : index < currentStep
+                      ? "w-2 bg-primary/50"
                       : "w-2 bg-muted"
-                }`}
+                  }`}
               />
             ))}
           </div>
 
+          {/* Form Area */}
+          {step.isForm && (
+            <div className="space-y-3 pt-4 border-t border-border">
+              <Label htmlFor="details" className="text-foreground font-semibold">Detalhes da sua Operação</Label>
+              <Textarea
+                id="details"
+                placeholder="Exemplo: Faremos cerca de 100k USDT por semana. Sou parceiro do Eduardo..."
+                className="min-h-[120px] resize-none"
+                value={commercialDetails}
+                onChange={(e) => setCommercialDetails(e.target.value)}
+              />
+            </div>
+          )}
+
           {/* Actions */}
-          <div className="space-y-3">
-            {step.action ? (
-              <>
-                <Button 
-                  onClick={handleAction} 
-                  className="w-full" 
-                  size="lg"
-                >
-                  {step.action.label}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  onClick={handleNext} 
-                  className="w-full text-muted-foreground"
-                >
-                  Fazer isso depois
-                </Button>
-              </>
+          <div className="space-y-3 pt-2">
+            {currentStep === 0 ? (
+              <Button
+                onClick={handleNext}
+                className="w-full bg-tkb-cyan hover:bg-tkb-cyan/90 text-black font-semibold"
+                size="lg"
+              >
+                Continuar
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
             ) : (
-              <>
-                <Button 
-                  onClick={handleNext} 
-                  className="w-full" 
-                  size="lg"
-                >
-                  {currentStep === steps.length - 1 ? "Começar a usar" : "Próximo"}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                {currentStep === 0 && (
-                  <Button 
-                    variant="ghost" 
-                    onClick={handleSkip} 
-                    className="w-full text-muted-foreground"
-                  >
-                    Pular introdução
-                  </Button>
-                )}
-              </>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full bg-tkb-cyan hover:bg-tkb-cyan/90 text-black font-semibold"
+                size="lg"
+              >
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                Enviar para a Mesa TKB
+              </Button>
             )}
           </div>
         </div>

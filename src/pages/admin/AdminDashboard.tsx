@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users, Handshake, MessageCircle, Building2, UserCog, FileText } from "lucide-react";
+import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users, Handshake, MessageCircle, Building2, UserCog, FileText, Percent } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VolumeCard } from "@/components/admin/VolumeCard";
@@ -49,7 +49,7 @@ const AdminDashboard = () => {
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (ordersError) {
         console.error('Erro ao buscar ordens:', ordersError);
         if (isMounted) {
@@ -71,14 +71,14 @@ const AdminDashboard = () => {
           .from('profiles')
           .select('id, full_name')
           .in('id', userIds);
-        
+
         const profilesMap = new Map(profilesData?.map(p => [p.id, p.full_name]));
-        
+
         const ordersWithNames = ordersData.map(order => ({
           ...order,
           full_name: profilesMap.get(order.user_id) || 'N/A'
         }));
-        
+
         if (isMounted) {
           setOrders(ordersWithNames as Order[]);
         }
@@ -87,7 +87,7 @@ const AdminDashboard = () => {
           setOrders([]);
         }
       }
-      
+
       if (isMounted) {
         setLoading(false);
       }
@@ -124,7 +124,7 @@ const AdminDashboard = () => {
 
     const fetchMetrics = async () => {
       if (!isMounted) return;
-      
+
       const { count: partnersCount } = await supabase
         .from('partner_requests')
         .select('*', { count: 'exact', head: true })
@@ -156,14 +156,14 @@ const AdminDashboard = () => {
         .eq('status', 'pending');
       if (isMounted) setPendingNotesCount(notesCount || 0);
     };
-    
+
     checkAdminAndFetchOrders();
     fetchMetrics();
-    
+
     // Realtime subscription
     const channel = supabase
       .channel('admin-orders')
-      .on('postgres_changes', 
+      .on('postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         () => {
           if (isMounted) {
@@ -172,7 +172,7 @@ const AdminDashboard = () => {
         }
       )
       .subscribe();
-    
+
     return () => {
       isMounted = false;
       supabase.removeChannel(channel);
@@ -202,7 +202,7 @@ const AdminDashboard = () => {
       expired: { label: "Expirado", className: "bg-muted text-muted-foreground" },
       rejected: { label: "Rejeitado", className: "bg-destructive text-destructive-foreground" },
     };
-    
+
     const variant = variants[status] || { label: status, className: "bg-muted text-muted-foreground" };
     return <Badge className={variant.className}>{variant.label}</Badge>;
   };
@@ -268,8 +268,8 @@ const AdminDashboard = () => {
 
           {/* Ações Rápidas */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <Card 
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-primary" 
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-primary"
               onClick={() => navigate('/admin/users')}
             >
               <CardContent className="pt-6">
@@ -284,8 +284,8 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card 
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-tkb-cyan" 
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-tkb-cyan"
               onClick={() => navigate('/admin/documents')}
             >
               <CardContent className="pt-6">
@@ -300,8 +300,8 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card 
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-green-500" 
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-green-500"
               onClick={() => navigate('/admin/partners')}
             >
               <CardContent className="pt-6">
@@ -316,8 +316,8 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card 
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-orange-500" 
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-orange-500"
               onClick={() => navigate('/admin/support')}
             >
               <CardContent className="pt-6">
@@ -332,8 +332,8 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card 
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-purple-500" 
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-purple-500"
               onClick={() => navigate('/admin/leads')}
             >
               <CardContent className="pt-6">
@@ -351,8 +351,8 @@ const AdminDashboard = () => {
 
           {/* Parceiros B2B Card */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-            <Card 
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-indigo-500" 
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-indigo-500"
               onClick={() => navigate('/admin/partners-b2b')}
             >
               <CardContent className="pt-6">
@@ -367,8 +367,8 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card 
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-blue-500" 
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-blue-500"
               onClick={() => navigate('/admin/offline-clients')}
             >
               <CardContent className="pt-6">
@@ -383,8 +383,8 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card 
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-teal-500" 
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-teal-500"
               onClick={() => navigate('/admin/otc-clients')}
             >
               <CardContent className="pt-6">
@@ -399,8 +399,8 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card 
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-emerald-500" 
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-emerald-500"
               onClick={() => navigate('/admin/pld-compliance')}
             >
               <CardContent className="pt-6">
@@ -415,8 +415,8 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card 
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-orange-500" 
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-orange-500"
               onClick={() => navigate('/admin/okx-operations')}
             >
               <CardContent className="pt-6">
@@ -431,8 +431,24 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card 
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-amber-500" 
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-tkb-cyan"
+              onClick={() => navigate('/admin/pricing')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">🏷️ Precificação Exclusiva</p>
+                    <p className="text-xl font-bold text-tkb-cyan">Analisar →</p>
+                  </div>
+                  <Percent className="h-8 w-8 text-tkb-cyan" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Aprovar perfis e definir spread</p>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-amber-500"
               onClick={() => navigate('/admin/operational-notes')}
             >
               <CardContent className="pt-6">

@@ -20,6 +20,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrderDetails from "./pages/admin/AdminOrderDetails";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUserDetails from "./pages/admin/AdminUserDetails";
+import AdminPricing from "./pages/admin/AdminPricing";
 import AdminDocuments from "./pages/admin/AdminDocuments";
 import AdminPartners from "./pages/admin/AdminPartners";
 import AdminSupport from "./pages/admin/AdminSupport";
@@ -108,6 +109,7 @@ const App = () => (
             <Route path="/admin/order/:orderId" element={<AdminProtectedRoute><AdminOrderDetails /></AdminProtectedRoute>} />
             <Route path="/admin/users" element={<AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>} />
             <Route path="/admin/users/:userId" element={<AdminProtectedRoute><AdminUserDetails /></AdminProtectedRoute>} />
+            <Route path="/admin/pricing" element={<AdminProtectedRoute><AdminPricing /></AdminProtectedRoute>} />
             <Route path="/admin/offline-clients" element={<AdminProtectedRoute><AdminOfflineClients /></AdminProtectedRoute>} />
             <Route path="/admin/offline-clients/:clientId" element={<AdminProtectedRoute><AdminOfflineClientDetails /></AdminProtectedRoute>} />
             <Route path="/admin/otc-clients" element={<AdminProtectedRoute><AdminOtcClients /></AdminProtectedRoute>} />

@@ -2,9 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowRight, 
-  Instagram, 
+import {
+  ArrowRight,
+  Instagram,
   Linkedin,
   Mail,
   MessageCircle,
@@ -60,14 +60,14 @@ const Landing = () => {
               </a>
             </nav>
             <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate("/login")} 
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/login")}
                 className="hidden sm:inline-flex text-white hover:bg-neutral-800"
               >
                 Login
               </Button>
-              <Button 
+              <Button
                 variant="tkb"
                 onClick={scrollToForm}
               >
@@ -95,7 +95,7 @@ const Landing = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-neutral-900/85 via-neutral-900/75 to-neutral-900/80" />
 
         {/* Grid Pattern Overlay */}
-        <div 
+        <div
           className="absolute inset-0 opacity-10"
           style={{
             backgroundImage: `
@@ -105,7 +105,7 @@ const Landing = () => {
             backgroundSize: '60px 60px'
           }}
         />
-        
+
         <div className="container mx-auto px-6 py-24 lg:py-32 relative z-10">
           <div className="max-w-5xl mx-auto text-center space-y-8">
             {/* Título */}
@@ -123,8 +123,8 @@ const Landing = () => {
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up animation-delay-400">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 variant="tkb"
                 onClick={() => navigate("/register")}
                 className="min-w-[240px] shadow-xl"
@@ -132,8 +132,8 @@ const Landing = () => {
                 Criar Conta Grátis
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 variant="outline"
                 onClick={scrollToForm}
                 className="min-w-[240px] border-neutral-600 text-white hover:bg-neutral-800"
@@ -220,23 +220,23 @@ const Landing = () => {
           <div className="max-w-6xl mx-auto space-y-12">
             {/* Grid de Métricas */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <MetricCard 
+              <MetricCard
                 number="R$ 50M+"
                 label="Movimentados nos últimos 12 meses"
                 delay="0ms"
                 countUp
               />
-              <MetricCard 
+              <MetricCard
                 number="60-90 min"
                 label="Tempo médio de execução porta-a-porta"
                 delay="100ms"
               />
-              <MetricCard 
+              <MetricCard
                 number="30-40%"
                 label="Economia média vs mercado tradicional"
                 delay="200ms"
               />
-              <MetricCard 
+              <MetricCard
                 number="24/7"
                 label="Disponibilidade operacional"
                 delay="300ms"
@@ -269,7 +269,7 @@ const Landing = () => {
 
             {/* Grid de Produtos */}
             <div className="grid lg:grid-cols-2 gap-8">
-              <ProductCard 
+              <ProductCard
                 icon="💱"
                 title="Conversão BRL ↔ USDT"
                 description="Liquidez em dólar digital para operações que exigem velocidade e previsibilidade. Spread 30% mais baixo que mercado e execução até 50% mais rápida."
@@ -283,7 +283,7 @@ const Landing = () => {
                 badge="DESTAQUE"
               />
 
-              <ProductCard 
+              <ProductCard
                 icon="🌐"
                 title="Remessa Internacional Express"
                 description="BRL direto para USD, EUR, CNY e outras moedas na conta bancária do beneficiário. Economize pelo menos 40% comparado a soluções tradicionais."
@@ -296,7 +296,7 @@ const Landing = () => {
                 advantage="Economia mínima de 40%"
               />
 
-              <ProductCard 
+              <ProductCard
                 icon="🔄"
                 title="Corredor Bidirecional"
                 description="Entrada e saída de capital internacional com a mesma estrutura de compliance e velocidade. Opere nos dois sentidos sem fricção."
@@ -309,7 +309,7 @@ const Landing = () => {
                 advantage="Consulte nosso time"
               />
 
-              <ProductCard 
+              <ProductCard
                 icon="🔌"
                 title="Integração via API"
                 description="Automação completa para empresas que processam alto volume de transações internacionais. Conecte seu sistema ao nosso via API REST."
@@ -343,35 +343,35 @@ const Landing = () => {
 
             {/* Grid 5 Pilares */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <PillarCard 
+              <PillarCard
                 icon="🛡️"
                 title="Conformidade Estruturada"
                 description="Operamos sob Lei 14.478/2022 em parceria com instituições reguladas pelo Banco Central. Toda operação é auditável, declarável e estruturada para passar por compliance interno da sua empresa. Documentação completa: contrato, nota fiscal, comprovantes de transação."
                 delay="0ms"
               />
 
-              <PillarCard 
+              <PillarCard
                 icon="⚡"
                 title="Execução Quando Importa"
                 description="Fornecedor não espera 5 dias. Oportunidade de arbitragem não espera 5 dias. Seu negócio não espera 5 dias. Processamos BRL para USD em 60 a 90 minutos. Não prometemos o que não entregamos."
                 delay="100ms"
               />
 
-              <PillarCard 
+              <PillarCard
                 icon="💎"
                 title="Precificação Competitiva"
                 description="Economia real e mensurável em cada operação. Conversões até 30% mais baratas que mercado. Remessas internacionais 40% mais econômicas que Wise e bancos tradicionais. Sem taxas escondidas. Sem surpresas no extrato."
                 delay="200ms"
               />
 
-              <PillarCard 
+              <PillarCard
                 icon="👤"
                 title="Atendimento Direto"
                 description="Você fala com quem decide. Sem abrir ticket. Sem esperar fila. Sem passar por três níveis de aprovação. Fundador disponível via WhatsApp para operações críticas."
                 delay="300ms"
               />
 
-              <PillarCard 
+              <PillarCard
                 icon="🔁"
                 title="Infraestrutura Redundante"
                 description="Operamos com múltiplos provedores de liquidez tier-1 e bancos correspondentes. Se um canal apresenta problema, ativamos alternativa em minutos. Seu capital não fica travado esperando análise de risco bancária."
@@ -395,37 +395,37 @@ const Landing = () => {
 
             {/* Grid 3x2 Setores */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <SectorCard 
+              <SectorCard
                 icon="🌾"
                 title="Trading de Commodities"
                 description="Soja, milho, carne, café - mercado spot exige liquidação imediata"
                 delay="0ms"
               />
-              <SectorCard 
+              <SectorCard
                 icon="🏭"
                 title="Importação Industrial"
                 description="Máquinas, insumos, componentes - produção não para esperando wire"
                 delay="100ms"
               />
-              <SectorCard 
+              <SectorCard
                 icon="⚡"
                 title="Energia & Combustíveis"
                 description="Mercado 24/7 onde minutos definem spread"
                 delay="200ms"
               />
-              <SectorCard 
+              <SectorCard
                 icon="💊"
                 title="Farmacêutico & Healthcare"
                 description="Importação de princípios ativos e insumos críticos"
                 delay="300ms"
               />
-              <SectorCard 
+              <SectorCard
                 icon="🚢"
                 title="Logística Internacional"
                 description="Frete, armazenagem, desembaraço - custos que vencem todo dia"
                 delay="400ms"
               />
-              <SectorCard 
+              <SectorCard
                 icon="💻"
                 title="Tecnologia & SaaS"
                 description="Folha internacional, fornecedores cloud, serviços em USD/EUR"
@@ -439,6 +439,117 @@ const Landing = () => {
                 Se seu negócio opera em janelas de oportunidade medidas em horas, não dias, nós entendemos.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Comparativo & Infraestrutura Institucional */}
+      <section className="py-24 bg-neutral-900 text-white" id="institucional">
+        <div className="container mx-auto px-6">
+          <div className="max-w-6xl mx-auto space-y-16">
+
+            {/* Header */}
+            <div className="text-center space-y-4 animate-fade-in">
+              <h2 className="text-4xl sm:text-5xl font-display font-bold text-white">
+                Infraestrutura Institucional
+              </h2>
+              <p className="text-lg text-neutral-300 max-w-3xl mx-auto leading-relaxed">
+                Entenda por que grandes mesas operacionais e importadores escolhem arquitetura blockchain para liquidação fiduciária.
+              </p>
+            </div>
+
+            {/* Comparativo de Mercado */}
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              {/* Mercado Tradicional */}
+              <Card className="bg-white/5 border-neutral-800 text-neutral-300 h-full">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-display text-white">Mercado Tradicional</CardTitle>
+                  <p className="text-sm text-neutral-400">Bancos e Corretoras de Câmbio Clássicas</p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm font-semibold text-danger">
+                      <span>Liquidação Típica</span>
+                      <span>D+3 a D+5</span>
+                    </div>
+                    <div className="h-2 w-full bg-neutral-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-danger w-full animate-pulse"></div>
+                    </div>
+                  </div>
+                  <ul className="space-y-3 text-sm">
+                    <li className="flex gap-3"><span className="text-danger">✗</span> Rede SWIFT lenta e custosa</li>
+                    <li className="flex gap-3"><span className="text-danger">✗</span> Múltiplos bancos correspondentes intercedendo</li>
+                    <li className="flex gap-3"><span className="text-danger">✗</span> Custos embutidos ("Spread Oculto")</li>
+                    <li className="flex gap-3"><span className="text-danger">✗</span> Operação dolorosa limitada em horário comercial</li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* TKB Asset */}
+              <Card className="bg-gradient-to-br from-tkb-cyan/20 to-primary/20 border-tkb-cyan/30 text-white relative overflow-hidden h-full">
+                <div className="absolute top-0 right-0 p-4 opacity-10 blur-xl">
+                  <div className="w-48 h-48 bg-tkb-cyan rounded-full"></div>
+                </div>
+                <CardHeader>
+                  <div className="flex justify-between items-start relative z-10">
+                    <div>
+                      <CardTitle className="text-2xl font-display text-white">TKB Asset</CardTitle>
+                      <p className="text-sm text-tkb-cyan font-medium">Liquidação via Blockchain Público e Privado</p>
+                    </div>
+                    <Badge variant="outline" className="border-tkb-cyan text-tkb-cyan bg-tkb-cyan/10">AVANÇADO</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6 relative z-10">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm font-semibold text-success">
+                      <span>Liquidação TKB</span>
+                      <span>D+0 (T+1h)</span>
+                    </div>
+                    <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden">
+                      <div className="h-full bg-tkb-cyan w-[15%]"></div>
+                    </div>
+                  </div>
+                  <ul className="space-y-3 text-sm font-medium">
+                    <li className="flex gap-3"><span className="text-tkb-cyan">✓</span> Até 50% mais barato (Eliminação de intermediários)</li>
+                    <li className="flex gap-3"><span className="text-tkb-cyan">✓</span> Liquidação em 60-90 minutos porta a porta</li>
+                    <li className="flex gap-3"><span className="text-tkb-cyan">✓</span> Custos 100% transparentes e travados na tela</li>
+                    <li className="flex gap-3"><span className="text-tkb-cyan">✓</span> Conectividade global veloz operacional 24/7</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Como Funciona Workflow */}
+            <div className="rounded-2xl bg-black p-8 sm:p-12 border border-neutral-800 shadow-2xl relative overflow-hidden">
+              <div className="absolute -left-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-[80px]"></div>
+              <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-tkb-cyan/10 rounded-full blur-[80px]"></div>
+
+              <h3 className="text-2xl font-display font-bold text-center mb-16 relative z-10">O Caminho do Capital Institucional</h3>
+
+              <div className="grid sm:grid-cols-3 gap-12 relative text-center z-10">
+                {/* Conector Linha SVG */}
+                <div className="hidden sm:block absolute top-[3rem] left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-neutral-800 via-tkb-cyan to-neutral-800 z-0"></div>
+
+                <div className="relative z-10 space-y-4">
+                  <div className="w-24 h-24 mx-auto rounded-full bg-neutral-900 border-2 border-neutral-700 flex items-center justify-center text-4xl shadow-lg">🏦</div>
+                  <h4 className="font-semibold text-lg text-white">1. Seu Negócio</h4>
+                  <p className="text-sm text-neutral-400">Fio de origem em BRL ou conta internacional com o lastro totalmente documentado, passando pelo nosso Compliance.</p>
+                </div>
+
+                <div className="relative z-10 space-y-4">
+                  <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-tkb-cyan to-primary shadow-[0_0_40px_rgba(45,212,191,0.3)] flex items-center justify-center text-4xl transform hover:scale-105 transition-transform cursor-pointer">⛓️</div>
+                  <h4 className="font-semibold text-lg text-white">2. Motores TKB</h4>
+                  <p className="text-sm text-neutral-400">Conversão e ponte instantânea para rails blockchain estáveis (USDT/USDC). Agilidade e imunidade à burocracia do Swift tradicional.</p>
+                </div>
+
+                <div className="relative z-10 space-y-4">
+                  <div className="w-24 h-24 mx-auto rounded-full bg-neutral-900 border-2 border-neutral-700 flex items-center justify-center text-4xl shadow-lg">🎯</div>
+                  <h4 className="font-semibold text-lg text-white">3. Liquidação Final</h4>
+                  <p className="text-sm text-neutral-400">Moeda local convertida liquidada com sucesso diretamente na conta do beneficiário final no exterior, em tempo recorde.</p>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
@@ -539,8 +650,8 @@ const Landing = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     variant="tkb"
                     className="min-w-[220px] shadow-xl"
                     onClick={() => window.open('https://wa.me/5541984219668', '_blank')}
@@ -548,8 +659,8 @@ const Landing = () => {
                     <MessageCircle className="mr-2 h-5 w-5" />
                     WhatsApp Direto
                   </Button>
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     className="min-w-[220px] bg-white text-neutral-900 hover:bg-neutral-100"
                     onClick={() => window.location.href = 'mailto:gestao@tkbasset.com'}
                   >
@@ -601,16 +712,16 @@ const Landing = () => {
                 <h4 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">
                   Contato
                 </h4>
-                <a 
-                  href="mailto:gestao@tkbasset.com" 
+                <a
+                  href="mailto:gestao@tkbasset.com"
                   className="flex items-center justify-center md:justify-start gap-2 text-sm text-neutral-300 hover:text-white transition-colors"
                 >
                   <Mail className="h-4 w-4" />
                   gestao@tkbasset.com
                 </a>
-                <a 
-                  href="https://wa.me/5541984219668" 
-                  target="_blank" 
+                <a
+                  href="https://wa.me/5541984219668"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center md:justify-start gap-2 text-sm text-neutral-300 hover:text-white transition-colors"
                 >
@@ -625,17 +736,17 @@ const Landing = () => {
                   Redes Sociais
                 </h4>
                 <div className="flex items-center justify-center md:justify-start gap-4">
-                  <a 
-                    href="https://instagram.com/tkbasset" 
-                    target="_blank" 
+                  <a
+                    href="https://instagram.com/tkbasset"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-tkb-cyan transition-colors"
                   >
                     <Instagram className="h-5 w-5" />
                   </a>
-                  <a 
-                    href="https://linkedin.com/company/tkbasset" 
-                    target="_blank" 
+                  <a
+                    href="https://linkedin.com/company/tkbasset"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-tkb-cyan transition-colors"
                   >

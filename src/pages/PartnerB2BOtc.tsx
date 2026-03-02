@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,11 +13,11 @@ import { usePartnerPrice } from "@/hooks/usePartnerPrice";
 
 export default function PartnerB2BOtc() {
   const navigate = useNavigate();
-  const { 
-    tkbPrice, 
+  const {
+    tkbPrice,
     standardPrice,
-    isLoading, 
-    isB2BPartner, 
+    isLoading,
+    isB2BPartner,
     companyName,
     markupPercent,
     savings,
@@ -33,9 +33,98 @@ export default function PartnerB2BOtc() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [clientLink, setClientLink] = useState<any>(null);
+  const [clientMarkup, setClientMarkup] = useState<number>(1.0);
+  const [slug, setSlug] = useState<string>("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    const fetchClientLink = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data } = await supabase
+          .from('otc_quote_clients')
+          .select('*')
+          .eq('created_by', user.id)
+          .maybeSingle();
+
+        if (data) {
+          setClientLink(data);
+          setSlug(data.slug);
+          setClientMarkup(data.spread_percent);
+        }
+      } catch (err) {
+        console.error("Error fetching client link:", err);
+      }
+    };
+    fetchClientLink();
+  }, []);
+
+  const handleGenerateLink = async () => {
+    if (!acceptedTerms) return;
+    setIsGenerating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { data: existingSlug } = await supabase
+        .from('otc_quote_clients')
+        .select('id, created_by')
+        .eq('slug', slug)
+        .maybeSingle();
+
+      if (existingSlug && existingSlug.created_by !== user.id) {
+        toast.error("Esta URL já está em uso por outro parceiro.");
+        setIsGenerating(false);
+        return;
+      }
+
+      const payload = {
+        slug,
+        client_name: companyName || "Mesa Parceira",
+        spread_percent: clientMarkup,
+        created_by: user.id,
+        price_source: 'binance',
+        is_active: true
+      };
+
+      if (clientLink) {
+        const { error } = await supabase
+          .from('otc_quote_clients')
+          .update(payload)
+          .eq('id', clientLink.id);
+        if (error) throw error;
+        toast.success("Link atualizado com sucesso!");
+      } else {
+        const { error } = await supabase
+          .from('otc_quote_clients')
+          .insert(payload);
+        if (error) throw error;
+        toast.success("Link gerado e ativo com sucesso!");
+      }
+
+      // Refresh
+      const { data } = await supabase
+        .from('otc_quote_clients')
+        .select('*')
+        .eq('created_by', user.id)
+        .maybeSingle();
+      if (data) setClientLink(data);
+
+    } catch (error: any) {
+      console.error("Erro ao gerar link:", error);
+      toast.error(`Erro: ${error.message}`);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isB2BPartner) {
       toast.error("Você não tem permissão para acessar esta área");
       navigate('/partner/b2b');
@@ -226,12 +315,160 @@ export default function PartnerB2BOtc() {
           </Card>
         </div>
 
-        {/* Formulário de Ordem */}
-        <Card className="max-w-2xl mx-auto">
+        {/* Meus Links de Cotação - Mesa Branca */}
+        <Card className="max-w-4xl mx-auto mb-8 bg-gradient-to-br from-neutral-900 to-black text-white border-tkb-cyan/20">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl font-display text-white mb-2">Seu Portal de Clientes (Mesa Branca)</CardTitle>
+                <CardDescription className="text-neutral-400">
+                  Gere um link público onde seus clientes podem acompanhar a cotação com o <strong>SEU</strong> spread adicionado ao preço da TKB.
+                </CardDescription>
+              </div>
+              <div className="bg-tkb-cyan/20 p-3 rounded-full hidden sm:block">
+                <TrendingUp className="h-6 w-6 text-tkb-cyan" />
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            {clientLink ? (
+              <div className="bg-neutral-800/50 p-6 rounded-lg border border-neutral-700">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-tkb-cyan flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5" /> Seu Link Institucional
+                  </h4>
+                  <Badge variant="outline" className="text-white border-neutral-600">Ativo</Badge>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                  <Input
+                    readOnly
+                    value={`https://tkbasset.com/${clientLink.slug}`}
+                    className="bg-black border-neutral-700 text-white font-mono"
+                  />
+                  <Button
+                    variant="outline"
+                    className="shrink-0 text-black bg-white hover:bg-neutral-200"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://tkbasset.com/${clientLink.slug}`);
+                      toast.success("Link copiado para a área de transferência!");
+                    }}
+                  >
+                    Copiar Link
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm mt-6">
+                  <div className="bg-black p-4 rounded border border-neutral-800">
+                    <p className="text-neutral-500 mb-1">Nome de Exibição</p>
+                    <p className="font-medium">{clientLink.client_name}</p>
+                  </div>
+                  <div className="bg-black p-4 rounded border border-neutral-800">
+                    <p className="text-neutral-500 mb-1">Spread Cobrado do seu Cliente</p>
+                    <p className="font-medium text-success">+{clientLink.spread_percent}%</p>
+                  </div>
+                </div>
+                <p className="text-xs text-neutral-500 mt-4 text-center">Para alterar o spread, preencha o formulário novamente.</p>
+              </div>
+            ) : null}
+
+            <div className="mt-8 pt-8 border-t border-neutral-800">
+              <h3 className="font-semibold text-lg mb-6">{clientLink ? "Atualizar Configurações" : "Configurar Novo Link"}</h3>
+              <div className="grid md:grid-cols-2 gap-8">
+
+                {/* Div de Simulação */}
+                <div className="bg-neutral-800/30 p-6 rounded-lg border border-neutral-800 order-2 md:order-1 flex flex-col justify-center">
+                  <h4 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-4">Simulação de Preço</h4>
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center text-sm">
+                      <span>Preço Base TKB:</span>
+                      <span className="font-medium">R$ {tkbPrice?.toFixed(4)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm text-tkb-cyan">
+                      <span>Seu Markup (+{clientMarkup}%):</span>
+                      <span className="font-bold">+ R$ {((tkbPrice || 0) * (clientMarkup / 100)).toFixed(4)}</span>
+                    </div>
+                    <div className="h-px bg-neutral-700 my-2"></div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">O Cliente vai ver:</span>
+                      <span className="text-2xl font-display font-bold text-white">
+                        R$ {((tkbPrice || 0) * (1 + clientMarkup / 100)).toFixed(4)}
+                      </span>
+                    </div>
+                    <div className="mt-6 pt-4 border-t border-neutral-800 text-center">
+                      <p className="text-xs text-neutral-400">Seu Lucro Bruto Projetado por USDT</p>
+                      <p className="text-lg font-bold text-success mt-1">R$ {((tkbPrice || 0) * (clientMarkup / 100)).toFixed(4)} / USDT</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Formulário */}
+                <div className="space-y-5 order-1 md:order-2">
+                  <div className="space-y-2">
+                    <Label className="text-neutral-300">URL Personalizada (Slug)</Label>
+                    <div className="flex items-center">
+                      <span className="bg-neutral-800 text-neutral-400 px-3 py-2 rounded-l-md border border-neutral-700 border-r-0 text-sm">tkbasset.com/</span>
+                      <Input
+                        value={slug}
+                        onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                        placeholder="sua-empresa"
+                        className="rounded-l-none bg-black border-neutral-700 text-white focus-visible:ring-tkb-cyan"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-neutral-300">Seu Spread (%) sobre a cotação</Label>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        type="range"
+                        min="0.1"
+                        max="5.0"
+                        step="0.1"
+                        value={clientMarkup}
+                        onChange={(e) => setClientMarkup(parseFloat(e.target.value))}
+                        className="flex-1 accent-tkb-cyan"
+                      />
+                      <span className="font-bold w-12 text-right">{clientMarkup.toFixed(1)}%</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-black/50 border border-neutral-800 p-4 rounded-md space-y-3 mt-4">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="terms"
+                        checked={acceptedTerms}
+                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-neutral-700 text-tkb-cyan focus:ring-tkb-cyan cursor-pointer"
+                      />
+                      <Label htmlFor="terms" className="text-xs text-neutral-400 leading-tight cursor-pointer">
+                        Li e aceito o <strong className="text-neutral-300">Termo de Parceria Comercial B2B</strong>. Declaro responsabilidade pela intermediação com o cliente final e concordo com os termos e regras de liquidação D0 estipuladas pela TKB Asset sob regulação da Lei 14.478/2022.
+                      </Label>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleGenerateLink}
+                    disabled={!acceptedTerms || isGenerating || !slug}
+                    className="w-full bg-tkb-cyan hover:bg-tkb-cyan/90 text-black font-semibold"
+                  >
+                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
+                    {clientLink ? "Atualizar meu Link" : "Assinar Termo e Gerar Link"}
+                  </Button>
+                </div>
+
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Formulário de Ordem original */}
+        <Card className="max-w-4xl mx-auto mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5" />
-              Criar Nova Ordem
+              <Lock className="h-5 w-5 text-primary" />
+              Executar Ordem B2B
             </CardTitle>
             <CardDescription>
               Compre USDT com seu spread personalizado de {markupPercent}%

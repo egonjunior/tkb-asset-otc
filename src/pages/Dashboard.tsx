@@ -42,6 +42,7 @@ const Dashboard = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showOperationalNoteModal, setShowOperationalNoteModal] = useState(false);
   const [operationalNotesRefresh, setOperationalNotesRefresh] = useState(0);
+  const [pricingStatus, setPricingStatus] = useState<string>("active");
 
   // Check if should show onboarding
   useEffect(() => {
@@ -62,6 +63,19 @@ const Dashboard = () => {
         }
       } = await supabase.auth.getUser();
       if (!user) return;
+      if (user) {
+        // Fetch pricing status
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('pricing_status')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profileData && profileData.pricing_status) {
+          setPricingStatus(profileData.pricing_status);
+        }
+      }
+
       const {
         data,
         error
@@ -271,8 +285,8 @@ const Dashboard = () => {
                   Cotação Atual
                 </h2>
                 <Card className={`bg-white/90 backdrop-blur-xl border shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all ${orders.length === 0
-                    ? 'border-primary/30 ring-2 ring-primary/10 shadow-[0_0_0_1px_rgba(var(--primary-rgb),0.1)]'
-                    : 'border-white/50'
+                  ? 'border-primary/30 ring-2 ring-primary/10 shadow-[0_0_0_1px_rgba(var(--primary-rgb),0.1)]'
+                  : 'border-white/50'
                   }`}>
                   {orders.length === 0 && (
                     <CardHeader className="pb-2">
@@ -309,10 +323,19 @@ const Dashboard = () => {
                         </p>
                       </div>
                     )}
-                    <Button size="lg" variant="premium" className="w-full" onClick={() => navigate("/order/new")}>
-                      <Plus className="h-5 w-5 mr-2" />
-                      {orders.length === 0 ? "Criar Minha Primeira Ordem" : "Solicitar Operação"}
-                    </Button>
+
+                    {pricingStatus === 'pending' ? (
+                      <Button size="lg" variant="outline" disabled className="w-full bg-warning/10 text-warning-foreground border-warning/50 border-dashed">
+                        <Clock className="h-5 w-5 mr-2" />
+                        Perfil em Análise pela Mesa
+                      </Button>
+                    ) : (
+                      <Button size="lg" variant="premium" className="w-full" onClick={() => navigate("/order/new")}>
+                        <Plus className="h-5 w-5 mr-2" />
+                        {orders.length === 0 ? "Criar Minha Primeira Ordem" : "Solicitar Operação"}
+                      </Button>
+                    )}
+
                     <Button
                       size="lg"
                       variant="outline"
@@ -384,15 +407,22 @@ const Dashboard = () => {
                         </div>
 
                         {/* CTA principal */}
-                        <Button
-                          size="lg"
-                          variant="premium"
-                          onClick={() => navigate("/order/new")}
-                          className="gap-2"
-                        >
-                          <Plus className="h-5 w-5" />
-                          Criar Minha Primeira Ordem
-                        </Button>
+                        {pricingStatus === 'pending' ? (
+                          <Button size="lg" variant="outline" disabled className="gap-2 bg-warning/10 text-warning-foreground border-warning/50 border-dashed w-full max-w-sm mx-auto">
+                            <Clock className="h-5 w-5" />
+                            Aguardando Liberação da Mesa
+                          </Button>
+                        ) : (
+                          <Button
+                            size="lg"
+                            variant="premium"
+                            onClick={() => navigate("/order/new")}
+                            className="gap-2"
+                          >
+                            <Plus className="h-5 w-5" />
+                            Criar Minha Primeira Ordem
+                          </Button>
+                        )}
 
                         {/* Link secundário */}
                         <p className="text-xs text-muted-foreground">
