@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -80,7 +80,7 @@ const AdminPricing = () => {
     return (
         <SidebarProvider defaultOpen={true}>
             <div className="flex w-full min-h-screen bg-neutral-50">
-                <AdminSidebar />
+                <AppSidebar />
                 <main className="flex-1 p-8 overflow-y-auto">
                     <div className="max-w-7xl mx-auto space-y-6">
                         <div className="flex justify-between items-center">
