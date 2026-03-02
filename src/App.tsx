@@ -94,6 +94,7 @@ const App = () => (
             } />
             <Route path="/partner" element={<Partner />} />
             <Route path="/partner/b2b" element={<PartnerB2B />} />
+            <Route path="/partner-b2b" element={<PartnerB2B />} />
             <Route path="/partner/b2b-otc" element={<ProtectedRoute><PartnerB2BOtc /></ProtectedRoute>} />
             <Route path="/suporte" element={
               <ProtectedRoute>
