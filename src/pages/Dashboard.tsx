@@ -103,7 +103,7 @@ const Dashboard = () => {
   // Show loading state while auth is initializing - MUST be after all hooks
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)]">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-r-transparent"></div>
           <p className="mt-4 text-sm text-muted-foreground font-medium">Carregando...</p>
@@ -131,38 +131,50 @@ const Dashboard = () => {
     await signOut();
   };
   const getStatusBadge = (status: Order["status"]) => {
-    const variants: Record<string, { label: string; className: string }> = {
+    const variants: Record<string, { label: string; dot: string; text: string }> = {
       pending: {
         label: "Aguardando",
-        className: "bg-warning text-warning-foreground"
+        dot: "bg-warning",
+        text: "text-warning"
       },
       paid: {
         label: "Pago",
-        className: "bg-primary text-primary-foreground"
+        dot: "bg-primary",
+        text: "text-primary"
       },
       processing: {
         label: "Processando",
-        className: "bg-tkb-cyan/20 text-tkb-cyan"
+        dot: "bg-tkb-cyan",
+        text: "text-tkb-cyan"
       },
       completed: {
         label: "Concluído",
-        className: "bg-success text-success-foreground"
+        dot: "bg-success",
+        text: "text-success"
       },
       expired: {
         label: "Expirado",
-        className: "bg-muted text-muted-foreground"
+        dot: "bg-muted-foreground",
+        text: "text-muted-foreground"
       },
       cancelled: {
         label: "Cancelado",
-        className: "bg-destructive/80 text-destructive-foreground"
+        dot: "bg-destructive/80",
+        text: "text-destructive/80"
       },
       rejected: {
         label: "Rejeitado",
-        className: "bg-destructive text-destructive-foreground"
+        dot: "bg-destructive",
+        text: "text-destructive"
       }
     };
-    const variant = variants[status] || { label: status, className: "bg-muted text-muted-foreground" };
-    return <Badge className={variant.className}>{variant.label}</Badge>;
+    const variant = variants[status] || { label: status, dot: "bg-muted", text: "text-muted-foreground" };
+    return (
+      <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest">
+        <span className={`w-1.5 h-1.5 rounded-full ${variant.dot}`}></span>
+        <span className={variant.text}>{variant.label}</span>
+      </div>
+    );
   };
   // Patrimônio operado: apenas ordens concluídas
   const totalVolume = orders
@@ -176,46 +188,46 @@ const Dashboard = () => {
       ["--sidebar-width-mobile" as any]: "18rem"
     }}
   >
-    <div className="min-h-screen w-full bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
-      {/* Floating orbs */}
-      <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-40 right-20 w-80 h-80 bg-tkb-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="min-h-screen w-full bg-background relative overflow-hidden">
+      {/* Subtle top glow for premium depth */}
+      <div className="absolute -top-[500px] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-      {/* Subtle grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(220,15%,92%)_1px,transparent_1px),linear-gradient(to_bottom,hsl(220,15%,92%)_1px,transparent_1px)] bg-[size:64px_64px] opacity-20 pointer-events-none"></div>
+      {/* Very faint vertical and horizontal grid lines for institutional feel */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:64px_64px] pointer-events-none"></div>
 
       <div className="relative z-10">
         {/* Header */}
-        <header className="h-20 bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
-          <div className="container mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
+        <header className="h-20 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b border-border/50 sticky top-0 z-50">
+          <div className="container mx-auto px-6 h-full flex items-center justify-between">
+            <div className="flex items-center">
               <div className="flex items-center gap-4">
-                <SidebarTrigger className="md:hidden text-white hover:bg-white/10" />
+                <SidebarTrigger className="md:hidden text-foreground hover:bg-white/5" />
 
                 <div
-                  className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity"
+                  className="flex items-center gap-4 cursor-pointer group"
                   onClick={() => navigate('/dashboard')}
                 >
                   <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
                   <div>
-                    <h1 className="text-2xl font-brand">TKB ASSET</h1>
-                    <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Mesa OTC</p>
+                    <h1 className="text-2xl font-brand text-foreground tracking-tight">TKB ASSET</h1>
+                    <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest mt-0.5">Mesa OTC</p>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-6">
-                <span className="text-sm font-inter hidden sm:inline">
-                  Olá, <strong className="font-semibold">{userName}</strong>
+                <span className="text-sm font-inter text-muted-foreground hidden sm:inline">
+                  Operador <strong className="font-semibold text-foreground">{userName}</strong>
                 </span>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-white hover:bg-white/10"
+                  className="text-muted-foreground hover:text-foreground hover:bg-white/5"
                   onClick={() => navigate('/settings')}
                 >
-                  <Settings className="h-5 w-5" />
+                  <Settings className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleLogout} className="border-neutral-600 text-white hover:bg-white/10">
+                <div className="w-px h-4 bg-border"></div>
+                <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-foreground hover:bg-white/5">
                   <LogOut className="h-4 w-4 mr-2" />
                   Sair
                 </Button>
@@ -240,8 +252,7 @@ const Dashboard = () => {
 
               {/* Stats Overview */}
               <div>
-                <h2 className="text-2xl font-display font-bold text-foreground mb-6 flex items-center gap-2">
-                  <Briefcase className="h-6 w-6 text-primary" />
+                <h2 className="text-xl font-display font-semibold text-foreground/90 tracking-tight mb-5 flex items-center gap-2">
                   Visão Geral
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -280,71 +291,73 @@ const Dashboard = () => {
 
               {/* Cotação Premium */}
               <div>
-                <h2 className="text-2xl font-display font-bold text-foreground mb-6 flex items-center gap-2">
-                  <TrendingUp className="h-6 w-6 text-primary" />
-                  Cotação Atual
+                <h2 className="text-xl font-display font-semibold text-foreground/90 tracking-tight mb-5 flex items-center gap-2">
+                  Execução OTC
                 </h2>
-                <Card className={`bg-white/90 backdrop-blur-xl border shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all ${orders.length === 0
-                  ? 'border-primary/30 ring-2 ring-primary/10 shadow-[0_0_0_1px_rgba(var(--primary-rgb),0.1)]'
-                  : 'border-white/50'
+                <Card className={`bg-card border-white/5 shadow-2xl transition-all ${orders.length === 0
+                  ? 'ring-1 ring-primary/20 bg-gradient-to-b from-card to-card/50'
+                  : ''
                   }`}>
-                  {orders.length === 0 && (
-                    <CardHeader className="pb-2">
-                      <Badge className="w-fit bg-tkb-cyan/10 text-tkb-cyan border-tkb-cyan/30 font-semibold">
-                        ✨ Comece aqui
-                      </Badge>
-                    </CardHeader>
-                  )}
-                  <CardContent className={orders.length === 0 ? "p-8 pt-2" : "p-8"}>
-                    <div className="grid md:grid-cols-2 gap-8 mb-6">
-                      <div className="space-y-3">
-                        <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Mercado</p>
-                        <p className="text-5xl font-display font-bold text-foreground">
-                          R$ {(binancePrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+                  <CardContent className={orders.length === 0 ? "p-8 pt-6" : "p-8"}>
+                    <div className="grid md:grid-cols-2 gap-8 mb-8">
+                      <div className="space-y-4">
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Mercado / Referência</p>
+                        <p className="text-5xl font-display font-medium text-foreground tabular-nums tracking-tight">
+                          <span className="text-2xl text-muted-foreground mr-1">R$</span>
+                          {(binancePrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
                         </p>
-                        <p className="text-sm text-muted-foreground font-inter">Par USDT/BRL</p>
+                        <p className="text-xs text-muted-foreground font-inter">Par USDT/BRL</p>
                       </div>
-                      <div className="space-y-3">
+                      <div className="space-y-4 relative">
+                        {/* Decorative separator on desktop */}
+                        <div className="hidden md:block absolute -left-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-border to-transparent"></div>
+
                         <div className="flex items-center justify-between">
-                          <p className="text-sm uppercase tracking-wider text-tkb-cyan font-semibold">TKB Asset</p>
-                          <Badge className="bg-success/20 text-success border-success/30">AO VIVO</Badge>
+                          <p className="text-[10px] uppercase tracking-widest text-tkb-cyan font-mono">Execução TKB</p>
+                          <div className="flex items-center gap-2 text-xs font-mono text-success">
+                            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
+                            AO VIVO
+                          </div>
                         </div>
-                        <p className="text-5xl font-display font-bold text-tkb-cyan">
-                          R$ {(tkbPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+                        <p className="text-5xl font-display font-medium text-tkb-cyan tabular-nums tracking-tight">
+                          <span className="text-2xl text-tkb-cyan/60 mr-1">R$</span>
+                          {(tkbPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
                         </p>
-                        <p className="text-sm text-muted-foreground font-inter">Cotação Institucional</p>
+                        <p className="text-xs text-muted-foreground font-inter">Cotação Institucional</p>
                       </div>
                     </div>
                     {orders.length === 0 && (
-                      <div className="mb-4 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                        <p className="text-xs text-center text-foreground/70 flex items-center justify-center gap-2">
-                          <span className="text-base">💡</span>
-                          <span>Monitore a cotação e solicite quando encontrar o melhor momento</span>
+                      <div className="mb-6 px-4 py-3 rounded border border-primary/10 bg-primary/5 flex items-start gap-3">
+                        <div className="w-1 h-full bg-primary absolute left-0 top-0 bottom-0 rounded-l"></div>
+                        <p className="text-xs text-muted-foreground/90 font-mono tracking-wide">
+                          Monitoramento ativo. Solicite a operação quando o preço estiver favorável.
                         </p>
                       </div>
                     )}
 
                     {pricingStatus === 'pending' ? (
-                      <Button size="lg" variant="outline" disabled className="w-full bg-warning/10 text-warning-foreground border-warning/50 border-dashed">
-                        <Clock className="h-5 w-5 mr-2" />
-                        Perfil em Análise pela Mesa
+                      <Button size="lg" variant="outline" disabled className="w-full bg-warning/5 text-warning border-warning/20 font-mono tracking-wide h-14">
+                        <Clock className="h-4 w-4 mr-2" />
+                        PERFIL EM ANÁLISE PELA MESA
                       </Button>
                     ) : (
-                      <Button size="lg" variant="premium" className="w-full" onClick={() => navigate("/order/new")}>
-                        <Plus className="h-5 w-5 mr-2" />
-                        {orders.length === 0 ? "Criar Minha Primeira Ordem" : "Solicitar Operação"}
+                      <Button size="lg" variant="default" className="w-full h-14 bg-gradient-to-r from-tkb-cyan-dark to-primary hover:from-primary hover:to-primary-glow text-white border-0 font-medium tracking-wide shadow-lg shadow-primary/20" onClick={() => navigate("/order/new")}>
+                        <TrendingUp className="h-4 w-4 mr-2" />
+                        {orders.length === 0 ? "NOVA ORDEM" : "EXECUTAR OPERAÇÃO"}
                       </Button>
                     )}
 
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="w-full mt-3"
-                      onClick={() => setShowOperationalNoteModal(true)}
-                    >
-                      <FileText className="h-5 w-5 mr-2" />
-                      Solicitar Nota Operacional
-                    </Button>
+                    <div className="flex justify-center mt-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground hover:text-foreground hover:bg-white/5 font-mono text-[10px] uppercase tracking-widest"
+                        onClick={() => setShowOperationalNoteModal(true)}
+                      >
+                        <FileText className="h-3 w-3 mr-2" />
+                        Solicitar Nota de Corretagem
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -354,35 +367,34 @@ const Dashboard = () => {
 
               {/* Histórico */}
               <div>
-                <h2 className="text-2xl font-display font-bold text-foreground mb-6 flex items-center gap-2">
-                  <Clock className="h-6 w-6 text-primary" />
+                <h2 className="text-xl font-display font-semibold text-foreground/90 tracking-tight mb-5 flex items-center gap-2">
                   Histórico de Operações
                 </h2>
-                <Card className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
+                <Card className="bg-card border-white/5 shadow-xl">
                   <CardContent className="p-0">
                     {orders.length > 0 ? <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow className="border-b border-border hover:bg-transparent">
-                            <TableHead className="font-semibold text-foreground">ID</TableHead>
-                            <TableHead className="font-semibold text-foreground">Valor</TableHead>
-                            <TableHead className="font-semibold text-foreground">Rede</TableHead>
-                            <TableHead className="font-semibold text-foreground">Total</TableHead>
-                            <TableHead className="font-semibold text-foreground">Status</TableHead>
-                            <TableHead className="font-semibold text-foreground">Data</TableHead>
+                            <TableHead className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">ID</TableHead>
+                            <TableHead className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Valor</TableHead>
+                            <TableHead className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Rede</TableHead>
+                            <TableHead className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Total</TableHead>
+                            <TableHead className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Status</TableHead>
+                            <TableHead className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Data</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {orders.map(order => <TableRow key={order.id} className="cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => navigate(`/order/${order.id}`)}>
-                            <TableCell className="font-medium font-inter">#{order.id.slice(0, 8)}</TableCell>
-                            <TableCell className="font-semibold">{order.amount.toLocaleString()} USDT</TableCell>
-                            <TableCell className="text-muted-foreground">{order.network}</TableCell>
-                            <TableCell className="font-semibold">R$ {order.total.toLocaleString('pt-BR', {
+                            <TableCell className="font-mono text-xs text-muted-foreground">#{order.id.slice(0, 8)}</TableCell>
+                            <TableCell className="font-semibold tabular-nums tracking-tight">{order.amount.toLocaleString()} USDT</TableCell>
+                            <TableCell className="text-muted-foreground text-xs">{order.network}</TableCell>
+                            <TableCell className="font-semibold text-primary tabular-nums tracking-tight">R$ {order.total.toLocaleString('pt-BR', {
                               minimumFractionDigits: 2
                             })}</TableCell>
                             <TableCell>{getStatusBadge(order.status)}</TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {order.createdAt.toLocaleDateString('pt-BR')}
+                            <TableCell className="text-muted-foreground font-mono text-[10px]">
+                              {order.createdAt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                             </TableCell>
                           </TableRow>)}
                         </TableBody>

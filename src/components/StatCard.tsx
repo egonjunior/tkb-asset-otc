@@ -15,19 +15,17 @@ interface StatCardProps {
 
 export const StatCard = ({ icon: Icon, label, value, trend, trendDirection, emptyStateAction }: StatCardProps) => {
   const isEmpty = value === "R$ 0,00" || value === "Nenhuma" || value === "0";
-  
+
   return (
-    <Card className="bg-glass backdrop-blur-md border-glass shadow-lg hover:shadow-institutional transition-premium hover:-translate-y-1">
-      <CardContent className="pt-6 pb-6">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
-          </div>
-          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+    <Card className="bg-card border-white/5 shadow-lg hover:border-white/10 transition-all hover:bg-card/80 group">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">{label}</p>
+          <Icon className="h-4 w-4 text-muted-foreground group-hover:text-tkb-cyan transition-colors" strokeWidth={1.5} />
         </div>
-        <p className="text-3xl font-playfair font-bold text-foreground mb-1">{value}</p>
+        <p className="text-3xl font-display font-medium text-foreground tracking-tight tabular-nums mb-2">{value}</p>
         {trend && (
-          <p className={`text-xs font-medium ${trendDirection === 'up' ? 'text-success' : 'text-danger'}`}>
+          <p className={`text-[10px] uppercase font-mono tracking-wider ${trendDirection === 'up' ? 'text-success/80' : 'text-danger/80'}`}>
             {trend}
           </p>
         )}
