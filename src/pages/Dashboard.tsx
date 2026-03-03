@@ -188,16 +188,14 @@ const Dashboard = () => {
       ["--sidebar-width-mobile" as any]: "18rem"
     }}
   >
-    <div className="min-h-screen w-full bg-background relative overflow-hidden">
-      {/* Subtle top glow for premium depth */}
-      <div className="absolute -top-[500px] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
-
-      {/* Very faint vertical and horizontal grid lines for institutional feel */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:64px_64px] pointer-events-none"></div>
+    <div className="dark min-h-screen w-full bg-background relative overflow-hidden">
+      {/* Subtle ambient glow — premium depth */}
+      <div className="absolute -top-[400px] left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full blur-[150px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(59,111,224,0.08) 0%, rgba(0,212,255,0.04) 50%, transparent 100%)' }}></div>
+      <div className="absolute -bottom-[300px] right-[10%] w-[600px] h-[400px] rounded-full blur-[120px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(212,168,83,0.04) 0%, transparent 80%)' }}></div>
 
       <div className="relative z-10">
         {/* Header */}
-        <header className="h-20 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b border-border/50 sticky top-0 z-50">
+        <header className="h-20 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b border-white/[0.06] sticky top-0 z-50 shadow-[0_1px_0_0_rgba(212,168,83,0.08)]">
           <div className="container mx-auto px-6 h-full flex items-center justify-between">
             <div className="flex items-center">
               <div className="flex items-center gap-4">
@@ -252,7 +250,8 @@ const Dashboard = () => {
 
               {/* Stats Overview */}
               <div>
-                <h2 className="text-xl font-display font-semibold text-foreground/90 tracking-tight mb-5 flex items-center gap-2">
+                <h2 className="text-sm font-mono uppercase tracking-[0.2em] text-muted-foreground mb-6 flex items-center gap-3">
+                  <span className="w-6 h-px bg-gradient-to-r from-[hsl(45,60%,58%)] to-transparent"></span>
                   Visão Geral
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -291,11 +290,12 @@ const Dashboard = () => {
 
               {/* Cotação Premium */}
               <div>
-                <h2 className="text-xl font-display font-semibold text-foreground/90 tracking-tight mb-5 flex items-center gap-2">
+                <h2 className="text-sm font-mono uppercase tracking-[0.2em] text-muted-foreground mb-6 flex items-center gap-3">
+                  <span className="w-6 h-px bg-gradient-to-r from-[hsl(195,100%,50%)] to-transparent"></span>
                   Execução OTC
                 </h2>
-                <Card className={`bg-card border-white/5 shadow-2xl transition-all ${orders.length === 0
-                  ? 'ring-1 ring-primary/20 bg-gradient-to-b from-card to-card/50'
+                <Card className={`bg-card/80 backdrop-blur-sm border-white/[0.06] shadow-xl transition-all ${orders.length === 0
+                  ? 'ring-1 ring-[hsl(45,60%,58%)]/10'
                   : ''
                   }`}>
                   <CardContent className={orders.length === 0 ? "p-8 pt-6" : "p-8"}>
@@ -367,10 +367,11 @@ const Dashboard = () => {
 
               {/* Histórico */}
               <div>
-                <h2 className="text-xl font-display font-semibold text-foreground/90 tracking-tight mb-5 flex items-center gap-2">
+                <h2 className="text-sm font-mono uppercase tracking-[0.2em] text-muted-foreground mb-6 flex items-center gap-3">
+                  <span className="w-6 h-px bg-gradient-to-r from-[hsl(45,60%,58%)] to-transparent"></span>
                   Histórico de Operações
                 </h2>
-                <Card className="bg-card border-white/5 shadow-xl">
+                <Card className="bg-card/80 backdrop-blur-sm border-white/[0.06] shadow-lg">
                   <CardContent className="p-0">
                     {orders.length > 0 ? <div className="overflow-x-auto">
                       <Table>
@@ -385,7 +386,7 @@ const Dashboard = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {orders.map(order => <TableRow key={order.id} className="cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => navigate(`/order/${order.id}`)}>
+                          {orders.map(order => <TableRow key={order.id} className="cursor-pointer hover:bg-white/[0.03] transition-colors border-b border-white/[0.04]" onClick={() => navigate(`/order/${order.id}`)}>
                             <TableCell className="font-mono text-xs text-muted-foreground">#{order.id.slice(0, 8)}</TableCell>
                             <TableCell className="font-semibold tabular-nums tracking-tight">{order.amount.toLocaleString()} USDT</TableCell>
                             <TableCell className="text-muted-foreground text-xs">{order.network}</TableCell>

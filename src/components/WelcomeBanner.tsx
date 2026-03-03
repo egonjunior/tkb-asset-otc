@@ -29,9 +29,9 @@ export function WelcomeBanner({ userName, onDismiss }: WelcomeBannerProps) {
   if (!isVisible) return null;
 
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-tkb-cyan/5 to-primary/5 border-primary/20 mb-8 animate-fade-in">
+    <Card className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-[hsl(45,60%,58%)]/5 to-primary/5 border-white/[0.06] mb-8 animate-fade-in">
       <div className="absolute top-0 right-0 w-64 h-64 bg-tkb-cyan/10 rounded-full blur-3xl -translate-y-32 translate-x-32" />
-      
+
       <div className="relative p-6 md:p-8">
         <Button
           variant="ghost"
@@ -60,7 +60,7 @@ export function WelcomeBanner({ userName, onDismiss }: WelcomeBannerProps) {
           </p>
 
           <div className="grid md:grid-cols-3 gap-4 mb-6">
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-white/50 border border-border/50">
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-white/[0.04] border border-white/[0.06]">
               <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <span className="text-lg font-bold text-primary">1</span>
               </div>
@@ -70,7 +70,7 @@ export function WelcomeBanner({ userName, onDismiss }: WelcomeBannerProps) {
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-white/50 border border-border/50">
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-white/[0.04] border border-white/[0.06]">
               <div className="h-8 w-8 rounded-lg bg-tkb-cyan/10 flex items-center justify-center flex-shrink-0">
                 <span className="text-lg font-bold text-tkb-cyan">2</span>
               </div>
@@ -80,7 +80,7 @@ export function WelcomeBanner({ userName, onDismiss }: WelcomeBannerProps) {
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-white/50 border border-border/50">
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-white/[0.04] border border-white/[0.06]">
               <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
                 <span className="text-lg font-bold text-success">3</span>
               </div>
@@ -92,18 +92,18 @@ export function WelcomeBanner({ userName, onDismiss }: WelcomeBannerProps) {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button 
-              size="lg" 
-              variant="premium" 
+            <Button
+              size="lg"
+              variant="premium"
               className="gap-2"
               onClick={() => navigate("/order/new")}
             >
               <CheckCircle2 className="h-5 w-5" />
               Começar Agora
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
+            <Button
+              size="lg"
+              variant="outline"
               className="gap-2"
               onClick={() => navigate("/documents")}
             >
