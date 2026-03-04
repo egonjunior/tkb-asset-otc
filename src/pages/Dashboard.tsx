@@ -138,7 +138,10 @@ const Dashboard = () => {
             <AppSidebar />
             <main className="flex-1 px-4 md:px-6 py-8 md:py-10 w-full overflow-y-auto">
               <div className="max-w-6xl mx-auto">
-                <PremiumHeader userName={userName} />
+                <PremiumHeader
+                  userName={userName}
+                  onNewOrder={() => navigate("/order/new")}
+                />
 
                 <PremiumKPICards
                   totalPatrimonio={stats.totalPatrimonio}
@@ -156,6 +159,7 @@ const Dashboard = () => {
                   binancePrice={binancePrice}
                   tkbPrice={tkbPrice}
                   variation24h={5.2}
+                  onNewOrder={() => navigate("/order/new")}
                 />
 
                 {/* Operations History Table */}

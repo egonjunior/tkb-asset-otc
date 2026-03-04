@@ -120,7 +120,7 @@ export function PremiumHistory({ orders, onCreateOrder }: PremiumHistoryProps) {
                                     {/* Amounts */}
                                     <div className="text-left sm:text-right shrink-0">
                                         <p className="text-white font-bold text-lg mb-0.5 tracking-tight">
-                                            USD {op.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            USDT {op.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </p>
                                         <p className="text-white/40 text-xs font-mono">
                                             R$ {op.total.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

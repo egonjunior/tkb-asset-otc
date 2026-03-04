@@ -87,13 +87,13 @@ export function PremiumKPICards({
                     </div>
                     <p className="text-white/40 text-xs mb-1">Volume por Operação</p>
                     <div className="flex items-baseline gap-1">
-                        <span className="text-white/50 text-xl font-bold">USD</span>
+                        <span className="text-white/50 text-xl font-bold">USDT</span>
                         <p className="text-white text-3xl font-bold tracking-tight">
                             <CountUp end={avgVolume} separator="." duration={2} />
                         </p>
                     </div>
                     <p className="text-white/30 text-[11px] mt-2 font-mono">
-                        Maior: <span className="text-emerald-400">USD {maxOperation.toLocaleString("pt-BR")}</span>
+                        Maior: <span className="text-emerald-400">USDT {maxOperation.toLocaleString("pt-BR")}</span>
                     </p>
                 </div>
             </div>
@@ -119,7 +119,7 @@ export function PremiumKPICards({
                     <p className="text-white/40 text-xs mb-1">Ordem Pendente</p>
                     {pendingAmount > 0 ? (
                         <div className="flex items-baseline gap-1">
-                            <span className="text-white/50 text-xl font-bold">USD</span>
+                            <span className="text-white/50 text-xl font-bold">USDT</span>
                             <p className="text-white text-3xl font-bold tracking-tight">
                                 {pendingAmount.toLocaleString("pt-BR")}
                             </p>

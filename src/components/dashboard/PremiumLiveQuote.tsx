@@ -11,6 +11,7 @@ interface PremiumLiveQuoteProps {
     volume24h?: number;
     trades24h?: number;
     sparklineData?: { price: number; time: string }[];
+    onNewOrder?: () => void;
 }
 
 export function PremiumLiveQuote({
@@ -21,7 +22,8 @@ export function PremiumLiveQuote({
     low24h = 5.1200,
     volume24h = 1254000,
     trades24h = 342,
-    sparklineData = Array.from({ length: 24 }).map((_, i) => ({ time: `${i}:00`, price: 5.2 + Math.random() * 0.15 }))
+    sparklineData = Array.from({ length: 24 }).map((_, i) => ({ time: `${i}:00`, price: 5.2 + Math.random() * 0.15 })),
+    onNewOrder
 }: PremiumLiveQuoteProps) {
     const [lastUpdateSeconds, setLastUpdateSeconds] = useState(0);
 
@@ -168,7 +170,10 @@ export function PremiumLiveQuote({
                         </div>
                     </div>
 
-                    <button className="w-full py-4 bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] text-white font-bold rounded-xl hover:shadow-lg hover:shadow-[#00D4FF]/20 transition-all active:scale-[0.98]">
+                    <button
+                        onClick={onNewOrder}
+                        className="w-full py-4 bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] text-white font-bold rounded-xl hover:shadow-lg hover:shadow-[#00D4FF]/20 transition-all active:scale-[0.98]"
+                    >
                         Travar e Executar
                     </button>
                 </div>
