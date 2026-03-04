@@ -9,9 +9,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { partnerRequestSchema } from "@/lib/validators";
 import { z } from "zod";
-import { Handshake, Phone, Linkedin, Instagram, ArrowLeft, Building2, Users, Clock, CheckCircle, Loader2 } from "lucide-react";
+import { Handshake, Phone, Linkedin, Instagram, ArrowLeft, Building2, Users, Clock, CheckCircle, Loader2, FileSignature } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
+import { PartnerContractGenerator } from "@/components/partner/PartnerContractGenerator";
 
 type PartnerFormData = z.infer<typeof partnerRequestSchema>;
 
@@ -19,9 +20,10 @@ export default function Partner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingRequest, setExistingRequest] = useState<any>(null);
   const [isCheckingRequest, setIsCheckingRequest] = useState(true);
+  const [showContractGenerator, setShowContractGenerator] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+
   const {
     register,
     handleSubmit,
@@ -79,7 +81,7 @@ export default function Partner() {
 
   const onSubmit = async (data: PartnerFormData) => {
     setIsSubmitting(true);
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -100,11 +102,11 @@ export default function Partner() {
 
       toast({
         title: "✅ Solicitação enviada!",
-        description: "Entraremos em contato em breve.",
+        description: "Preencha seu contrato para finalizar.",
       });
 
       if (user) {
-        checkExistingRequest();
+        setShowContractGenerator(true);
       } else {
         reset();
       }
@@ -149,188 +151,137 @@ export default function Partner() {
             </CardHeader>
 
             <CardContent>
-              <Tabs defaultValue="assessor" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="assessor" className="gap-2">
-                    <Users className="h-4 w-4" />
-                    Parceiro por Comissão
-                  </TabsTrigger>
-                  <TabsTrigger value="b2b" className="gap-2">
-                    <Building2 className="h-4 w-4" />
-                    Mesa OTC (B2B)
-                  </TabsTrigger>
-                </TabsList>
+              <div className="bg-primary/5 p-4 rounded-lg mb-6">
+                <h3 className="font-semibold text-lg mb-2">Seja um Parceiro Homologado</h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Você é um assessor de investimentos, corretor ou tem uma rede de contatos
+                  que podem se interessar em comprar USDT com cotação premium?
+                </p>
+                <p className="text-sm font-semibold text-foreground">
+                  Traga seus clientes para a TKB Asset e seja comissionado por cada operação realizada!
+                </p>
+              </div>
 
-                <TabsContent value="assessor" className="space-y-4">
-                  <div className="bg-primary/5 p-4 rounded-lg mb-6">
-                    <h3 className="font-semibold text-lg mb-2">Parceria por Comissão</h3>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Você é um assessor de investimentos, corretor ou tem uma rede de contatos
-                      que podem se interessar em comprar USDT com cotação premium?
-                    </p>
-                    <p className="text-sm font-semibold text-foreground">
-                      Traga seus clientes para a TKB Asset e seja comissionado por cada operação realizada!
-                    </p>
+              {isCheckingRequest ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                  <p className="text-muted-foreground mt-2">Verificando solicitação...</p>
+                </div>
+              ) : showContractGenerator ? (
+                <PartnerContractGenerator onComplete={() => checkExistingRequest()} />
+              ) : existingRequest ? (
+                <Card className="border-primary/20">
+                  <CardContent className="pt-6">
+                    <div className="text-center space-y-4">
+                      {existingRequest.status === 'pending' && (
+                        <>
+                          <div className="bg-blue-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
+                            <FileSignature className="h-8 w-8 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg">Próximo Passo: Assinatura</h3>
+                            <p className="text-muted-foreground mt-2 mb-4">
+                              Para finalizarmos sua parceria, precisamos que você assine digitalmente o contrato.
+                            </p>
+                            <Button onClick={() => setShowContractGenerator(true)} className="w-full">
+                              Gerar e Assinar Contrato
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                      {existingRequest.status === 'approved' && (
+                        <>
+                          <div className="bg-green-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
+                            <CheckCircle className="h-8 w-8 text-green-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg text-green-700">Parceria Aprovada! 🎉</h3>
+                            <p className="text-muted-foreground mt-2">
+                              Sua parceria foi aprovada. Verifique seu dashboard para iniciar as operações.
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome Completo *</Label>
+                    <Input
+                      id="name"
+                      {...register("name")}
+                      placeholder="Seu nome completo"
+                      disabled={isSubmitting}
+                    />
+                    {errors.name && (
+                      <p className="text-sm text-destructive">{errors.name.message}</p>
+                    )}
                   </div>
 
-                  {isCheckingRequest ? (
-                    <div className="text-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                      <p className="text-muted-foreground mt-2">Verificando solicitação...</p>
-                    </div>
-                  ) : existingRequest ? (
-                    <Card className="border-primary/20">
-                      <CardContent className="pt-6">
-                        <div className="text-center space-y-4">
-                          {existingRequest.status === 'pending' && (
-                            <>
-                              <div className="bg-yellow-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
-                                <Clock className="h-8 w-8 text-yellow-600" />
-                              </div>
-                              <div>
-                                <h3 className="font-semibold text-lg">Solicitação em Análise</h3>
-                                <p className="text-muted-foreground mt-2">
-                                  Sua solicitação de parceria foi enviada em{' '}
-                                  {new Date(existingRequest.created_at).toLocaleDateString('pt-BR')}
-                                </p>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  Nossa equipe está analisando seu pedido. Em breve entraremos em contato!
-                                </p>
-                              </div>
-                            </>
-                          )}
-                          {existingRequest.status === 'approved' && (
-                            <>
-                              <div className="bg-green-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
-                                <CheckCircle className="h-8 w-8 text-green-600" />
-                              </div>
-                              <div>
-                                <h3 className="font-semibold text-lg text-green-700">Parceria Aprovada! 🎉</h3>
-                                <p className="text-muted-foreground mt-2">
-                                  Sua parceria foi aprovada. Entre em contato conosco para mais detalhes.
-                                </p>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nome Completo *</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Telefone/WhatsApp *</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
-                        id="name"
-                        {...register("name")}
-                        placeholder="Seu nome completo"
+                        id="phone"
+                        {...register("phone")}
+                        onChange={handlePhoneChange}
+                        placeholder="(11) 99999-9999"
+                        className="pl-10"
                         disabled={isSubmitting}
                       />
-                      {errors.name && (
-                        <p className="text-sm text-destructive">{errors.name.message}</p>
-                      )}
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Telefone/WhatsApp *</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="phone"
-                          {...register("phone")}
-                          onChange={handlePhoneChange}
-                          placeholder="(11) 99999-9999"
-                          className="pl-10"
-                          disabled={isSubmitting}
-                        />
-                      </div>
-                      {errors.phone && (
-                        <p className="text-sm text-destructive">{errors.phone.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="linkedin">LinkedIn (opcional)</Label>
-                      <div className="relative">
-                        <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="linkedin"
-                          {...register("linkedin")}
-                          placeholder="https://linkedin.com/in/seu-perfil"
-                          className="pl-10"
-                          disabled={isSubmitting}
-                        />
-                      </div>
-                      {errors.linkedin && (
-                        <p className="text-sm text-destructive">{errors.linkedin.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="instagram">Instagram (opcional)</Label>
-                      <div className="relative">
-                        <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="instagram"
-                          {...register("instagram")}
-                          placeholder="@seu_usuario ou https://instagram.com/seu_usuario"
-                          className="pl-10"
-                          disabled={isSubmitting}
-                        />
-                      </div>
-                      {errors.instagram && (
-                        <p className="text-sm text-destructive">{errors.instagram.message}</p>
-                      )}
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isSubmitting}
-                      size="lg"
-                    >
-                      {isSubmitting ? "Enviando..." : "Enviar Solicitação"}
-                    </Button>
-                  </form>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="b2b" className="space-y-4">
-                  <div className="bg-primary/5 p-4 rounded-lg mb-6">
-                    <h3 className="font-semibold text-lg mb-2">Parceria B2B - Mesas OTC</h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Opere com markup diferenciado e potencialize seus resultados
-                    </p>
-                    <ul className="text-sm space-y-2">
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary mt-0.5">✓</span>
-                        <span>Margem atrativa para lucrar com seus clientes</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary mt-0.5">✓</span>
-                        <span>Acesso direto à plataforma com cotações em tempo real</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary mt-0.5">✓</span>
-                        <span>Suporte dedicado e condições especiais</span>
-                      </li>
-                    </ul>
+                    {errors.phone && (
+                      <p className="text-sm text-destructive">{errors.phone.message}</p>
+                    )}
                   </div>
 
-                  <div className="text-center">
-                    <Button
-                      type="button"
-                      size="lg"
-                      onClick={() => navigate('/partner-b2b')}
-                      className="w-full"
-                    >
-                      Acessar Formulário B2B
-                    </Button>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Você será redirecionado para o formulário completo
-                    </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="linkedin">LinkedIn (opcional)</Label>
+                    <div className="relative">
+                      <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="linkedin"
+                        {...register("linkedin")}
+                        placeholder="https://linkedin.com/in/seu-perfil"
+                        className="pl-10"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    {errors.linkedin && (
+                      <p className="text-sm text-destructive">{errors.linkedin.message}</p>
+                    )}
                   </div>
-                </TabsContent>
-              </Tabs>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram">Instagram (opcional)</Label>
+                    <div className="relative">
+                      <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="instagram"
+                        {...register("instagram")}
+                        placeholder="@seu_usuario ou https://instagram.com/seu_usuario"
+                        className="pl-10"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    {errors.instagram && (
+                      <p className="text-sm text-destructive">{errors.instagram.message}</p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isSubmitting}
+                    size="lg"
+                  >
+                    {isSubmitting ? "Enviando..." : "Enviar Solicitação"}
+                  </Button>
+                </form>
+              )}
             </CardContent>
           </Card>
         </div>

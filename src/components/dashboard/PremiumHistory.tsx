@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { Download, CheckCircle, Clock, XCircle, Eye, TrendingUp, Zap } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 interface Order {
     id: string;
@@ -15,6 +16,8 @@ interface PremiumHistoryProps {
 }
 
 export function PremiumHistory({ orders, onCreateOrder }: PremiumHistoryProps) {
+    const navigate = useNavigate();
+
     const getStatusProps = (status: Order["status"]) => {
         switch (status) {
             case "completed":
@@ -87,7 +90,13 @@ export function PremiumHistory({ orders, onCreateOrder }: PremiumHistoryProps) {
                         return (
                             <div
                                 key={op.id}
-                                className="group flex gap-6 p-4 bg-black/20 border border-white/[0.02] rounded-xl hover:bg-white/[0.02] hover:border-[#00D4FF]/10 transition-all cursor-pointer relative"
+                                onClick={(e) => {
+                                    console.log("Navigating to:", `/order/${op.id}`);
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    navigate(`/order/${op.id}`);
+                                }}
+                                className="group flex gap-6 p-4 bg-black/20 border border-white/[0.02] rounded-xl hover:bg-black/40 hover:border-white/[0.1] transition-all cursor-pointer relative z-50 pointer-events-auto"
                             >
                                 {/* Timeline connector */}
                                 <div className="flex flex-col items-center shrink-0">
@@ -136,9 +145,13 @@ export function PremiumHistory({ orders, onCreateOrder }: PremiumHistoryProps) {
                                             </p>
                                         </div>
 
-                                        <button className="p-2 opacity-0 group-hover:opacity-100 hover:bg-white/[0.06] rounded-lg transition-all shrink-0">
+                                        <Link
+                                            to={`/order/${op.id}`}
+                                            className="p-2 opacity-0 group-hover:opacity-100 hover:bg-white/[0.06] rounded-lg transition-all shrink-0 cursor-pointer"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
                                             <Eye className="w-4 h-4 text-white/40 group-hover:text-white" />
-                                        </button>
+                                        </Link>
                                     </div>
                                 </div>
                             </div>
