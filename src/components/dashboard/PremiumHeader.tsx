@@ -39,19 +39,13 @@ export function PremiumHeader({ userName, onNewOrder }: PremiumHeaderProps) {
                 <div className="flex gap-3">
                     <button
                         onClick={onNewOrder}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-xl text-white hover:bg-slate-700 transition-all font-medium text-sm w-full md:w-auto"
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] rounded-xl text-white hover:shadow-lg hover:shadow-[#00D4FF]/20 transition-all font-bold text-sm w-full md:w-auto"
                     >
-                        <TrendingUp className="w-4 h-4" />
+                        <Zap className="w-5 h-5" />
                         Nova Ordem
                     </button>
-                    <button
-                        onClick={onNewOrder}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] text-white rounded-xl hover:shadow-lg hover:shadow-[#00D4FF]/20 transition-all font-medium text-sm w-full md:w-auto"
-                    >
-                        <Zap className="w-4 h-4" />
-                        Execução Rápida
-                    </button>
                 </div>
+
             </div>
 
             <div className="flex items-center gap-2 text-sm text-slate-400 hidden md:flex">
