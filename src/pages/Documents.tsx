@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBinancePrice } from "@/hooks/useBinancePrice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -12,6 +13,8 @@ import { TermsModal } from "@/components/documents/TermsModal";
 import { KYCDocumentsSection } from "@/components/documents/KYCDocumentsSection";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { HeaderUserMenu } from "@/components/HeaderUserMenu";
+import { HeaderMarketTicker } from "@/components/HeaderMarketTicker";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { Eye, CheckCircle2, LogOut, Settings } from "lucide-react";
@@ -30,7 +33,9 @@ interface Document {
 }
 
 export default function Documents() {
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
+  const userName = profile?.full_name || user?.email?.split("@")[0] || "Usuário";
+  const { binancePrice, tkbPrice, isLoading: priceLoading } = useBinancePrice();
   const navigate = useNavigate();
   const [documents, setDocuments] = useState<Record<string, Document>>({});
   const [loading, setLoading] = useState(true);
@@ -55,7 +60,7 @@ export default function Documents() {
         .select('*')
         .eq('user_id', user?.id)
         .in('document_type', [
-          'contrato-quadro', 
+          'contrato-quadro',
           'dossie-kyc',
           'politica-pld',
           'kyc-faturamento',
@@ -276,281 +281,265 @@ export default function Documents() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
-      {/* Floating orbs */}
-      <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-40 right-20 w-80 h-80 bg-tkb-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
-      
-      {/* Subtle grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(220,15%,92%)_1px,transparent_1px),linear-gradient(to_bottom,hsl(220,15%,92%)_1px,transparent_1px)] bg-[size:64px_64px] opacity-20 pointer-events-none"></div>
+    <SidebarProvider
+      defaultOpen={false}
+      style={{
+        ["--sidebar-width" as any]: "16rem",
+        ["--sidebar-width-mobile" as any]: "18rem"
+      }}
+    >
+      <div className="dark min-h-screen w-full bg-[#0A0A0A] relative overflow-hidden">
+        {/* Subtle ambient glow - Premium Depth */}
+        <div className="absolute -top-[400px] left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full blur-[150px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(0,212,255,0.08) 0%, transparent 100%)' }}></div>
 
-      <div className="relative z-10">
-        {/* Header */}
-        <header className="h-20 bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
-          <div className="container mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-            <div 
-              className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" 
-              onClick={() => navigate('/dashboard')}
-            >
-              <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
-              <div>
-                <h1 className="text-2xl font-brand">TKB ASSET</h1>
-                <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Mesa OTC</p>
+        <div className="relative z-10">
+          {/* Header alinhado com o Dashboard Premium */}
+          <header className="sticky top-0 z-50 bg-[#0A0A0A]/80 backdrop-blur-xl border-b border-white/[0.04]">
+            <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/dashboard')}>
+                  <img src={tkbLogo} alt="TKB Asset" className="h-8 w-8" />
+                  <div>
+                    <h1 className="text-sm font-bold text-white tracking-tight">TKB ASSET</h1>
+                    <p className="text-[9px] text-[#00D4FF] font-mono uppercase tracking-[0.2em] mt-0.5">Mesa OTC</p>
+                  </div>
+                </div>
               </div>
+              <HeaderMarketTicker binancePrice={binancePrice} tkbPrice={tkbPrice} isLoading={priceLoading} />
+              <HeaderUserMenu userName={userName} userEmail={user?.email} onLogout={() => signOut()} />
             </div>
-              <div className="flex items-center gap-6">
-                <span className="text-sm font-inter hidden sm:inline">
-                  Olá, <strong className="font-semibold">{profile?.full_name || user?.email?.split("@")[0] || "Usuário"}</strong>
-                </span>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-white hover:bg-white/10"
-                onClick={() => navigate('/settings')}
-              >
-                <Settings className="h-5 w-5" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleLogout} className="border-neutral-600 text-white hover:bg-white/10">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sair
-                </Button>
-              </div>
-            </div>
-          </div>
-        </header>
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00D4FF]/20 to-transparent" />
+          </header>
 
-        {/* Layout com Sidebar e Conteúdo */}
-        <SidebarProvider defaultOpen={true} style={{ ["--sidebar-width" as any]: "12rem" }}>
-          <div className="flex w-full min-h-[calc(100vh-80px)]">
+          <div className="flex w-full min-h-[calc(100vh-64px)]">
             {/* Sidebar */}
             <AppSidebar />
 
             {/* Main Content */}
-            <main className="flex-1 px-6 py-10">
+            <main className="flex-1 px-4 md:px-6 py-8 md:py-10 w-full overflow-y-auto">
               <div className="max-w-6xl mx-auto space-y-10">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">📄 Documentos Contratuais</h1>
-        <p className="text-muted-foreground">
-          Gerencie seus documentos contratuais com a TKB Asset
-        </p>
-      </div>
-
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Status Geral dos Documentos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span>{completedCount} de {totalCount} documentos completos</span>
-              <span className="font-semibold">{Math.round(progressPercentage)}%</span>
-            </div>
-            <Progress value={progressPercentage} className="h-3" />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Card de Instruções */}
-      <Card className="mb-8 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            📋 Como Preencher os Documentos
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="text-sm">
-              <p className="font-semibold text-foreground mb-2">
-                Para documentos que requerem preenchimento (Contrato-Quadro e Dossiê KYC):
-              </p>
-              <div className="space-y-1 text-muted-foreground ml-2">
-                <p>1️⃣ Baixe a minuta do documento</p>
-                <p>2️⃣ Preencha com seus dados</p>
-                <p>3️⃣ Assine digitalmente via Gov.br ou Certificado Digital</p>
-                <p>4️⃣ Anexe o documento assinado</p>
-              </div>
-            </div>
-            
-            <div className="text-sm pt-2 border-t border-primary/20">
-              <p className="font-semibold text-foreground mb-2">
-                Para documentos que requerem apenas confirmação (Termos de Uso e Política PLD):
-              </p>
-              <div className="space-y-1 text-muted-foreground ml-2">
-                <p>✅ Leia o conteúdo completo</p>
-                <p>✅ Clique em "Confirmo que li e compreendi"</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Documentos Básicos - Sempre visíveis */}
-      <div className="space-y-6 mb-8">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          ✅ Documentos Básicos
-        </h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Termos de Uso */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <span className="text-2xl">📜</span>
-                  Termos de Uso e Política de Privacidade
-                </CardTitle>
-                <DocumentStatusBadge status="approved" />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                Aceito ao criar sua conta
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => setTermsModalOpen(true)}
-                className="w-full justify-start"
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                Visualizar Documento
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Política de PLD */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <span className="text-2xl">🛡️</span>
-                  Política de PLD/FTP
-                </CardTitle>
-                {documents['politica-pld']?.pld_acknowledged ? (
-                  <DocumentStatusBadge status="approved" />
-                ) : (
-                  <DocumentStatusBadge status="pending" />
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {documents['politica-pld']?.pld_acknowledged ? (
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  Confirmado em {new Date(documents['politica-pld'].pld_acknowledged_at!).toLocaleDateString('pt-BR')}
-                </p>
-              ) : (
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>📖 <strong>Passo 1:</strong> Clique em "Ler Política"</p>
-                  <p>✅ <strong>Passo 2:</strong> Após ler, clique em "Confirmo que li e compreendi"</p>
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold mb-2 text-white">📄 Documentos Contratuais</h1>
+                  <p className="text-white/40 font-mono">
+                    Gerencie seus documentos contratuais com a TKB Asset
+                  </p>
                 </div>
-              )}
-              <div className="flex flex-col gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setPldModalOpen(true)}
-                  className="w-full justify-start"
-                >
-                  <Eye className="mr-2 h-4 w-4" />
-                  Ler Política
-                </Button>
-                {!documents['politica-pld']?.pld_acknowledged && (
-                  <Button
-                    onClick={handlePLDAcknowledge}
-                    className="w-full"
+
+                <Card className="mb-8 bg-[#111111] border-white/[0.04]">
+                  <CardHeader>
+                    <CardTitle>Status Geral dos Documentos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>{completedCount} de {totalCount} documentos completos</span>
+                        <span className="font-semibold">{Math.round(progressPercentage)}%</span>
+                      </div>
+                      <Progress value={progressPercentage} className="h-3" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Card de Instruções */}
+                <Card className="mb-8 bg-[#111111] border-[#00D4FF]/20">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2 text-white">
+                      📋 Como Preencher os Documentos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="text-sm">
+                        <p className="font-semibold text-foreground mb-2">
+                          Para documentos que requerem preenchimento (Contrato-Quadro e Dossiê KYC):
+                        </p>
+                        <div className="space-y-1 text-muted-foreground ml-2">
+                          <p>1️⃣ Baixe a minuta do documento</p>
+                          <p>2️⃣ Preencha com seus dados</p>
+                          <p>3️⃣ Assine digitalmente via Gov.br ou Certificado Digital</p>
+                          <p>4️⃣ Anexe o documento assinado</p>
+                        </div>
+                      </div>
+
+                      <div className="text-sm pt-2 border-t border-primary/20">
+                        <p className="font-semibold text-foreground mb-2">
+                          Para documentos que requerem apenas confirmação (Termos de Uso e Política PLD):
+                        </p>
+                        <div className="space-y-1 text-muted-foreground ml-2">
+                          <p>✅ Leia o conteúdo completo</p>
+                          <p>✅ Clique em "Confirmo que li e compreendi"</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Documentos Básicos - Sempre visíveis */}
+                <div className="space-y-6 mb-8">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    ✅ Documentos Básicos
+                  </h2>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Termos de Uso */}
+                    <Card className="hover:shadow-lg transition-shadow">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <span className="text-2xl">📜</span>
+                            Termos de Uso e Política de Privacidade
+                          </CardTitle>
+                          <DocumentStatusBadge status="approved" />
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          Aceito ao criar sua conta
+                        </p>
+                        <Button
+                          variant="outline"
+                          onClick={() => setTermsModalOpen(true)}
+                          className="w-full justify-start"
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Visualizar Documento
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    {/* Política de PLD */}
+                    <Card className="hover:shadow-lg transition-shadow">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <span className="text-2xl">🛡️</span>
+                            Política de PLD/FTP
+                          </CardTitle>
+                          {documents['politica-pld']?.pld_acknowledged ? (
+                            <DocumentStatusBadge status="approved" />
+                          ) : (
+                            <DocumentStatusBadge status="pending" />
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {documents['politica-pld']?.pld_acknowledged ? (
+                          <p className="text-sm text-muted-foreground flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            Confirmado em {new Date(documents['politica-pld'].pld_acknowledged_at!).toLocaleDateString('pt-BR')}
+                          </p>
+                        ) : (
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            <p>📖 <strong>Passo 1:</strong> Clique em "Ler Política"</p>
+                            <p>✅ <strong>Passo 2:</strong> Após ler, clique em "Confirmo que li e compreendi"</p>
+                          </div>
+                        )}
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setPldModalOpen(true)}
+                            className="w-full justify-start"
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            Ler Política
+                          </Button>
+                          {!documents['politica-pld']?.pld_acknowledged && (
+                            <Button
+                              onClick={handlePLDAcknowledge}
+                              className="w-full"
+                            >
+                              <CheckCircle2 className="mr-2 h-4 w-4" />
+                              Confirmo que li e compreendi
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
+                {/* Documentos Contratuais e KYC - Accordion */}
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    📑 Documentos Contratuais e KYC
+                  </h2>
+
+                  <Accordion
+                    type="multiple"
+                    defaultValue={["contrato-quadro", "kyc-documents"]}
+                    className="space-y-4"
                   >
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Confirmo que li e compreendi
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                    {/* SEÇÃO 1: Contrato-Quadro */}
+                    <AccordionItem
+                      value="contrato-quadro"
+                      className="border-2 rounded-lg px-6 bg-card hover:shadow-md transition-shadow"
+                    >
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center gap-3 w-full">
+                          <span className="text-2xl">📄</span>
+                          <div className="flex-1 text-left">
+                            <h3 className="font-semibold text-lg">Contrato-Quadro</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Documento principal do relacionamento comercial
+                            </p>
+                          </div>
+                          <DocumentStatusBadge
+                            status={documents['contrato-quadro']?.status || 'pending'}
+                          />
+                        </div>
+                      </AccordionTrigger>
 
-      {/* Documentos Contratuais e KYC - Accordion */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          📑 Documentos Contratuais e KYC
-        </h2>
-        
-        <Accordion 
-          type="multiple" 
-          defaultValue={["contrato-quadro", "kyc-documents"]}
-          className="space-y-4"
-        >
-          {/* SEÇÃO 1: Contrato-Quadro */}
-          <AccordionItem 
-            value="contrato-quadro" 
-            className="border-2 rounded-lg px-6 bg-card hover:shadow-md transition-shadow"
-          >
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-3 w-full">
-                <span className="text-2xl">📄</span>
-                <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-lg">Contrato-Quadro</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Documento principal do relacionamento comercial
-                  </p>
-                </div>
-                <DocumentStatusBadge 
-                  status={documents['contrato-quadro']?.status || 'pending'} 
-                />
-              </div>
-            </AccordionTrigger>
-            
-            <AccordionContent className="pt-4">
-              <DocumentCard
-                title="Contrato-Quadro"
-                icon="📄"
-                type="contrato-quadro"
-                status={documents['contrato-quadro']?.status || 'pending'}
-                clientFileUrl={documents['contrato-quadro']?.client_file_url}
-                tkbFileUrl={documents['contrato-quadro']?.tkb_file_url}
-                rejectionReason={documents['contrato-quadro']?.rejection_reason}
-                onDownloadTemplate={() => handleDownloadTemplate('contrato-quadro')}
-                onUpload={(file) => handleUpload('contrato-quadro', file)}
-                onView={handleView}
-                hideTitle={true}
-              />
-            </AccordionContent>
-          </AccordionItem>
+                      <AccordionContent className="pt-4">
+                        <DocumentCard
+                          title="Contrato-Quadro"
+                          icon="📄"
+                          type="contrato-quadro"
+                          status={documents['contrato-quadro']?.status || 'pending'}
+                          clientFileUrl={documents['contrato-quadro']?.client_file_url}
+                          tkbFileUrl={documents['contrato-quadro']?.tkb_file_url}
+                          rejectionReason={documents['contrato-quadro']?.rejection_reason}
+                          onDownloadTemplate={() => handleDownloadTemplate('contrato-quadro')}
+                          onUpload={(file) => handleUpload('contrato-quadro', file)}
+                          onView={handleView}
+                          hideTitle={true}
+                        />
+                      </AccordionContent>
+                    </AccordionItem>
 
-          {/* SEÇÃO 2: Dossiê KYC/CDD */}
-          <AccordionItem 
-            value="kyc-documents" 
-            className="border-2 rounded-lg px-6 bg-card hover:shadow-md transition-shadow"
-          >
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-3 w-full">
-                <span className="text-2xl">🔍</span>
-                <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-lg">Dossiê KYC/CDD</h3>
-                  <p className="text-sm text-muted-foreground">
-                    5 documentos complementares para compliance
-                  </p>
+                    {/* SEÇÃO 2: Dossiê KYC/CDD */}
+                    <AccordionItem
+                      value="kyc-documents"
+                      className="border-2 rounded-lg px-6 bg-card hover:shadow-md transition-shadow"
+                    >
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center gap-3 w-full">
+                          <span className="text-2xl">🔍</span>
+                          <div className="flex-1 text-left">
+                            <h3 className="font-semibold text-lg">Dossiê KYC/CDD</h3>
+                            <p className="text-sm text-muted-foreground">
+                              5 documentos complementares para compliance
+                            </p>
+                          </div>
+                          <div className="flex gap-2 items-center">
+                            <span className="text-xs bg-muted px-2 py-1 rounded font-medium">
+                              {Object.values(documents).filter(d =>
+                                d.document_type.startsWith('kyc-') && d.status === 'approved'
+                              ).length}/5
+                            </span>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+
+                      <AccordionContent className="pt-4">
+                        <KYCDocumentsSection
+                          documents={documents}
+                          onUpload={handleUpload}
+                          onView={handleView}
+                        />
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 </div>
-                <div className="flex gap-2 items-center">
-                  <span className="text-xs bg-muted px-2 py-1 rounded font-medium">
-                    {Object.values(documents).filter(d => 
-                      d.document_type.startsWith('kyc-') && d.status === 'approved'
-                    ).length}/5
-                  </span>
-                </div>
-              </div>
-            </AccordionTrigger>
-            
-            <AccordionContent className="pt-4">
-              <KYCDocumentsSection
-                documents={documents}
-                onUpload={handleUpload}
-                onView={handleView}
-              />
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
 
                 <TermsModal isOpen={termsModalOpen} onClose={() => setTermsModalOpen(false)} />
                 <TermsModal isOpen={pldModalOpen} onClose={() => setPldModalOpen(false)} />
@@ -563,8 +552,8 @@ export default function Documents() {
               </div>
             </main>
           </div>
-        </SidebarProvider>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

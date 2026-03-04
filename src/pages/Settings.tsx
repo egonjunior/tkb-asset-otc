@@ -11,6 +11,9 @@ import { LogOut, Settings as SettingsIcon, ExternalLink, User, Phone, Mail, MapP
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBinancePrice } from "@/hooks/useBinancePrice";
+import { HeaderUserMenu } from "@/components/HeaderUserMenu";
+import { HeaderMarketTicker } from "@/components/HeaderMarketTicker";
 import tkbLogo from "@/assets/tkb-logo.png";
 import { formatPhone } from "@/lib/validators";
 
@@ -56,6 +59,8 @@ const Settings = () => {
     const formatted = formatPhone(e.target.value);
     setFormData({ ...formData, phone: formatted });
   };
+
+  const { binancePrice, tkbPrice, isLoading: priceLoading } = useBinancePrice();
 
   const validateEmail = (email: string): boolean => {
     if (!email) return true; // Email é opcional
@@ -115,72 +120,52 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)] relative overflow-hidden">
-      {/* Floating orbs */}
-      <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-40 right-20 w-80 h-80 bg-tkb-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
-      
-      {/* Grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(220,15%,92%)_1px,transparent_1px),linear-gradient(to_bottom,hsl(220,15%,92%)_1px,transparent_1px)] bg-[size:64px_64px] opacity-20 pointer-events-none"></div>
+    <SidebarProvider
+      defaultOpen={false}
+      style={{
+        ["--sidebar-width" as any]: "16rem",
+        ["--sidebar-width-mobile" as any]: "18rem"
+      }}
+    >
+      <div className="dark min-h-screen w-full bg-[#0A0A0A] relative overflow-hidden">
+        {/* Subtle ambient glow - Premium Depth */}
+        <div className="absolute -top-[400px] left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full blur-[150px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(0,212,255,0.08) 0%, transparent 100%)' }}></div>
 
-      <div className="relative z-10">
-        {/* Header */}
-        <header className="h-20 bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-b border-neutral-700 shadow-xl">
-          <div className="container mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div 
-                className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" 
-                onClick={() => navigate('/dashboard')}
-              >
-                <img src={tkbLogo} alt="TKB Asset" className="h-12 w-12" />
-                <div>
-                  <h1 className="text-2xl font-brand">TKB ASSET</h1>
-                  <p className="text-xs text-neutral-300 font-inter uppercase tracking-wider">Mesa OTC</p>
+        <div className="relative z-10">
+          {/* Header alinhado com o Dashboard Premium */}
+          <header className="sticky top-0 z-50 bg-[#0A0A0A]/80 backdrop-blur-xl border-b border-white/[0.04]">
+            <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/dashboard')}>
+                  <img src={tkbLogo} alt="TKB Asset" className="h-8 w-8" />
+                  <div>
+                    <h1 className="text-sm font-bold text-white tracking-tight">TKB ASSET</h1>
+                    <p className="text-[9px] text-[#00D4FF] font-mono uppercase tracking-[0.2em] mt-0.5">Mesa OTC</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-6">
-                <span className="text-sm font-inter hidden sm:inline">
-                  Olá, <strong className="font-semibold">{userName}</strong>
-                </span>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="text-white hover:bg-white/10"
-                  onClick={() => navigate('/settings')}
-                >
-                  <SettingsIcon className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                  <ExternalLink className="h-5 w-5" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleLogout} className="border-neutral-600 text-white hover:bg-white/10">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sair
-                </Button>
-              </div>
+              <HeaderMarketTicker binancePrice={binancePrice} tkbPrice={tkbPrice} isLoading={priceLoading} />
+              <HeaderUserMenu userName={userName} userEmail={user?.email} onLogout={() => signOut()} />
             </div>
-          </div>
-        </header>
-
-        {/* Layout com Sidebar e Conteúdo */}
-        <SidebarProvider defaultOpen={true} style={{ ["--sidebar-width" as any]: "12rem" }}>
-          <div className="flex w-full min-h-[calc(100vh-80px)]">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00D4FF]/20 to-transparent" />
+          </header>
+          <div className="flex w-full min-h-[calc(100vh-64px)]">
             {/* Sidebar */}
             <AppSidebar />
 
             {/* Main Content */}
-            <main className="flex-1 px-6 py-10">
+            <main className="flex-1 px-4 md:px-6 py-8 md:py-10 w-full overflow-y-auto">
               <div className="max-w-4xl mx-auto space-y-8">
                 <div>
-                  <h1 className="text-3xl font-display font-bold text-foreground mb-2 flex items-center gap-3">
-                    <SettingsIcon className="h-8 w-8 text-primary" />
+                  <h1 className="text-3xl font-display font-bold text-white mb-2 flex items-center gap-3">
+                    <SettingsIcon className="h-8 w-8 text-[#00D4FF]" />
                     Configurações do Perfil
                   </h1>
-                  <p className="text-muted-foreground">Gerencie suas informações pessoais e de contato</p>
+                  <p className="text-white/40 font-mono">Gerencie suas informações pessoais e de contato</p>
                 </div>
 
                 {/* Dados Pessoais */}
-                <Card className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
+                <Card className="bg-[#111111] border-white/[0.04]">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <User className="h-5 w-5 text-primary" />
@@ -222,7 +207,7 @@ const Settings = () => {
                 </Card>
 
                 {/* Informações de Contato */}
-                <Card className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
+                <Card className="bg-[#111111] border-white/[0.04]">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Phone className="h-5 w-5 text-primary" />
@@ -275,7 +260,7 @@ const Settings = () => {
                 </Card>
 
                 {/* Redes Sociais */}
-                <Card className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
+                <Card className="bg-[#111111] border-white/[0.04]">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Linkedin className="h-5 w-5 text-primary" />
@@ -344,9 +329,9 @@ const Settings = () => {
               </div>
             </main>
           </div>
-        </SidebarProvider>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
