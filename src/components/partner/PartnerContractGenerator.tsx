@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 
 export function PartnerContractGenerator({ onComplete }: { onComplete?: () => void }) {
     const { user, profile } = useAuth();
+    const contractRef = useRef<HTMLDivElement>(null);
 
     // Dados do formulário para preencher o contrato
     const [formData, setFormData] = useState({
@@ -36,102 +38,47 @@ export function PartnerContractGenerator({ onComplete }: { onComplete?: () => vo
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const generatePDF = () => {
+    const generatePDF = async () => {
         setIsGenerating(true);
-
         try {
-            const doc = new jsPDF();
-            const pageWidth = doc.internal.pageSize.width;
-            const margin = 20;
-            const textWidth = pageWidth - margin * 2;
+            if (!contractRef.current) return;
 
-            const addText = (text: string, x: number, y: number, isBold = false, size = 11, align: "left" | "center" = "left") => {
-                doc.setFont("helvetica", isBold ? "bold" : "normal");
-                doc.setFontSize(size);
-                if (align === "center") {
-                    doc.text(text, pageWidth / 2, y, { align: "center" });
-                } else {
-                    doc.text(text, x, y, { maxWidth: textWidth, align: "justify" });
-                }
-            };
+            // Gera o canvas da div com mais resolução
+            const canvas = await html2canvas(contractRef.current, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: "#ffffff"
+            });
 
-            // Cabeçalho
-            addText("CONTRATO DE PARCERIA COMERCIAL", margin, 20, true, 14, "center");
-            addText("INTERMEDIAÇÃO DE OPERAÇÕES CAMBIAIS EM CRIPTOATIVOS", margin, 28, true, 12, "center");
+            const imgData = canvas.toDataURL("image/png");
 
-            // Partes
-            let currentY = 45;
-            addText("Pelo presente instrumento particular, de um lado:", margin, currentY);
+            // Cria o documento jsPDF (A4)
+            const pdf = new jsPDF("p", "mm", "a4");
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
 
-            currentY += 10;
-            addText("CONTRATADA:", margin, currentY, true);
-            currentY += 8;
-            addText("TOKENIZACAO MANAGEMENT GESTAO DE NEGOCIOS, PATRIMONIO E INVESTIMENTOS LTDA, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº 45.933.866/0001-93, com sede na Rua Fidencio Ramos, nº 100, Vila Olímpia, São Paulo/SP, CEP 04.551-010, atuando sob o nome fantasia \"TOKEN BUSINESS ASSETS\", neste ato representada na forma de seu Contrato Social, doravante denominada simplesmente \"CONTRATADA\" ou \"TKB ASSET\";", margin, currentY);
+            // Calcula a altura da imagem no PDF mantendo a proporção
+            const imgProps = pdf.getImageProperties(imgData);
+            const imgHeightInMm = (imgProps.height * pdfWidth) / imgProps.width;
 
-            currentY += 35;
-            addText("CONTRATANTE:", margin, currentY, true);
-            currentY += 8;
-            const contratanteText = `${formData.razaoSocial.toUpperCase()}, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº ${formData.cnpj}, com sede na ${formData.endereco}, neste ato representada por ${formData.nomeRepresentante.toUpperCase()}, ${formData.nacionalidade}, ${formData.profissao}, portador do RG nº ${formData.rg} e CPF/MF nº ${formData.cpf}, doravante denominada simplesmente "CONTRATANTE" ou "PARCEIRO";`;
-            addText(contratanteText, margin, currentY);
+            let heightLeft = imgHeightInMm;
+            let position = 0;
 
-            currentY += 35;
-            addText("As partes acima qualificadas têm, entre si, justo e contratado o presente CONTRATO DE PARCERIA COMERCIAL, que se regerá pelas cláusulas e condições seguintes, que reciprocamente outorgam e aceitam:", margin, currentY);
+            // Adiciona a primeira página
+            pdf.addImage(imgData, "PNG", 0, position, pdfWidth, imgHeightInMm);
+            heightLeft -= pdfHeight;
 
-            // Cláusulas (Resumidas para o gerador devido ao limite de linhas do jsPDF básico, ou quebras calculadas)
-            currentY += 25;
-            addText("CLÁUSULA PRIMEIRA – DO OBJETO E NATUREZA DA PARCERIA", margin, currentY, true);
-            currentY += 8;
-            addText("1.1. O presente contrato tem por objeto estabelecer parceria comercial entre CONTRATADA e CONTRATANTE para intermediação de operações de conversão entre moeda fiduciária (Real - BRL) e criptoativos (USDT - Tether), junto a CLIENTES FINAIS apresentados pelo PARCEIRO.", margin, currentY);
+            // Se for preciso, adiciona mais páginas
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeightInMm;
+                pdf.addPage();
+                pdf.addImage(imgData, "PNG", 0, position, pdfWidth, imgHeightInMm);
+                heightLeft -= pdfHeight;
+            }
 
-            currentY += 20;
-            addText("CLÁUSULA SEGUNDA – DA REMUNERAÇÃO E COMISSIONAMENTO", margin, currentY, true);
-            currentY += 8;
-            addText("2.1. Como contraprestação pelos serviços de intermediação prestados pelo PARCEIRO, a CONTRATADA pagará comissionamento calculado sobre o volume financeiro das operações.", margin, currentY);
-            currentY += 15;
-            addText("2.2. A CONTRATADA cobrará dos CLIENTES FINAIS uma taxa base para cobertura de custos operacionais e margem de lucro. O PARCEIRO faturará sua comissão em seu próprio nome diretamente na plataforma.", margin, currentY);
-
-            // Nova página
-            doc.addPage();
-            currentY = 20;
-
-            addText("CLÁUSULA TERCEIRA – DAS OBRIGAÇÕES DO PARCEIRO", margin, currentY, true);
-            currentY += 8;
-            addText("3.1. Compete ao PARCEIRO realizar Due Diligence Comercial prévia, coleta de documentação KYC, representação comercial, e monitoramento contínuo das operações em conformidade com as leis de PLD.", margin, currentY);
-
-            currentY += 25;
-            addText("CLÁUSULA QUARTA – DAS OBRIGAÇÕES DA CONTRATADA", margin, currentY, true);
-            currentY += 8;
-            addText("4.1. Processar as operações de conversão de criptoativos dos CLIENTES FINAIS com eficiência, realizar análise de compliance, e disponibilizar plataforma sistêmica.", margin, currentY);
-
-            currentY += 25;
-            addText("CLÁUSULA QUINTA – DO FORO E DISPOSIÇÕES FINAIS", margin, currentY, true);
-            currentY += 8;
-            addText("5.1. As partes elegem o Foro da Comarca de São Paulo/SP para dirimir quaisquer questões.", margin, currentY);
-
-            currentY += 20;
-            addText("E, por estarem assim justas e contratadas, as partes assinam eletronicamente o presente instrumento, via plataforma Gov.br, em 2 (duas) vias de igual teor e forma.", margin, currentY);
-
-            // Assinaturas
-            currentY += 30;
-            const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
-            addText(`São Paulo/SP, ${today}.`, margin, currentY);
-
-            currentY += 30;
-            addText("__________________________________________________", margin, currentY);
-            currentY += 6;
-            addText("TOKENIZACAO MANAGEMENT GESTAO DE NEGOCIOS", margin, currentY, true);
-            currentY += 6;
-            addText("(TOKEN BUSINESS ASSETS) - Representante Legal", margin, currentY);
-
-            currentY += 25;
-            addText("__________________________________________________", margin, currentY);
-            currentY += 6;
-            addText(formData.razaoSocial.toUpperCase(), margin, currentY, true);
-            currentY += 6;
-            addText(`${formData.nomeRepresentante} - Representante Legal`, margin, currentY);
-
-            // Baixar PDF
-            doc.save(`Contrato_Parceria_TKB_${formData.razaoSocial.replace(/\s+/g, '_')}.pdf`);
+            const fileName = `Contrato_Parceria_TKB_${formData.razaoSocial.replace(/\s+/g, '_') || 'assinatura'}.pdf`;
+            pdf.save(fileName);
 
             toast.success("Contrato gerado com sucesso!");
             setStep(2);
@@ -176,6 +123,175 @@ export function PartnerContractGenerator({ onComplete }: { onComplete?: () => vo
 
     return (
         <Card className="w-full bg-[#111111] border-white/[0.04]">
+
+            {/* Template HTML Escondido para Geração do Contrato com html2canvas */}
+            <div style={{ position: "absolute", top: "-20000px", left: "-20000px" }}>
+                <div
+                    ref={contractRef}
+                    style={{
+                        width: "800px",
+                        padding: "60px 50px",
+                        backgroundColor: "#ffffff",
+                        color: "#000000",
+                        fontFamily: "Times New Roman, serif",
+                        fontSize: "14px",
+                        lineHeight: "1.5",
+                        textAlign: "justify"
+                    }}
+                >
+                    <h2 style={{ textAlign: "center", fontWeight: "bold", fontSize: "16px", marginBottom: "30px" }}>
+                        CONTRATO DE PARCERIA COMERCIAL<br />
+                        INTERMEDIAÇÃO DE OPERAÇÕES CAMBIAIS EM CRIPTOATIVOS
+                    </h2>
+
+                    <p style={{ marginBottom: "20px" }}>Pelo presente instrumento particular, de um lado:</p>
+
+                    <p style={{ marginBottom: "10px" }}><strong>CONTRATADA:</strong></p>
+                    <p style={{ marginBottom: "20px" }}>
+                        <strong>TOKENIZACAO MANAGEMENT GESTAO DE NEGOCIOS, PATRIMONIO E INVESTIMENTOS LTDA</strong>, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº 45.933.866/0001-93, com sede na Rua Fidencio Ramos, nº 100, Vila Olímpia, São Paulo/SP, CEP 04.551-010, atuando sob o nome fantasia "TOKEN BUSINESS ASSETS", neste ato representada na forma de seu Contrato Social, doravante denominada simplesmente "CONTRATADA" ou "TKB ASSET";
+                    </p>
+
+                    <p style={{ marginBottom: "10px" }}><strong>CONTRATANTE:</strong></p>
+                    <p style={{ marginBottom: "30px" }}>
+                        <strong>{formData.razaoSocial.toUpperCase() || "[RAZÃO SOCIAL PARCEIRO]"}</strong>, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº {formData.cnpj || "[CNPJ]"}, com sede na {formData.endereco || "[ENDEREÇO]"}, neste ato representada por {formData.nomeRepresentante.toUpperCase() || "[NOME REPRESENTANTE]"}, {formData.nacionalidade || "Brasileiro(a)"}, {formData.profissao || "Empresário(a)"}, portador do RG nº {formData.rg || "[RG]"} e CPF/MF nº {formData.cpf || "[CPF]"}, doravante denominada simplesmente "CONTRATANTE" ou "PARCEIRO";
+                    </p>
+
+                    <p style={{ marginBottom: "30px" }}>
+                        As partes acima qualificadas têm, entre si, justo e contratado o presente <strong>CONTRATO DE PARCERIA COMERCIAL</strong>, que se regerá pelas cláusulas e condições seguintes, que reciprocamente outorgam e aceitam:
+                    </p>
+
+                    <p style={{ marginBottom: "10px" }}><strong>CLÁUSULA PRIMEIRA – DO OBJETO E NATUREZA DA PARCERIA</strong></p>
+                    <p style={{ marginBottom: "10px" }}>1.1. O presente contrato tem por objeto estabelecer parceria comercial entre CONTRATADA e CONTRATANTE para intermediação de operações de conversão entre moeda fiduciária (Real - BRL) e criptoativos (USDT - Tether), junto a CLIENTES FINAIS apresentados pelo PARCEIRO.</p>
+                    <p style={{ marginBottom: "10px" }}>1.2. A CONTRATADA prestará os seguintes serviços aos CLIENTES FINAIS intermediados pelo PARCEIRO:</p>
+                    <ul style={{ paddingLeft: "40px", marginBottom: "10px", listStyleType: "disc" }}>
+                        <li>Conversão BRL → USDT (compra de criptoativo);</li>
+                        <li>Conversão USDT → BRL (venda de criptoativo);</li>
+                        <li>Conversão USDT → USD/EUR/ARS (remessa internacional);</li>
+                        <li>Custódia temporária de criptoativos durante processamento de operações;</li>
+                        <li>Suporte técnico e operacional relacionado às conversões.</li>
+                    </ul>
+                    <p style={{ marginBottom: "10px" }}>1.3. O PARCEIRO atuará como representante comercial da CONTRATADA, apresentando CLIENTES FINAIS interessados nos serviços descritos no item 1.2, realizando a interface comercial e coletando documentação necessária para due diligence.</p>
+                    <p style={{ marginBottom: "30px" }}>1.4. Fica expressamente estabelecido que a CONTRATADA não presta serviços diretamente aos CLIENTES FINAIS, mas sim ao PARCEIRO, que assume a responsabilidade pela relação comercial com seus clientes, nos termos deste contrato.</p>
+
+                    <p style={{ marginBottom: "10px" }}><strong>CLÁUSULA SEGUNDA – DA REMUNERAÇÃO E COMISSIONAMENTO</strong></p>
+                    <p style={{ marginBottom: "10px" }}>2.1. Como contraprestação pelos serviços de intermediação prestados pelo PARCEIRO, a CONTRATADA pagará comissionamento calculado sobre o volume financeiro das operações realizadas pelos CLIENTES FINAIS apresentados pelo PARCEIRO.</p>
+                    <p style={{ marginBottom: "10px" }}>2.2. A CONTRATADA cobrará dos CLIENTES FINAIS uma taxa de 1% (um por cento) sobre o valor de cada operação, destinada exclusivamente à CONTRATADA para cobertura de custos operacionais, tecnológicos e margem de lucro.</p>
+                    <p style={{ marginBottom: "10px" }}>2.3. O PARCEIRO terá autonomia comercial para negociar com seus CLIENTES FINAIS uma taxa adicional de intermediação, de acordo com sua estratégia comercial, sendo recomendável a faixa de 0,5% a 1,5% adicional, totalizando ao cliente final entre 1,5% e 2,5% sobre o valor da operação.</p>
+                    <p style={{ marginBottom: "10px" }}>2.4. A título exemplificativo, considere-se uma operação de USD 100.000,00 (cem mil dólares americanos):</p>
+
+                    <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "15px", textAlign: "center" }}>
+                        <thead>
+                            <tr>
+                                <th style={{ border: "1px solid black", padding: "5px" }}>Descrição</th>
+                                <th style={{ border: "1px solid black", padding: "5px" }}>Taxa</th>
+                                <th style={{ border: "1px solid black", padding: "5px" }}>Valor (USD)</th>
+                                <th style={{ border: "1px solid black", padding: "5px" }}>Destinatário</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>Taxa base operacional</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>1,0%</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>USD 1.000</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>CONTRATADA (TKB Asset)</td>
+                            </tr>
+                            <tr>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>Taxa intermediação PARCEIRO</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>1,0%</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>USD 1.000</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>PARCEIRO (comissionamento)</td>
+                            </tr>
+                            <tr>
+                                <td style={{ border: "1px solid black", padding: "5px", fontWeight: "bold" }}>Taxa total ao CLIENTE FINAL</td>
+                                <td style={{ border: "1px solid black", padding: "5px", fontWeight: "bold" }}>2,0%</td>
+                                <td style={{ border: "1px solid black", padding: "5px", fontWeight: "bold" }}>USD 2.000</td>
+                                <td style={{ border: "1px solid black", padding: "5px", fontWeight: "bold" }}>Total operação</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p style={{ marginBottom: "10px" }}>2.5. O PARCEIRO faturará mensalmente seus CLIENTES FINAIS pela taxa de intermediação negociada, em seu próprio nome, emitindo as competentes notas fiscais de prestação de serviços de intermediação comercial, conforme legislação tributária vigente.</p>
+                    <p style={{ marginBottom: "10px" }}>2.6. A CONTRATADA repassará ao PARCEIRO, até o 5º (quinto) dia útil do mês subsequente, relatório detalhado contendo volume total operado, taxa retida, demonstrativo financeiro e comprovante de disponibilidade de saldo.</p>
+                    <p style={{ marginBottom: "30px" }}>2.7. O PARCEIRO poderá solicitar saque do comissionamento acumulado a qualquer momento, mediante solicitação via plataforma digital da CONTRATADA, com liquidação em até 48 (quarenta e oito) horas úteis.</p>
+
+                    <p style={{ marginBottom: "10px" }}><strong>CLÁUSULA TERCEIRA – DAS OBRIGAÇÕES DO PARCEIRO</strong></p>
+                    <p style={{ marginBottom: "10px" }}>3.1. Compete ao PARCEIRO, no exercício de suas atividades de intermediação:</p>
+                    <p style={{ marginBottom: "10px" }}>a) Due Diligence Comercial: Realizar análise prévia de cada CLIENTE FINAL antes de cadastrá-lo na plataforma da CONTRATADA, verificando: (i) capacidade jurídica e financeira; (ii) idoneidade comercial; (iii) compatibilidade entre atividade empresarial declarada e volume de operações pretendido;</p>
+                    <p style={{ marginBottom: "10px" }}>b) Coleta Documental: Obter e anexar na plataforma digital da CONTRATADA, em relação a cada CLIENTE FINAL, a seguinte documentação obrigatória: (i) Contrato Social ou Estatuto Social atualizado; (ii) Documento de identificação com foto de todos os sócios e administradores (RG/CNH); (iii) Comprovante de endereço da sede empresarial; (iv) Última Declaração de Imposto de Renda Pessoa Jurídica (DIRPJ) ou Declaração de Informações Socioeconômicas e Fiscais (DEFIS); (v) Declaração de origem lícita de recursos, assinada pelo representante legal;</p>
+                    <p style={{ marginBottom: "10px" }}>c) Representação Comercial: Atuar como único ponto de contato entre a CONTRATADA e os CLIENTES FINAIS, responsabilizando-se pela comunicação, negociação de prazos, esclarecimento de dúvidas e resolução de eventuais reclamações;</p>
+                    <p style={{ marginBottom: "10px" }}>d) Monitoramento Contínuo: Acompanhar a regularidade das operações de seus CLIENTES FINAIS, reportando à CONTRATADA, de forma imediata, qualquer (i) alteração no quadro societário; (ii) mudança de endereço ou atividade empresarial; (iii) envolvimento em investigações, processos judiciais ou administrativos; (iv) suspeita de irregularidade ou ilicitude nas operações;</p>
+                    <p style={{ marginBottom: "10px" }}>e) Atualização Documental: Renovar anualmente toda documentação prevista na alínea "b" deste item, mantendo os cadastros atualizados na plataforma da CONTRATADA;</p>
+                    <p style={{ marginBottom: "10px" }}>f) Conformidade Legal: Assegurar que todas as operações intermediadas estejam em conformidade com a legislação brasileira aplicável, incluindo mas não se limitando a: Lei nº 9.613/98 (Lavagem de Dinheiro), Lei nº 14.478/22 (Marco Legal dos Criptoativos), Instrução Normativa RFB nº 1.888/19 e regulamentação posterior (DECRIPTO), Resoluções do Conselho de Controle de Atividades Financeiras (COAF);</p>
+                    <p style={{ marginBottom: "10px" }}>3.2. O PARCEIRO declara ter ciência de que a ausência, incompletude ou desatualização da documentação prevista no item 3.1 impedirá o cadastramento ou acarretará o bloqueio imediato das operações do CLIENTE FINAL correspondente, sem qualquer responsabilidade ou ônus à CONTRATADA.</p>
+                    <p style={{ marginBottom: "30px" }}>3.3. O PARCEIRO compromete-se a fornecer à CONTRATADA, em até 48 (quarenta e oito) horas, toda e qualquer documentação adicional ou esclarecimento solicitado em relação a seus CLIENTES FINAIS, sob pena de suspensão imediata das operações e aplicação das penalidades previstas neste contrato.</p>
+
+                    <p style={{ marginBottom: "10px" }}><strong>CLÁUSULA QUARTA – DAS OBRIGAÇÕES DA CONTRATADA</strong></p>
+                    <p style={{ marginBottom: "10px" }}>4.1. Compete à CONTRATADA:</p>
+                    <p style={{ marginBottom: "10px" }}>a) Disponibilizar ao PARCEIRO acesso à plataforma digital para cadastramento e gestão de CLIENTES FINAIS, com interface intuitiva e suporte técnico;</p>
+                    <p style={{ marginBottom: "10px" }}>b) Processar as operações de conversão de criptoativos dos CLIENTES FINAIS com eficiência, transparência e dentro dos prazos estimados (90 minutos para operações padrão);</p>
+                    <p style={{ marginBottom: "10px" }}>c) Realizar análise de conformidade (compliance) da documentação fornecida pelo PARCEIRO, aprovando ou rejeitando cadastros em até 48 (quarenta e oito) horas úteis;</p>
+                    <p style={{ marginBottom: "10px" }}>d) Manter sistema de registro e auditoria de todas as operações, com rastreabilidade completa em blockchain, atendendo requisitos regulatórios aplicáveis;</p>
+                    <p style={{ marginBottom: "10px" }}>e) Emitir relatório mensal detalhado ao PARCEIRO conforme item 2.6, com demonstrativo financeiro de comissionamento;</p>
+                    <p style={{ marginBottom: "10px" }}>f) Manter sigilo e confidencialidade sobre as informações comerciais e cadastrais dos CLIENTES FINAIS apresentados pelo PARCEIRO, utilizando-as exclusivamente para cumprimento deste contrato e obrigações legais.</p>
+                    <p style={{ marginBottom: "30px" }}>4.2. A CONTRATADA reserva-se o direito de recusar o cadastramento ou suspender operações de qualquer CLIENTE FINAL que, a seu exclusivo critério técnico, apresente (i) documentação insuficiente ou inconsistente; (ii) indícios de irregularidade ou ilicitude; (iii) incompatibilidade entre perfil declarado e operações solicitadas; (iv) envolvimento em listas restritivas nacionais ou internacionais.</p>
+
+                    <p style={{ marginBottom: "10px" }}><strong>CLÁUSULA QUINTA – DA RESPONSABILIDADE E GESTÃO DE RISCOS</strong></p>
+                    <p style={{ marginBottom: "10px" }}>5.1. O PARCEIRO declara e garante que todos os CLIENTES FINAIS por ele apresentados: (i) exercem atividades econômicas lícitas; (ii) possuem recursos de origem comprovadamente lícita; (iii) não estão envolvidos em atividades ilícitas, investigações criminais ou processos que possam comprometer a reputação ou expor a CONTRATADA a riscos legais ou regulatórios.</p>
+                    <p style={{ marginBottom: "10px" }}>5.2. O PARCEIRO assume responsabilidade integral e exclusiva por quaisquer danos, prejuízos, multas, sanções administrativas, penalidades ou contingências de natureza civil, criminal, tributária ou regulatória que venham a ser impostas à CONTRATADA em decorrência de fraude, falha de due diligence ou licitude dos recursos.</p>
+                    <p style={{ marginBottom: "10px" }}>5.3. Na hipótese de a CONTRATADA ser demandada, autuada, multada ou sofrer qualquer prejuízo, o PARCEIRO obriga-se a reembolsar integralmente a CONTRATADA em até 30 dias e assumir a condução da defesa se aplicável.</p>
+                    <p style={{ marginBottom: "30px" }}>5.5. O PARCEIRO declara ter pleno conhecimento das normas de Prevenção à Lavagem de Dinheiro e Financiamento ao Terrorismo (PLD/FT), comprometendo-se a observá-las rigorosamente.</p>
+
+                    <p style={{ marginBottom: "10px" }}><strong>CLÁUSULA SEXTA, SÉTIMA, OITAVA E NONA – DIREITOS GERAIS, CONFIDENCIALIDADE E RESCISÃO</strong></p>
+                    <p style={{ marginBottom: "10px" }}>6.1. A CONTRATADA reserva-se o direito de realizar, a qualquer tempo, auditoria sobre a documentação do PARCEIRO.</p>
+                    <p style={{ marginBottom: "10px" }}>7.1. O contrato tem vigência de 12 meses, renovável automaticamente por iguais períodos.</p>
+                    <p style={{ marginBottom: "10px" }}>8.1. Sigilo absoluto sobre informações comerciais pelo prazo de 5 anos após a rescisão do contrato.</p>
+                    <p style={{ marginBottom: "30px" }}>9.1. O contrato poderá ser rescindido, sem prejuízo, por acordo, notificação prévia de 30 dias, ou imediatamente por justos motivos envolvendo ilicitudes, fraude ou falência do parceiro.</p>
+
+                    <p style={{ marginBottom: "10px" }}><strong>CLÁUSULA DÉCIMA A DÉCIMA SEGUNDA – PENALIDADES E FORO</strong></p>
+                    <p style={{ marginBottom: "10px" }}>10.1. O descumprimento de obrigações confere multa de 10% sobre o volume financeiro operado nos últimos 12 meses, além de perdas e danos.</p>
+                    <p style={{ marginBottom: "10px" }}>11.1. O contrato representa a integralidade do acordo, substituindo tratativas anteriores.</p>
+                    <p style={{ marginBottom: "30px" }}>12.1. Elege-se o Foro de São Paulo/SP para dirimir litígios.</p>
+
+                    <p style={{ marginBottom: "40px" }}>E, por estarem assim justas e contratadas, as partes assinam eletronicamente o presente instrumento, via plataforma Gov.br, em 2 (duas) vias de igual teor e forma.</p>
+
+                    <p style={{ marginBottom: "60px", textAlign: "right" }}>São Paulo/SP, {format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: "20px", marginTop: "40px", textAlign: "center" }}>
+                        <div style={{ width: "45%" }}>
+                            <p style={{ borderTop: "1px solid black", paddingTop: "10px", margin: "0" }}>
+                                <strong>TOKENIZACAO MANAGEMENT GESTAO DE NEGOCIOS<br />PATRIMONIO E INVESTIMENTOS LTDA</strong>
+                            </p>
+                            <p style={{ margin: "5px 0" }}>(TOKEN BUSINESS ASSETS)</p>
+                            <p style={{ margin: "0" }}>Representante Legal</p>
+                        </div>
+                        <div style={{ width: "45%" }}>
+                            <p style={{ borderTop: "1px solid black", paddingTop: "10px", margin: "0" }}>
+                                <strong>{formData.razaoSocial.toUpperCase() || "[RAZÃO SOCIAL PARCEIRO]"}</strong>
+                            </p>
+                            <p style={{ margin: "5px 0" }}>{formData.nomeRepresentante.toUpperCase() || "[NOME DO REPRESENTANTE]"}</p>
+                            <p style={{ margin: "0" }}>Representante Legal</p>
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: "60px" }}>
+                        <p style={{ marginBottom: "40px" }}><strong>TESTEMUNHAS:</strong></p>
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: "20px" }}>
+                            <div style={{ width: "45%" }}>
+                                <p style={{ borderTop: "1px solid black", paddingTop: "10px", margin: "0" }}>Nome:</p>
+                                <p style={{ margin: "5px 0" }}>CPF:</p>
+                            </div>
+                            <div style={{ width: "45%" }}>
+                                <p style={{ borderTop: "1px solid black", paddingTop: "10px", margin: "0" }}>Nome:</p>
+                                <p style={{ margin: "5px 0" }}>CPF:</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Fim do Template HTML */}
+
+
             <CardHeader>
                 <CardTitle className="text-xl flex items-center gap-2 text-white">
                     <FileSignature className="h-5 w-5 text-[#00D4FF]" />
@@ -244,10 +360,10 @@ export function PartnerContractGenerator({ onComplete }: { onComplete?: () => vo
                             disabled={isGenerating || !formData.razaoSocial || !formData.cnpj}
                             className="w-full bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] text-white hover:opacity-90"
                         >
-                            {isGenerating ? "Gerando Contrato..." : (
+                            {isGenerating ? "Processando e Gerando (Aguarde)..." : (
                                 <>
                                     <FileDown className="w-4 h-4 mr-2" />
-                                    Gerar e Baixar Contrato
+                                    Gerar e Baixar Contrato Completo
                                 </>
                             )}
                         </Button>

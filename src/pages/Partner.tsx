@@ -11,7 +11,6 @@ import { partnerRequestSchema } from "@/lib/validators";
 import { z } from "zod";
 import { Handshake, Phone, Linkedin, Instagram, ArrowLeft, Building2, Users, Clock, CheckCircle, Loader2, FileSignature } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
 import { PartnerContractGenerator } from "@/components/partner/PartnerContractGenerator";
 
 type PartnerFormData = z.infer<typeof partnerRequestSchema>;
