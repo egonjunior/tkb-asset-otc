@@ -29,9 +29,13 @@ import AdminPartnersB2B from "./pages/admin/AdminPartnersB2B";
 import Partner from "./pages/Partner";
 import PartnerB2B from "./pages/PartnerB2B";
 import PartnerB2BOtc from "./pages/PartnerB2BOtc";
+import PartnerDashboard from "./pages/PartnerDashboard";
+import PartnerClients from "./pages/PartnerClients";
+import PartnerPricing from "./pages/PartnerPricing";
 import Support from "./pages/Support";
 import QuotePage from "./pages/QuotePage";
 import Settings from "./pages/Settings";
+import Analytics from "./pages/Analytics";
 import Empresas from "./pages/Empresas";
 import AdminOfflineClients from "./pages/admin/AdminOfflineClients";
 import AdminOfflineClientDetails from "./pages/admin/AdminOfflineClientDetails";
@@ -87,6 +91,11 @@ const App = () => (
                 <Settings />
               </ProtectedRoute>
             } />
+            <Route path="/analytics" element={
+              <ProtectedRoute>
+                <Analytics />
+              </ProtectedRoute>
+            } />
             <Route path="/parceiro" element={
               <ProtectedRoute>
                 <Partner />
@@ -95,7 +104,10 @@ const App = () => (
             <Route path="/partner" element={<Partner />} />
             <Route path="/partner/b2b" element={<PartnerB2B />} />
             <Route path="/partner-b2b" element={<PartnerB2B />} />
-            <Route path="/partner/b2b-otc" element={<ProtectedRoute><PartnerB2BOtc /></ProtectedRoute>} />
+            <Route path="/partner/b2b-otc" element={<ProtectedRoute><PartnerDashboard /></ProtectedRoute>} />
+            <Route path="/partner/dashboard" element={<ProtectedRoute><PartnerDashboard /></ProtectedRoute>} />
+            <Route path="/partner/clients" element={<ProtectedRoute><PartnerClients /></ProtectedRoute>} />
+            <Route path="/partner/financial" element={<ProtectedRoute><PartnerPricing /></ProtectedRoute>} />
             <Route path="/suporte" element={
               <ProtectedRoute>
                 <Support />

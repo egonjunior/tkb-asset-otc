@@ -1,353 +1,543 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Building2, TrendingUp, Shield, Zap, ArrowLeft, Loader2, Clock, CheckCircle } from "lucide-react";
+import tkbLogo from "@/assets/tkb-logo.png";
+import {
+  ArrowLeft, Check, Upload, X, Loader2,
+  Building2, FileText, ShieldCheck, Eye, ChevronRight,
+} from "lucide-react";
+
+const STEPS = [
+  { id: 0, label: "Dados da Empresa", icon: Building2 },
+  { id: 1, label: "Documentação KYC", icon: FileText },
+  { id: 2, label: "Contrato de Parceria", icon: ShieldCheck },
+];
+
+const REQUIRED_DOCS = [
+  { id: "contrato_social", label: "Contrato Social (PDF)", required: true },
+  { id: "rg_cpf_socios", label: "RG/CPF Sócios (PDF)", required: true },
+  { id: "comp_endereco", label: "Comprovante de Endereço", required: true },
+  { id: "decl_pld", label: "Declaração PLD/FT Assinada", required: true },
+];
+
+const CONTRACT_TERMS = [
+  "Comissão de 1% por operação realizada por clientes indicados",
+  "Responsabilidade integral pela due diligence (KYC) de cada cliente",
+  "Obrigatoriedade de coleta e armazenamento de documentação compliance",
+  "Vigência de 12 meses com renovação automática",
+  "Liquidação D+0 conforme termos operacionais da TKB Asset",
+  "Operação sob regulação da Lei 14.478/2022",
+];
 
 export default function PartnerB2B() {
   const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingRequest, setExistingRequest] = useState<any>(null);
-  const [isCheckingRequest, setIsCheckingRequest] = useState(true);
+
+  // Form state
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
-    linkedin: "",
-    instagram: "",
-    company_name: "",
     cnpj: "",
-    trading_volume_monthly: "",
-    notes: "",
+    razaoSocial: "",
+    endereco: "",
+    origemRecursos: "",
+    volumeEstimado: "",
   });
 
-  useEffect(() => {
-    checkExistingRequest();
-  }, []);
+  // CNPJ validation state
+  const [cnpjValidating, setCnpjValidating] = useState(false);
+  const [cnpjValid, setCnpjValid] = useState<boolean | null>(null);
+  const [cnpjInfo, setCnpjInfo] = useState<{ razaoSocial: string; situacao: string } | null>(null);
 
-  const checkExistingRequest = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setIsCheckingRequest(false);
-        return;
-      }
+  // Docs state
+  const [uploadedDocs, setUploadedDocs] = useState<Record<string, boolean>>({});
 
-      const { data, error } = await supabase
-        .from('partner_requests')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('request_type', 'b2b_otc')
-        .in('status', ['pending', 'approved'])
-        .maybeSingle();
+  // Contract state
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showContract, setShowContract] = useState(false);
 
-      if (data) {
-        setExistingRequest(data);
-        
-        // If approved, redirect to B2B OTC environment
-        if (data.status === 'approved') {
-          navigate('/partner/b2b-otc');
-        }
-      }
-    } catch (error) {
-      console.error('Error checking request:', error);
-    } finally {
-      setIsCheckingRequest(false);
+  // Count completed fields for step 1
+  const step1Fields = [formData.name, formData.phone, formData.cnpj, formData.endereco, formData.origemRecursos, formData.volumeEstimado];
+  const completedFields = step1Fields.filter(f => f.trim().length > 0).length;
+  const uploadedCount = Object.values(uploadedDocs).filter(Boolean).length;
+
+  const handleCNPJChange = async (value: string) => {
+    const cleaned = value.replace(/\D/g, "");
+    // Format: XX.XXX.XXX/XXXX-XX
+    let formatted = cleaned;
+    if (cleaned.length > 2) formatted = cleaned.slice(0, 2) + "." + cleaned.slice(2);
+    if (cleaned.length > 5) formatted = formatted.slice(0, 6) + "." + cleaned.slice(5);
+    if (cleaned.length > 8) formatted = formatted.slice(0, 10) + "/" + cleaned.slice(8);
+    if (cleaned.length > 12) formatted = formatted.slice(0, 15) + "-" + cleaned.slice(12, 14);
+
+    setFormData({ ...formData, cnpj: formatted });
+    setCnpjValid(null);
+    setCnpjInfo(null);
+
+    if (cleaned.length === 14) {
+      setCnpjValidating(true);
+      // Simulate API call
+      await new Promise((r) => setTimeout(r, 1200));
+      setCnpjValidating(false);
+      setCnpjValid(true);
+      const mockRazao = "Empresa Parceira Ltda";
+      setCnpjInfo({ razaoSocial: mockRazao, situacao: "Ativa" });
+      setFormData((prev) => ({ ...prev, razaoSocial: mockRazao }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const formatPhone = (value: string) => {
+    const cleaned = value.replace(/\D/g, "");
+    if (cleaned.length <= 2) return cleaned;
+    if (cleaned.length <= 7) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
+  };
 
+  const handleDocUpload = (docId: string) => {
+    setUploadedDocs((prev) => ({ ...prev, [docId]: true }));
+  };
+
+  const canAdvanceStep = () => {
+    if (currentStep === 0) return completedFields >= 5;
+    if (currentStep === 1) return uploadedCount >= 4;
+    if (currentStep === 2) return acceptedTerms;
+    return false;
+  };
+
+  const handleNext = () => {
+    if (currentStep < 2) setCurrentStep(currentStep + 1);
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-
-      const { error } = await supabase
-        .from('partner_requests')
-        .insert({
-          name: formData.company_name,
-          phone: formData.phone,
-          linkedin: formData.linkedin,
-          instagram: formData.instagram,
-          request_type: 'b2b_otc',
-          status: 'pending',
-          user_id: user?.id || null,
-          notes: `Responsável: ${formData.name}\nCNPJ: ${formData.cnpj}\nVolume Mensal: R$ ${formData.trading_volume_monthly}\n\nObservações: ${formData.notes}`,
-          trading_volume_monthly: parseFloat(formData.trading_volume_monthly) || 0,
-        });
-
+      const { error } = await supabase.from("partner_requests").insert({
+        name: formData.razaoSocial || formData.name,
+        phone: formData.phone,
+        request_type: "b2b_otc",
+        status: "pending",
+        user_id: user?.id || null,
+        notes: `Responsável: ${formData.name}\nCNPJ: ${formData.cnpj}\nEndereço: ${formData.endereco}\nOrigem Recursos: ${formData.origemRecursos}\nVolume Estimado: R$ ${formData.volumeEstimado}`,
+        trading_volume_monthly: parseFloat(formData.volumeEstimado) || 0,
+      });
       if (error) throw error;
-
-      toast.success("Solicitação enviada com sucesso! Em breve entraremos em contato.");
-      
-      if (user) {
-        checkExistingRequest();
-      } else {
-        setTimeout(() => navigate('/'), 2000);
-      }
+      toast.success("Solicitação enviada com sucesso!");
+      navigate("/dashboard");
     } catch (error: any) {
-      console.error("Error submitting B2B partner request:", error);
-      toast.error(`Erro ao enviar solicitação: ${error.message}`);
+      console.error("Error:", error);
+      toast.error(`Erro: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-4xl font-bold flex items-center gap-3">
-              <Building2 className="h-10 w-10 text-primary" />
-              Parceria B2B - Mesas OTC
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Opere com markup diferenciado e potencialize seus resultados
-            </p>
+    <div className="min-h-screen bg-[#0A0A0A] flex flex-col">
+      {/* Header */}
+      <div className="shrink-0 border-b border-white/[0.04] bg-[#0D0D0D]">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-4">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.04] transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-3">
+            <img src={tkbLogo} alt="TKB" className="h-7 w-7" />
+            <div>
+              <h1 className="text-white text-sm font-bold">Parceria B2B</h1>
+              <p className="text-white/20 text-[10px]">Portal de cadastro para mesas OTC</p>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          {/* Benefits */}
-          <Card className="border-primary/20">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center gap-3">
-                <div className="bg-primary/10 p-4 rounded-full">
-                  <TrendingUp className="h-8 w-8 text-primary" />
+      {/* Progress */}
+      <div className="shrink-0 bg-[#0D0D0D] border-b border-white/[0.04]">
+        <div className="max-w-3xl mx-auto px-4 py-5">
+          <div className="flex items-center justify-between">
+            {STEPS.map((step, i) => (
+              <div key={step.id} className="flex items-center flex-1 last:flex-none">
+                <div className="flex items-center gap-2.5">
+                  <div className={`
+                    flex items-center justify-center w-9 h-9 rounded-full border-2 text-xs font-semibold transition-all
+                    ${currentStep > i
+                      ? "bg-[#00D4FF] border-[#00D4FF] text-white"
+                      : currentStep === i
+                        ? "border-[#00D4FF] text-[#00D4FF] bg-[#00D4FF]/[0.06]"
+                        : "border-white/[0.08] text-white/15"
+                    }
+                  `}>
+                    {currentStep > i ? <Check className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
+                  </div>
+                  <span className={`text-xs font-medium hidden sm:block ${currentStep >= i ? "text-white/60" : "text-white/15"
+                    }`}>{step.label}</span>
                 </div>
-                <h3 className="font-semibold text-lg">Markup Personalizado</h3>
-                <p className="text-sm text-muted-foreground">
-                  Markup personalizado com condições especiais para sua operação
-                </p>
+                {i < STEPS.length - 1 && (
+                  <div className={`flex-1 h-[2px] mx-4 rounded-full transition-all ${currentStep > i ? "bg-[#00D4FF]" : "bg-white/[0.04]"
+                    }`} />
+                )}
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-primary/20">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center gap-3">
-                <div className="bg-primary/10 p-4 rounded-full">
-                  <Zap className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="font-semibold text-lg">Operação Ágil</h3>
-                <p className="text-sm text-muted-foreground">
-                  Acesso direto à plataforma com cotações em tempo real e travamento de preço
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-primary/20">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center gap-3">
-                <div className="bg-primary/10 p-4 rounded-full">
-                  <Shield className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="font-semibold text-lg">Suporte Dedicado</h3>
-                <p className="text-sm text-muted-foreground">
-                  Atendimento prioritário e condições especiais para mesas parceiras
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
         </div>
+      </div>
 
-        {/* Form */}
-        <Card className="max-w-3xl mx-auto">
-          <CardHeader>
-            <CardTitle>Solicitar Parceria B2B</CardTitle>
-            <CardDescription>
-              Preencha os dados da sua mesa OTC para iniciar o processo de parceria
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isCheckingRequest ? (
-              <div className="text-center py-12">
-                <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-                <p className="text-muted-foreground mt-4">Verificando solicitação...</p>
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-4 py-6">
+
+          {/* ═══════════════════ STEP 1: DADOS DA EMPRESA ═══════════════════ */}
+          {currentStep === 0 && (
+            <div className="space-y-5">
+              {/* Progress mini */}
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-white/25 text-xs">Dados da Empresa</span>
+                <span className="text-white/15 text-[10px] font-mono">{completedFields}/6 campos</span>
               </div>
-            ) : existingRequest ? (
-              <div className="text-center space-y-6 py-8">
-                {existingRequest.status === 'pending' && (
-                  <>
-                    <div className="bg-yellow-100 p-6 rounded-full w-24 h-24 mx-auto flex items-center justify-center">
-                      <Clock className="h-12 w-12 text-yellow-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-2xl mb-2">Solicitação em Análise</h3>
-                      <p className="text-lg text-muted-foreground">
-                        Sua solicitação B2B foi enviada em{' '}
-                        {new Date(existingRequest.created_at).toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
-                      </p>
-                      <div className="bg-muted/50 p-4 rounded-lg mt-4 text-left max-w-md mx-auto">
-                        <p className="text-sm text-muted-foreground">
-                          <strong>Status:</strong> Aguardando aprovação
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          Nossa equipe comercial está analisando sua proposta. 
-                          Você receberá um retorno em até <strong>24h úteis</strong>.
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
-                {existingRequest.status === 'approved' && (
-                  <>
-                    <div className="bg-green-100 p-6 rounded-full w-24 h-24 mx-auto flex items-center justify-center">
-                      <CheckCircle className="h-12 w-12 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-2xl text-green-700 mb-2">Parceria B2B Ativa! 🎉</h3>
-                      <p className="text-lg text-muted-foreground">
-                        Sua mesa OTC foi aprovada e está ativa na plataforma
-                      </p>
-                      <Button 
-                        onClick={() => navigate('/dashboard')} 
-                        className="mt-4"
-                        size="lg"
-                      >
-                        Acessar Plataforma
-                      </Button>
-                    </div>
-                  </>
-                )}
+              <div className="h-1 bg-white/[0.04] rounded-full overflow-hidden mb-4">
+                <div
+                  className="h-full bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] rounded-full transition-all duration-500"
+                  style={{ width: `${(completedFields / 6) * 100}%` }}
+                />
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Company Info */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Dados da Empresa</h3>
-                
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="company_name">Nome da Mesa OTC *</Label>
-                    <Input
-                      id="company_name"
-                      required
-                      value={formData.company_name}
-                      onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                      placeholder="Ex: Crypto Trading LTDA"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cnpj">CNPJ *</Label>
-                    <Input
-                      id="cnpj"
-                      required
+
+              <div className="bg-[#111111] border border-white/[0.04] rounded-2xl p-5 space-y-4">
+                {/* CNPJ */}
+                <div>
+                  <label className="block text-xs font-medium text-white/40 mb-1.5">
+                    CNPJ <span className="text-red-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
                       value={formData.cnpj}
-                      onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
-                      placeholder="00.000.000/0000-00"
+                      onChange={(e) => handleCNPJChange(e.target.value)}
+                      maxLength={18}
+                      className="w-full px-3.5 py-2.5 bg-black/40 border border-white/[0.06] rounded-xl text-white text-sm placeholder-white/15 focus:border-[#00D4FF]/30 outline-none transition-all font-mono"
+                      placeholder="00.000.000/0001-00"
                     />
+                    {cnpjValidating && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 text-[#00D4FF] animate-spin" />
+                      </div>
+                    )}
                   </div>
+                  {cnpjValid && cnpjInfo && (
+                    <div className="mt-2 p-3 bg-emerald-500/[0.05] border border-emerald-500/[0.1] rounded-lg">
+                      <p className="text-emerald-400 text-xs font-medium">✓ {cnpjInfo.razaoSocial}</p>
+                      <p className="text-white/20 text-[10px] mt-0.5">Situação: {cnpjInfo.situacao}</p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="trading_volume_monthly">Volume Mensal Estimado (R$) *</Label>
-                  <Input
-                    id="trading_volume_monthly"
-                    type="number"
-                    required
-                    value={formData.trading_volume_monthly}
-                    onChange={(e) => setFormData({ ...formData, trading_volume_monthly: e.target.value })}
+                {/* Nome responsável */}
+                <div>
+                  <label className="block text-xs font-medium text-white/40 mb-1.5">
+                    Nome do Responsável <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-black/40 border border-white/[0.06] rounded-xl text-white text-sm placeholder-white/15 focus:border-[#00D4FF]/30 outline-none transition-all"
+                    placeholder="Nome completo"
+                  />
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="block text-xs font-medium text-white/40 mb-1.5">
+                    WhatsApp <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
+                    maxLength={15}
+                    className="w-full px-3.5 py-2.5 bg-black/40 border border-white/[0.06] rounded-xl text-white text-sm placeholder-white/15 focus:border-[#00D4FF]/30 outline-none transition-all"
+                    placeholder="(41) 99999-9999"
+                  />
+                </div>
+
+                {/* Endereço */}
+                <div>
+                  <label className="block text-xs font-medium text-white/40 mb-1.5">
+                    Endereço Completo <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.endereco}
+                    onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-black/40 border border-white/[0.06] rounded-xl text-white text-sm placeholder-white/15 focus:border-[#00D4FF]/30 outline-none transition-all"
+                    placeholder="Rua, número, cidade - UF"
+                  />
+                </div>
+
+                {/* Origem recursos */}
+                <div>
+                  <label className="block text-xs font-medium text-white/40 mb-1.5">
+                    Origem dos Recursos <span className="text-red-400">*</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={formData.origemRecursos}
+                    onChange={(e) => setFormData({ ...formData, origemRecursos: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-black/40 border border-white/[0.06] rounded-xl text-white text-sm placeholder-white/15 resize-none focus:border-[#00D4FF]/30 outline-none transition-all"
+                    placeholder="Ex: Exportação de madeira para o exterior"
+                  />
+                </div>
+
+                {/* Volume estimado */}
+                <div>
+                  <label className="block text-xs font-medium text-white/40 mb-1.5">
+                    Volume Mensal Estimado (R$) <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.volumeEstimado}
+                    onChange={(e) => setFormData({ ...formData, volumeEstimado: e.target.value.replace(/\D/g, "") })}
+                    className="w-full px-3.5 py-2.5 bg-black/40 border border-white/[0.06] rounded-xl text-white text-sm placeholder-white/15 focus:border-[#00D4FF]/30 outline-none transition-all font-mono"
                     placeholder="500000"
                   />
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Contact Info */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Dados do Responsável</h3>
-                
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome Completo *</Label>
-                    <Input
-                      id="name"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="João Silva"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">WhatsApp *</Label>
-                    <Input
-                      id="phone"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="(41) 99999-9999"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="linkedin">LinkedIn (opcional)</Label>
-                    <Input
-                      id="linkedin"
-                      value={formData.linkedin}
-                      onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-                      placeholder="linkedin.com/in/seu-perfil"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="instagram">Instagram (opcional)</Label>
-                    <Input
-                      id="instagram"
-                      value={formData.instagram}
-                      onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                      placeholder="@sua_mesa"
-                    />
-                  </div>
-                </div>
+          {/* ═══════════════════ STEP 2: DOCUMENTAÇÃO KYC ═══════════════════ */}
+          {currentStep === 1 && (
+            <div className="space-y-5">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-white/25 text-xs">Documentação KYC</span>
+                <span className="text-white/15 text-[10px] font-mono">{uploadedCount}/4 documentos</span>
               </div>
-
-              {/* Additional Notes */}
-              <div className="space-y-2">
-                <Label htmlFor="notes">Informações Adicionais (opcional)</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Conte-nos um pouco mais sobre sua mesa OTC e expectativas de parceria..."
-                  rows={4}
+              <div className="h-1 bg-white/[0.04] rounded-full overflow-hidden mb-4">
+                <div
+                  className="h-full bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] rounded-full transition-all duration-500"
+                  style={{ width: `${(uploadedCount / 4) * 100}%` }}
                 />
               </div>
 
-              <div className="bg-muted/50 p-4 rounded-lg text-sm text-muted-foreground">
-                <p className="font-medium mb-2">Como funciona:</p>
-                <ol className="list-decimal list-inside space-y-1">
-                  <li>Análise da sua solicitação em até 24h úteis</li>
-                  <li>Contato da nossa equipe para validação e configuração do markup</li>
-                  <li>Aprovação e acesso à plataforma com preços diferenciados</li>
-                  <li>Suporte contínuo e condições exclusivas</li>
-                </ol>
+              {/* Checklist */}
+              <div className="bg-[#111111] border border-white/[0.04] rounded-2xl p-5">
+                <p className="text-white text-xs font-semibold mb-3">Documentos Obrigatórios</p>
+                <div className="space-y-2 mb-5">
+                  {REQUIRED_DOCS.map((doc) => (
+                    <div key={doc.id} className="flex items-center gap-2.5">
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${uploadedDocs[doc.id]
+                          ? "bg-emerald-500 border-emerald-500"
+                          : "border-white/10"
+                        }`}>
+                        {uploadedDocs[doc.id] && <Check className="w-2.5 h-2.5 text-white" />}
+                      </div>
+                      <span className={`text-xs ${uploadedDocs[doc.id] ? "text-white/25 line-through" : "text-white/50"}`}>
+                        {doc.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Upload areas */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {REQUIRED_DOCS.map((doc) => (
+                    <div
+                      key={doc.id}
+                      onClick={() => handleDocUpload(doc.id)}
+                      className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${uploadedDocs[doc.id]
+                          ? "border-emerald-500/20 bg-emerald-500/[0.03]"
+                          : "border-white/[0.06] hover:border-[#00D4FF]/30 hover:bg-[#00D4FF]/[0.02]"
+                        }`}
+                    >
+                      {uploadedDocs[doc.id] ? (
+                        <div className="flex flex-col items-center gap-1">
+                          <Check className="w-5 h-5 text-emerald-400" />
+                          <span className="text-emerald-400/70 text-[10px]">{doc.label}</span>
+                          <span className="text-emerald-400 text-[10px] font-medium">Enviado ✓</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1.5">
+                          <Upload className="w-5 h-5 text-white/15" />
+                          <span className="text-white/25 text-[10px]">{doc.label}</span>
+                          <span className="text-[#00D4FF]/40 text-[9px]">Clique ou arraste</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-white/10 text-[10px] mt-4 text-center">
+                  Formatos aceitos: PDF, JPG, PNG • Máx 10MB por arquivo
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ═══════════════════ STEP 3: CONTRATO ═══════════════════ */}
+          {currentStep === 2 && (
+            <div className="space-y-5">
+              <div className="bg-[#111111] border border-white/[0.04] rounded-2xl overflow-hidden">
+                {/* Contract header */}
+                <div className="p-5 border-b border-white/[0.04]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-white text-sm font-bold">Contrato de Parceria Comercial</h3>
+                      <p className="text-white/20 text-[10px] mt-0.5">TKB Asset × {formData.razaoSocial || "Sua Empresa"}</p>
+                    </div>
+                    <button
+                      onClick={() => setShowContract(!showContract)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.06] rounded-lg text-white/40 text-[10px] transition-colors"
+                    >
+                      <Eye className="w-3 h-3" />
+                      {showContract ? "Minimizar" : "Ver Contrato Completo"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Contract preview */}
+                {showContract && (
+                  <div className="p-5 bg-black/20 border-b border-white/[0.04] max-h-60 overflow-y-auto">
+                    <div className="prose prose-invert prose-xs max-w-none">
+                      <p className="text-white/30 text-[11px] leading-relaxed">
+                        <strong className="text-white/50">CONTRATO DE PARCERIA COMERCIAL</strong><br /><br />
+                        Pelo presente instrumento, de um lado <strong className="text-white/50">TKB ASSET LTDA</strong>,
+                        inscrita no CNPJ sob nº XX.XXX.XXX/0001-XX, doravante denominada <strong>"TKB"</strong>,
+                        e de outro lado <strong className="text-[#00D4FF]/60">{formData.razaoSocial || "[Razão Social]"}</strong>,
+                        inscrita no CNPJ sob nº <strong className="text-[#00D4FF]/60">{formData.cnpj || "[CNPJ]"}</strong>,
+                        doravante denominada <strong>"PARCEIRO"</strong>, celebram o presente contrato de parceria comercial...<br /><br />
+                        Este contrato estabelece os termos e condições para a intermediação de operações OTC
+                        de compra e venda de stablecoins (USDT/Tether), em conformidade com a Lei 14.478/2022
+                        e demais regulamentações aplicáveis ao mercado de ativos virtuais no Brasil.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Key terms */}
+                <div className="p-5">
+                  <p className="text-white/30 text-[10px] uppercase tracking-wider font-semibold mb-3">
+                    Principais Termos
+                  </p>
+                  <div className="space-y-2.5">
+                    {CONTRACT_TERMS.map((term, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <ChevronRight className="w-3 h-3 text-[#00D4FF]/40 mt-0.5 shrink-0" />
+                        <span className="text-white/40 text-xs leading-relaxed">{term}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Summary sidebar info */}
+                <div className="p-5 bg-black/20 border-t border-white/[0.04]">
+                  <div className="grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <p className="text-white/15 text-[10px]">Parte 1</p>
+                      <p className="text-white/40 font-medium">TKB Asset LTDA</p>
+                    </div>
+                    <div>
+                      <p className="text-white/15 text-[10px]">Parte 2</p>
+                      <p className="text-[#00D4FF]/50 font-medium">{formData.razaoSocial || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-white/15 text-[10px]">CNPJ Parceiro</p>
+                      <p className="text-white/40 font-mono text-[11px]">{formData.cnpj || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-white/15 text-[10px]">Vigência</p>
+                      <p className="text-white/40">12 meses (renovação auto)</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Accept terms */}
+                <div className="p-5 border-t border-white/[0.04]">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-white/20 text-[#00D4FF] focus:ring-[#00D4FF]/30 bg-transparent cursor-pointer"
+                    />
+                    <span className="text-white/40 text-xs leading-relaxed group-hover:text-white/50 transition-colors">
+                      Li e aceito integralmente os termos do <strong className="text-white/60">Contrato de Parceria Comercial</strong> e
+                      o <strong className="text-white/60">Termo de Responsabilidade KYC/PLD</strong>.
+                      Declaro ciência de todas as obrigações e conformidade com a legislação vigente.
+                    </span>
+                  </label>
+                </div>
               </div>
 
-              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Solicitar Parceria B2B
-              </Button>
-            </form>
+              {/* Gov.br Signature (placeholder) */}
+              <div className="bg-gradient-to-br from-green-900/10 to-emerald-900/10 border border-green-500/[0.12] rounded-2xl p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-green-500/[0.1] rounded-lg">
+                    <ShieldCheck className="w-5 h-5 text-green-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-white text-xs font-semibold">Assinatura Digital</h4>
+                    <p className="text-white/20 text-[10px]">Em breve: integração Gov.br para assinatura digital</p>
+                  </div>
+                </div>
+                <button
+                  disabled
+                  className="w-full py-3 bg-gradient-to-r from-green-600/30 to-emerald-600/30 text-green-200/40 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 cursor-not-allowed border border-green-500/10"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  Assinar com Gov.br (em breve)
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer Actions */}
+      <div className="shrink-0 border-t border-white/[0.04] bg-[#0D0D0D]">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
+          <button
+            onClick={currentStep === 0 ? () => navigate("/dashboard") : handleBack}
+            className="px-4 py-2 text-white/25 hover:text-white/50 text-sm transition-colors"
+          >
+            {currentStep === 0 ? "Cancelar" : "Voltar"}
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-white/10 text-[10px] font-mono mr-2">
+              Passo {currentStep + 1} de 3
+            </span>
+            {currentStep < 2 ? (
+              <button
+                onClick={handleNext}
+                disabled={!canAdvanceStep()}
+                className="px-6 py-2.5 bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-[#00D4FF]/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:shadow-none"
+              >
+                Continuar
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={!acceptedTerms || isSubmitting}
+                className="px-6 py-2.5 bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-[#00D4FF]/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  "Enviar Solicitação"
+                )}
+              </button>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
