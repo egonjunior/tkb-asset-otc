@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Coins } from "lucide-react";
@@ -10,9 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 const TradingOrderPage = () => {
   const navigate = useNavigate();
-  const { 
-    binancePrice, 
-    tkbPrice, 
+  const {
+    binancePrice,
+    tkbPrice,
     isLoading,
     dailyChangePercent,
     volumeUSDT,
@@ -22,20 +22,41 @@ const TradingOrderPage = () => {
     lastUpdate,
   } = useBinancePrice();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [quoteClients, setQuoteClients] = useState<any[]>([]);
 
-  const handleSubmit = async (orderData: { 
-    amount: string; 
-    network: string; 
-    lockedPrice: number; 
+  useEffect(() => {
+    const fetchClients = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('otc_quote_clients')
+        .select('id, client_name, spread_percent')
+        .eq('created_by', user.id)
+        .eq('is_active', true)
+        .order('client_name');
+
+      if (data) {
+        setQuoteClients(data);
+      }
+    };
+    fetchClients();
+  }, []);
+
+  const handleSubmit = async (orderData: {
+    amount: string;
+    network: string;
+    lockedPrice: number;
     total: number;
     lockedAt: string;
     walletAddress: string;
+    quoteClientId?: string;
   }) => {
     setIsSubmitting(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         toast({
           title: "Erro de autenticação",
@@ -56,6 +77,7 @@ const TradingOrderPage = () => {
           total: orderData.total,
           locked_price: orderData.lockedPrice,
           locked_at: orderData.lockedAt,
+          quote_client_id: orderData.quoteClientId || null,
           status: 'pending',
         })
         .select()
@@ -89,7 +111,7 @@ const TradingOrderPage = () => {
         title: "Ordem criada com sucesso!",
         description: `Ordem ${data.id} aguardando pagamento`,
       });
-      
+
       navigate(`/order/${data.id}`);
     } catch (error) {
       console.error('Error creating order:', error);
@@ -146,6 +168,7 @@ const TradingOrderPage = () => {
             isLoading={isLoading}
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
+            quoteClients={quoteClients}
           />
         </div>
       </main>

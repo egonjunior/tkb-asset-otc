@@ -12,15 +12,16 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { 
-  Lock, 
-  Clock, 
-  AlertCircle, 
-  ArrowDownUp, 
+import {
+  Lock,
+  Clock,
+  AlertCircle,
+  ArrowDownUp,
   Network,
   CheckCircle2,
   Coins,
-  Wallet
+  Wallet,
+  Users
 } from "lucide-react";
 import { validateWalletAddress, type NetworkType } from "@/lib/walletValidation";
 
@@ -28,19 +29,22 @@ interface OrderFormCardProps {
   tkbPrice: number | null;
   binancePrice: number | null;
   isLoading: boolean;
-  onSubmit: (data: { amount: string; network: string; lockedPrice: number; total: number; lockedAt: string; walletAddress: string }) => void;
+  onSubmit: (data: { amount: string; network: string; lockedPrice: number; total: number; lockedAt: string; walletAddress: string; quoteClientId?: string }) => void;
   isSubmitting?: boolean;
+  quoteClients?: any[];
 }
 
 const LOCK_DURATION = 300; // 5 minutes in seconds
 
-const OrderFormCard = ({ 
-  tkbPrice, 
-  binancePrice, 
+const OrderFormCard = ({
+  tkbPrice,
+  binancePrice,
   isLoading,
   onSubmit,
-  isSubmitting = false 
+  isSubmitting = false,
+  quoteClients = []
 }: OrderFormCardProps) => {
+  const [selectedClientId, setSelectedClientId] = useState<string>("none");
   const [usdtAmount, setUsdtAmount] = useState("");
   const [brlAmount, setBrlAmount] = useState("");
   const [brlAmountFormatted, setBrlAmountFormatted] = useState(""); // Valor visual formatado
@@ -56,12 +60,12 @@ const OrderFormCard = ({
   const formatBRL = (value: string): string => {
     // Remove tudo exceto dígitos
     const numericValue = value.replace(/\D/g, '');
-    
+
     if (!numericValue) return '';
-    
+
     // Converte para número e divide por 100 (para ter 2 decimais)
     const number = parseFloat(numericValue) / 100;
-    
+
     // Formata no padrão brasileiro
     return number.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
@@ -104,11 +108,11 @@ const OrderFormCard = ({
   const handleUSDTChange = (value: string) => {
     setUsdtAmount(value);
     setIsEditingUSDT(true);
-    
+
     if (value && tkbPrice) {
       const brl = parseFloat(value) * tkbPrice;
       setBrlAmount(brl.toFixed(2));
-      
+
       // Formatar visualmente
       const formatted = brl.toLocaleString('pt-BR', {
         minimumFractionDigits: 2,
@@ -132,13 +136,13 @@ const OrderFormCard = ({
     // Atualiza valor formatado visualmente
     const formatted = formatBRL(value);
     setBrlAmountFormatted(formatted);
-    
+
     // Extrai valor numérico puro
     const numericValue = unformatBRL(formatted);
     setBrlAmount(numericValue.toString());
-    
+
     setIsEditingUSDT(false);
-    
+
     // Calcula USDT baseado no valor numérico
     if (numericValue > 0 && tkbPrice) {
       const usdt = numericValue / tkbPrice;
@@ -157,12 +161,12 @@ const OrderFormCard = ({
 
   const handleWalletAddressChange = (value: string) => {
     setWalletAddress(value);
-    
+
     // Clear error when user starts typing
     if (walletError) {
       setWalletError(null);
     }
-    
+
     // Validate on change if network is selected and value is not empty
     if (network && value.trim()) {
       const validation = validateWalletAddress(value, network as NetworkType);
@@ -182,7 +186,7 @@ const OrderFormCard = ({
 
   const handleSubmitOrder = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!lockedPrice || !usdtAmount || !network || !walletAddress) return;
 
     // Final validation before submit
@@ -193,14 +197,15 @@ const OrderFormCard = ({
     }
 
     const total = parseFloat(usdtAmount) * lockedPrice;
-    
+
     onSubmit({
       amount: usdtAmount,
       network,
       lockedPrice,
       total,
       lockedAt: new Date().toISOString(),
-      walletAddress: walletAddress.trim()
+      walletAddress: walletAddress.trim(),
+      quoteClientId: selectedClientId !== "none" ? selectedClientId : undefined
     });
   };
 
@@ -224,6 +229,29 @@ const OrderFormCard = ({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmitOrder} className="space-y-6">
+          {/* Selecionar Cliente (Para Parceiros) */}
+          {quoteClients && quoteClients.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="client" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Vincular a um Cliente (Opcional)
+              </Label>
+              <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um cliente (ou deixe em branco)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum cliente (Ordem própria)</SelectItem>
+                  {quoteClients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.client_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Quantidade USDT */}
           <div className="space-y-2">
             <Label htmlFor="usdt">Quantidade de USDT</Label>
@@ -306,7 +334,7 @@ const OrderFormCard = ({
           {network && (
             <>
               <div className="h-px bg-border" />
-              
+
               <div className="space-y-2">
                 <Label htmlFor="wallet" className="flex items-center gap-2">
                   <Wallet className="h-4 w-4" />
@@ -400,7 +428,7 @@ const OrderFormCard = ({
           {isLocked && lockedPrice && usdtAmount && network && (
             <>
               <div className="h-px bg-border" />
-              
+
               <div className="space-y-3">
                 <h3 className="font-semibold flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -449,8 +477,8 @@ const OrderFormCard = ({
             >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="flex-1"
               disabled={!isLocked || !lockedPrice || isSubmitting}
             >
