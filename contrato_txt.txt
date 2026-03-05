@@ -1,0 +1,264 @@
+CONTRATO DE PARCERIA COMERCIAL
+ INTERMEDIAÇÃO DE OPERAÇÕES CAMBIAIS EM CRIPTOATIVOS
+ Pelo presente instrumento particular, de um lado:
+CONTRATADA:
+ TOKENIZACAO MANAGEMENT GESTAO DE NEGOCIOS, PATRIMONIO E INVESTIMENTOS
+LTDA, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº 45.933.866/0001-93, com sede
+na Rua Fidencio Ramos, nº 100, Vila Olímpia, São Paulo/SP, CEP 04.551-010, atuando sob o nome
+fantasia "TOKEN BUSINESS ASSETS", neste ato representada na forma de seu Contrato Social,
+doravante denominada simplesmente "CONTRATADA" ou "TKB ASSET";
+CONTRATANTE:
+ [RAZÃO SOCIAL PARCEIRO], pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº
+[CNPJ PARCEIRO], com sede na [Endereço completo], neste ato representada por [Nome completo
+representante legal], [nacionalidade], [profissão], portador do RG nº [RG] e CPF/MF nº [CPF],
+doravante denominada simplesmente "CONTRATANTE" ou "PARCEIRO";
+ As partes acima qualificadas têm, entre si, justo e contratado o presente CONTRATO DE
+PARCERIA COMERCIAL, que se regerá pelas cláusulas e condições seguintes, que reciprocamente
+outorgam e aceitam:
+CLÁUSULA PRIMEIRA – DO OBJETO E NATUREZA DA PARCERIA
+1.1. O presente contrato tem por objeto estabelecer parceria comercial entre CONTRATADA e
+CONTRATANTE para intermediação de operações de conversão entre moeda fiduciária (Real -
+BRL) e criptoativos (USDT - Tether), junto a CLIENTES FINAIS apresentados pelo PARCEIRO.
+1.2. A CONTRATADA prestará os seguintes serviços aos CLIENTES FINAIS intermediados
+pelo PARCEIRO:
+     Conversão BRL → USDT (compra de criptoativo);
+     Conversão USDT → BRL (venda de criptoativo);
+     Conversão USDT → USD/EUR/ARS (remessa internacional);
+     Custódia temporária de criptoativos durante processamento de operações;
+     Suporte técnico e operacional relacionado às conversões.
+1.3. O PARCEIRO atuará como representante comercial da CONTRATADA, apresentando
+CLIENTES FINAIS interessados nos serviços descritos no item 1.2, realizando a interface
+comercial e coletando documentação necessária para due diligence.
+1.4. Fica expressamente estabelecido que a CONTRATADA não presta serviços diretamente
+aos CLIENTES FINAIS, mas sim ao PARCEIRO, que assume a responsabilidade pela relação
+comercial com seus clientes, nos termos deste contrato.
+CLÁUSULA SEGUNDA – DA REMUNERAÇÃO E COMISSIONAMENTO
+2.1. Como contraprestação pelos serviços de intermediação prestados pelo PARCEIRO, a
+CONTRATADA pagará comissionamento calculado sobre o volume financeiro das operações
+
+realizadas pelos CLIENTES FINAIS apresentados pelo PARCEIRO.
+2.2. A CONTRATADA cobrará dos CLIENTES FINAIS uma taxa de 1% (um por cento) sobre o
+valor de cada operação, destinada exclusivamente à CONTRATADA para cobertura de custos
+operacionais, tecnológicos e margem de lucro.
+2.3. O PARCEIRO terá autonomia comercial para negociar com seus CLIENTES FINAIS uma
+taxa adicional de intermediação, de acordo com sua estratégia comercial, sendo recomendável
+a faixa de 0,5% a 1,5% adicional, totalizando ao cliente final entre 1,5% e 2,5% sobre o valor da
+operação.
+2.4. A título exemplificativo, considere-se uma operação de USD 100.000,00 (cem mil dólares
+americanos):
+Descrição
+Taxa
+Valor (USD)
+Destinatário
+Taxa base operacional
+1,0%
+USD 1.000
+CONTRATADA (TKB Asset)
+Taxa intermediação PARCEIRO
+1,0%
+USD 1.000
+PARCEIRO (comissionamento)
+Taxa total ao CLIENTE FINAL
+2,0%
+USD 2.000
+Total operação
+2.5. O PARCEIRO faturará mensalmente seus CLIENTES FINAIS pela taxa de intermediação
+negociada, em seu próprio nome, emitindo as competentes notas fiscais de prestação de
+serviços de intermediação comercial, conforme legislação tributária vigente.
+2.6. A CONTRATADA repassará ao PARCEIRO, até o 5º (quinto) dia útil do mês subsequente,
+relatório detalhado contendo:
+     Volume total operado por cada CLIENTE FINAL no mês anterior;
+     Taxa base (1%) retida pela CONTRATADA;
+     Demonstrativo financeiro consolidado;
+     Comprovante de disponibilidade para saque do comissionamento.
+2.7. O PARCEIRO poderá solicitar saque do comissionamento acumulado a qualquer momento,
+mediante solicitação via plataforma digital da CONTRATADA, com liquidação em até 48
+(quarenta e oito) horas úteis.
+
+CLÁUSULA TERCEIRA – DAS OBRIGAÇÕES DO PARCEIRO
+3.1. Compete ao PARCEIRO, no exercício de suas atividades de intermediação:
+a) Due Diligence Comercial: Realizar análise prévia de cada CLIENTE FINAL antes de
+cadastrá-lo na plataforma da CONTRATADA, verificando: (i) capacidade jurídica e financeira; (ii)
+idoneidade comercial; (iii) compatibilidade entre atividade empresarial declarada e volume de
+operações pretendido;
+b) Coleta Documental: Obter e anexar na plataforma digital da CONTRATADA, em relação a
+cada CLIENTE FINAL, a seguinte documentação obrigatória: (i) Contrato Social ou Estatuto
+Social atualizado; (ii) Documento de identificação com foto de todos os sócios e administradores
+(RG/CNH); (iii) Comprovante de endereço da sede empresarial; (iv) Última Declaração de
+Imposto de Renda Pessoa Jurídica (DIRPJ) ou Declaração de Informações Socioeconômicas e
+Fiscais (DEFIS); (v) Declaração de origem lícita de recursos, assinada pelo representante legal;
+c) Representação Comercial: Atuar como único ponto de contato entre a CONTRATADA e
+os CLIENTES FINAIS, responsabilizando-se pela comunicação, negociação de prazos,
+esclarecimento de dúvidas e resolução de eventuais reclamações;
+d) Monitoramento Contínuo: Acompanhar a regularidade das operações de seus CLIENTES
+FINAIS, reportando à CONTRATADA, de forma imediata, qualquer (i) alteração no quadro
+societário; (ii) mudança de endereço ou atividade empresarial; (iii) envolvimento em
+investigações, processos judiciais ou administrativos; (iv) suspeita de irregularidade ou ilicitude
+nas operações;
+e) Atualização Documental: Renovar anualmente toda documentação prevista na alínea "b"
+deste item, mantendo os cadastros atualizados na plataforma da CONTRATADA;
+f) Conformidade Legal: Assegurar que todas as operações intermediadas estejam em
+conformidade com a legislação brasileira aplicável, incluindo mas não se limitando a: Lei nº
+9.613/98 (Lavagem de Dinheiro), Lei nº 14.478/22 (Marco Legal dos Criptoativos), Instrução
+Normativa RFB nº 1.888/19 e regulamentação posterior (DECRIPTO), Resoluções do Conselho
+de Controle de Atividades Financeiras (COAF);
+3.2. O PARCEIRO declara ter ciência de que a ausência, incompletude ou desatualização da
+documentação prevista no item 3.1 impedirá o cadastramento ou acarretará o bloqueio
+imediato das operações do CLIENTE FINAL correspondente, sem qualquer responsabilidade
+ou ônus à CONTRATADA.
+3.3. O PARCEIRO compromete-se a fornecer à CONTRATADA, em até 48 (quarenta e oito)
+horas, toda e qualquer documentação adicional ou esclarecimento solicitado em relação a seus
+CLIENTES FINAIS, sob pena de suspensão imediata das operações e aplicação das
+penalidades previstas neste contrato.
+CLÁUSULA QUARTA – DAS OBRIGAÇÕES DA CONTRATADA
+4.1. Compete à CONTRATADA:
+a) Disponibilizar ao PARCEIRO acesso à plataforma digital para cadastramento e gestão de
+CLIENTES FINAIS, com interface intuitiva e suporte técnico;
+b) Processar as operações de conversão de criptoativos dos CLIENTES FINAIS com eficiência,
+transparência e dentro dos prazos estimados (90 minutos para operações padrão);
+c) Realizar análise de conformidade (compliance) da documentação fornecida pelo PARCEIRO,
+aprovando ou rejeitando cadastros em até 48 (quarenta e oito) horas úteis;
+d) Manter sistema de registro e auditoria de todas as operações, com rastreabilidade completa
+em blockchain, atendendo requisitos regulatórios aplicáveis;
+
+e) Emitir relatório mensal detalhado ao PARCEIRO conforme item 2.6, com demonstrativo
+financeiro de comissionamento;
+f) Manter sigilo e confidencialidade sobre as informações comerciais e cadastrais dos
+CLIENTES FINAIS apresentados pelo PARCEIRO, utilizando-as exclusivamente para
+cumprimento deste contrato e obrigações legais.
+4.2. A CONTRATADA reserva-se o direito de recusar o cadastramento ou suspender operações
+de qualquer CLIENTE FINAL que, a seu exclusivo critério técnico, apresente (i) documentação
+insuficiente ou inconsistente; (ii) indícios de irregularidade ou ilicitude; (iii) incompatibilidade
+entre perfil declarado e operações solicitadas; (iv) envolvimento em listas restritivas nacionais ou
+internacionais.
+
+CLÁUSULA QUINTA – DA RESPONSABILIDADE E GESTÃO DE RISCOS
+5.1. O PARCEIRO declara e garante que todos os CLIENTES FINAIS por ele apresentados: (i)
+exercem atividades econômicas lícitas; (ii) possuem recursos de origem comprovadamente
+lícita; (iii) não estão envolvidos em atividades ilícitas, investigações criminais ou processos que
+possam comprometer a reputação ou expor a CONTRATADA a riscos legais ou regulatórios.
+5.2. O PARCEIRO assume responsabilidade integral e exclusiva por quaisquer danos,
+prejuízos, multas, sanções administrativas, penalidades ou contingências de natureza civil,
+criminal, tributária ou regulatória que venham a ser impostas à CONTRATADA em decorrência
+de:
+a) Falsidade, incompletude ou inconsistência nas informações e documentos fornecidos pelo
+PARCEIRO em relação a seus CLIENTES FINAIS;
+b) Falha do PARCEIRO em realizar due diligence adequada, conforme obrigações previstas na
+Cláusula Terceira deste contrato;
+c) Atividades ilícitas, fraudulentas ou contrárias à legislação praticadas pelos CLIENTES FINAIS
+apresentados pelo PARCEIRO;
+d) Descumprimento pelo PARCEIRO de qualquer obrigação prevista neste contrato, na
+legislação aplicável ou em regulamentação de órgãos competentes (Receita Federal, Banco
+Central, COAF, CVM).
+5.3. Na hipótese de a CONTRATADA ser demandada, autuada, multada ou sofrer qualquer
+prejuízo em decorrência das situações previstas no item 5.2, o PARCEIRO obriga-se a:
+a) Reembolsar integralmente a CONTRATADA, em até 30 (trinta) dias contados da
+notificação, por todos os valores despendidos, incluindo mas não se limitando a: (i) multas e
+penalidades administrativas; (ii) honorários advocatícios; (iii) custas processuais; (iv)
+indenizações a terceiros; (v) custos de auditoria e compliance; (vi) danos à imagem e reputação;
+b) Prestar toda colaboração necessária à defesa da CONTRATADA, incluindo fornecimento de
+documentos, informações e testemunho, se aplicável;
+c) Assumir, se assim decidir a CONTRATADA, a condução da defesa administrativa ou judicial,
+arcando com todos os custos, sob supervisão e aprovação prévia da CONTRATADA.
+5.4. Fica expressamente pactuado que a CONTRATADA possui responsabilidade subsidiária
+apenas nas hipóteses em que restar comprovado que (i) o PARCEIRO forneceu toda
+documentação exigida de forma completa, verdadeira e atualizada; (ii) o PARCEIRO cumpriu
+integralmente todas as obrigações previstas neste contrato; e (iii) a CONTRATADA possuía
+conhecimento inequívoco e documentado da irregularidade praticada pelo CLIENTE FINAL e,
+mesmo assim, optou por processar a operação.
+5.5. O PARCEIRO declara ter pleno conhecimento das normas de Prevenção à Lavagem de
+Dinheiro e Financiamento ao Terrorismo (PLD/FT), comprometendo-se a observá-las
+rigorosamente na seleção e monitoramento de seus CLIENTES FINAIS, sob pena de
+responsabilização nos termos deste contrato e da legislação vigente.
+CLÁUSULA SEXTA – DO DIREITO DE AUDITORIA
+6.1. A CONTRATADA reserva-se o direito de realizar, a qualquer tempo e sem aviso prévio,
+auditoria sobre a documentação e procedimentos adotados pelo PARCEIRO em relação aos
+seus CLIENTES FINAIS.
+6.2. Na hipótese de auditoria, o PARCEIRO compromete-se a disponibilizar, em até 24 (vinte e
+quatro) horas, todos os documentos, registros, comunicações e informações solicitadas pela
+CONTRATADA.
+6.3. Caso a auditoria identifique descumprimento de obrigações contratuais ou legais pelo
+PARCEIRO, a CONTRATADA poderá, sem prejuízo de outras medidas cabíveis: (i) suspender
+imediatamente todas as operações dos CLIENTES FINAIS vinculados ao PARCEIRO; (ii)
+
+bloquear o comissionamento pendente; (iii) rescindir o contrato, conforme Cláusula Nona.
+CLÁUSULA SÉTIMA – DA VIGÊNCIA E RENOVAÇÃO
+7.1. O presente contrato entra em vigor na data de sua assinatura eletrônica via plataforma
+Gov.br e terá prazo de vigência de 12 (doze) meses.
+7.2. O contrato será automaticamente renovado por períodos sucessivos de 12 (doze) meses,
+salvo manifestação contrária de qualquer das partes, comunicada por escrito com antecedência
+mínima de 30 (trinta) dias do término da vigência.
+CLÁUSULA OITAVA – DA CONFIDENCIALIDADE
+8.1. As partes comprometem-se a manter sigilo absoluto sobre todas as informações
+comerciais, financeiras, operacionais e cadastrais trocadas em decorrência deste contrato,
+utilizando-as exclusivamente para os fins aqui previstos.
+8.2. A obrigação de confidencialidade permanecerá em vigor mesmo após o término deste
+contrato, pelo prazo de 5 (cinco) anos.
+8.3. Excetuam-se do dever de confidencialidade as informações que devam ser compartilhadas
+com autoridades competentes (Receita Federal, Banco Central, COAF, Poder Judiciário) em
+cumprimento a obrigações legais ou ordens judiciais.
+
+CLÁUSULA NONA – DA RESCISÃO
+9.1. O presente contrato poderá ser rescindido, sem prejuízo de perdas e danos:
+a) Por acordo entre as partes, a qualquer tempo;
+b) Por qualquer das partes, mediante notificação prévia de 30 (trinta) dias, sem necessidade de
+justificativa;
+c) Pela CONTRATADA, de forma imediata e sem aviso prévio, nas seguintes hipóteses: (i)
+descumprimento pelo PARCEIRO de qualquer obrigação prevista na Cláusula Terceira; (ii)
+fornecimento de informações falsas ou documentação fraudulenta; (iii) envolvimento do
+PARCEIRO ou de seus CLIENTES FINAIS em atividades ilícitas; (iv) investigação criminal,
+autuação fiscal ou sanção administrativa contra o PARCEIRO; (v) falência, recuperação judicial
+ou extinção do PARCEIRO.
+9.2. Na hipótese de rescisão por culpa do PARCEIRO (alínea "c" do item 9.1), este perderá o
+direito ao comissionamento ainda não liquidado, sem prejuízo de responder por perdas e danos
+causados à CONTRATADA.
+9.3. Em caso de rescisão por qualquer motivo, o PARCEIRO permanece responsável por todos
+os CLIENTES FINAIS por ele cadastrados até a data da rescisão, inclusive quanto a eventuais
+contingências futuras relacionadas a operações já realizadas.
+CLÁUSULA DÉCIMA – DAS PENALIDADES
+10.1. O descumprimento de quaisquer das obrigações previstas neste contrato sujeitará a parte
+infratora ao pagamento de multa de 10% (dez por cento) sobre o valor total das operações
+processadas nos últimos 12 (doze) meses, sem prejuízo da reparação de eventuais perdas e
+danos adicionais.
+10.2. A multa prevista no item anterior não exclui a responsabilidade da parte infratora pelo
+pagamento de indenização por danos materiais e morais causados à parte inocente, apurados
+em liquidação de sentença, se necessário.
+CLÁUSULA DÉCIMA PRIMEIRA – DAS DISPOSIÇÕES GERAIS
+11.1. Este contrato representa a integralidade do acordo entre as partes, substituindo e
+cancelando quaisquer entendimentos, negociações ou acordos anteriores, verbais ou escritos.
+11.2. Qualquer alteração, aditamento ou renúncia a direitos previstos neste contrato somente
+terá validade se formalizada por escrito e assinada por ambas as partes.
+11.3. A tolerância de qualquer das partes quanto ao descumprimento de obrigações pela outra
+parte não constituirá novação ou renúncia de direitos, podendo ser exigido o cumprimento a
+qualquer tempo.
+11.4. Caso qualquer cláusula ou disposição deste contrato seja considerada nula ou inexequível
+por autoridade competente, as demais cláusulas permanecerão em pleno vigor e efeito.
+11.5. As partes declaram que este contrato foi negociado de forma equilibrada, tendo ambas
+ampla compreensão de seus termos e condições, bem como ciência das obrigações e
+responsabilidades assumidas.
+CLÁUSULA DÉCIMA SEGUNDA – DO FORO
+12.1. As partes elegem o Foro da Comarca de São Paulo, Estado de São Paulo, com
+expressa renúncia a qualquer outro, por mais privilegiado que seja, para dirimir quaisquer
+questões oriundas deste contrato.
+
+E, por estarem assim justas e contratadas, as partes assinam eletronicamente o presente
+instrumento, via plataforma Gov.br, em 2 (duas) vias de igual teor e forma, na presença de 2 (duas)
+testemunhas.
+ São Paulo/SP, 4 de March de 2026.
+ __________________________________________________
+ TOKENIZACAO MANAGEMENT GESTAO DE NEGOCIOS,
+ PATRIMONIO E INVESTIMENTOS LTDA
+ (TOKEN BUSINESS ASSETS)
+ Representante Legal
+ __________________________________________________
+ [RAZÃO SOCIAL PARCEIRO]
+ [Nome Representante Legal]
+ [Cargo]
+TESTEMUNHAS:
+1. _________________________
+2. _________________________
+Nome:
+Nome:
+CPF:
+CPF:
+

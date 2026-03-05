@@ -6,7 +6,9 @@ import { toast } from "@/hooks/use-toast";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
 import MarketInfoCard from "@/components/MarketInfoCard";
 import OrderFormCard from "@/components/OrderFormCard";
+import RetroactiveOrderForm from "@/components/partner/RetroactiveOrderForm";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TradingOrderPage = () => {
   const navigate = useNavigate();
@@ -125,6 +127,81 @@ const TradingOrderPage = () => {
     }
   };
 
+  const handleRetroactiveSubmit = async (orderData: {
+    quoteClientId: string;
+    brlAmount: number;
+    usdtAmount: number;
+    executedAt: string;
+    proofFile?: File;
+  }) => {
+    setIsSubmitting(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Não autenticado");
+
+      let receiptUrl = null;
+
+      // Se houver arquivo de comprovante, faz o upload
+      if (orderData.proofFile) {
+        const fileExt = orderData.proofFile.name.split('.').pop();
+        const fileName = `retroactive-${user.id}-${Date.now()}.${fileExt}`;
+        const filePath = `receipts/${user.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, orderData.proofFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('documents')
+          .getPublicUrl(filePath);
+
+        receiptUrl = publicUrl;
+      }
+
+      // Calcula a cotação que o parceiro fechou
+      const lockedPrice = orderData.brlAmount / orderData.usdtAmount;
+
+      const { data, error } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          amount: orderData.usdtAmount,
+          network: 'TRC20', // Default para ordens retroativas sem rede específica
+          total: orderData.brlAmount,
+          locked_price: lockedPrice,
+          locked_at: orderData.executedAt,
+          quote_client_id: orderData.quoteClientId !== "none" ? orderData.quoteClientId : null,
+          status: 'completed', // Ordem retroativa já entra como concluída pro CRM
+          receipt_url: receiptUrl,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "✅ Operação Lançada!",
+        description: "Os dados já constam no seu Dashboard e histórico.",
+      });
+
+      // Volta pro dashboard após lançar a ordem manual
+      navigate("/dashboard");
+
+    } catch (error) {
+      console.error('Error creating retroactive order:', error);
+      toast({
+        title: "Erro ao lançar",
+        description: "Verifique os dados e tente novamente",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -161,15 +238,47 @@ const TradingOrderPage = () => {
             lastUpdate={lastUpdate}
           />
 
-          {/* Order Form Card - Integrated */}
-          <OrderFormCard
-            tkbPrice={tkbPrice}
-            binancePrice={binancePrice}
-            isLoading={isLoading}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            quoteClients={quoteClients}
-          />
+          {/* Order Forms - Tabs para Parceiros */}
+          {quoteClients.length > 0 ? (
+            <Tabs defaultValue="live" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6 h-12">
+                <TabsTrigger value="live" className="text-sm font-semibold">
+                  🔴 Cotação Ao Vivo
+                </TabsTrigger>
+                <TabsTrigger value="retro" className="text-sm font-semibold">
+                  📝 Lançamento CRM (Lote)
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="live" className="animate-in fade-in zoom-in-95 duration-300">
+                <OrderFormCard
+                  tkbPrice={tkbPrice}
+                  binancePrice={binancePrice}
+                  isLoading={isLoading}
+                  onSubmit={handleSubmit}
+                  isSubmitting={isSubmitting}
+                  quoteClients={quoteClients}
+                />
+              </TabsContent>
+
+              <TabsContent value="retro" className="animate-in fade-in zoom-in-95 duration-300">
+                <RetroactiveOrderForm
+                  onSubmit={handleRetroactiveSubmit}
+                  isSubmitting={isSubmitting}
+                  quoteClients={quoteClients}
+                />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <OrderFormCard
+              tkbPrice={tkbPrice}
+              binancePrice={binancePrice}
+              isLoading={isLoading}
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+              quoteClients={quoteClients}
+            />
+          )}
         </div>
       </main>
     </div>
