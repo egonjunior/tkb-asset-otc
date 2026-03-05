@@ -46,6 +46,9 @@ import AdminOkxOperations from "./pages/admin/AdminOkxOperations";
 import AdminOperationalNotes from "./pages/admin/AdminOperationalNotes";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import AdminBlog from "./pages/admin/AdminBlog";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +64,8 @@ const App = () => (
             <Route path="/home" element={<Landing />} />
             <Route path="/empresas" element={<Empresas />} />
             <Route path="/cotacao" element={<QuotePage />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -129,6 +134,7 @@ const App = () => (
             <Route path="/admin/pld-compliance" element={<AdminProtectedRoute><AdminPLDCompliance /></AdminProtectedRoute>} />
             <Route path="/admin/okx-operations" element={<AdminProtectedRoute><AdminOkxOperations /></AdminProtectedRoute>} />
             <Route path="/admin/operational-notes" element={<AdminProtectedRoute><AdminOperationalNotes /></AdminProtectedRoute>} />
+            <Route path="/admin/blog" element={<AdminProtectedRoute><AdminBlog /></AdminProtectedRoute>} />
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="/:slug" element={<OtcQuote />} />
