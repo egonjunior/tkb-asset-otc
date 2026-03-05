@@ -74,11 +74,30 @@ export default function AdminBlog() {
         setIsGenerating(true);
 
         try {
-            const { data, error } = await supabase.functions.invoke("generate-blog-post", {
-                body: { topic: aiTopic, category: aiCategory },
-            });
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("Você precisa estar logado.");
 
-            if (error) throw error;
+            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+            const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+            const response = await fetch(
+                `${supabaseUrl}/functions/v1/generate-blog-post`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${session.access_token}`,
+                        "apikey": anonKey,
+                    },
+                    body: JSON.stringify({ topic: aiTopic, category: aiCategory }),
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || `Erro ${response.status}: ${JSON.stringify(result)}`);
+            }
 
             toast({
                 title: "✨ Artigo gerado com sucesso!",
