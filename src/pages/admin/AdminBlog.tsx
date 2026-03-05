@@ -74,9 +74,6 @@ export default function AdminBlog() {
         setIsGenerating(true);
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error("Você precisa estar logado.");
-
             const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
             const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
@@ -86,7 +83,6 @@ export default function AdminBlog() {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${session.access_token}`,
                         "apikey": anonKey,
                     },
                     body: JSON.stringify({ topic: aiTopic, category: aiCategory }),
