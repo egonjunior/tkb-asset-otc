@@ -90,6 +90,7 @@ export default function Partner() {
         linkedin: data.linkedin || null,
         instagram: data.instagram || null,
         request_type: 'assessor',
+        status: 'pending',
         user_id: user?.id || null,
       };
 
