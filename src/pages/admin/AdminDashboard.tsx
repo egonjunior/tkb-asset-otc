@@ -462,6 +462,22 @@ const AdminDashboard = () => {
                 <p className="text-xs text-muted-foreground mt-2">Solicitações de comprovantes para aprovação</p>
               </CardContent>
             </Card>
+
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-pink-500"
+              onClick={() => navigate('/admin/blog')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">📝 Blog & Conteúdo IA</p>
+                    <p className="text-xl font-bold text-pink-600">Gerenciar →</p>
+                  </div>
+                  <FileText className="h-8 w-8 text-pink-600" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Gerar artigos com Claude e publicar no blog</p>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Volume Card */}

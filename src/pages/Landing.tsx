@@ -55,6 +55,9 @@ const Landing = () => {
               <a href="#sobre" className="text-neutral-300 hover:text-white transition-colors">
                 Sobre
               </a>
+              <a href="/blog" className="text-neutral-300 hover:text-white transition-colors">
+                Blog
+              </a>
               <a href="#contato" className="text-neutral-300 hover:text-white transition-colors">
                 Contato
               </a>
