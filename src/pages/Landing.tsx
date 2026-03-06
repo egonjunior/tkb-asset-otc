@@ -21,6 +21,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -36,11 +42,11 @@ const Landing = () => {
       <header className="bg-neutral-900 border-b border-neutral-800 sticky top-0 z-50 shadow-lg">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src={tkbLogo} alt="TKB Asset" className="h-10 w-10" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <img src={tkbLogo} alt="TKB Asset" className="h-8 w-8 sm:h-10 sm:w-10" />
               <div>
-                <h1 className="text-lg font-display text-white">TKB Asset</h1>
-                <p className="text-xs text-neutral-400 uppercase tracking-wider">
+                <h1 className="text-base sm:text-lg font-display text-white leading-none">TKB Asset</h1>
+                <p className="hidden sm:block text-[10px] sm:text-xs text-neutral-400 uppercase tracking-wider mt-1">
                   Asset Manager Cambial via Blockchain
                 </p>
               </div>
@@ -62,11 +68,77 @@ const Landing = () => {
                 Contato
               </a>
             </nav>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 sm:gap-3 lg:hidden">
               <Button
                 variant="ghost"
                 onClick={() => navigate("/login")}
-                className="hidden sm:inline-flex text-white hover:bg-neutral-800"
+                className="text-white hover:bg-neutral-800 text-xs px-2 h-8"
+              >
+                Login
+              </Button>
+              <Button
+                variant="tkb"
+                onClick={scrollToForm}
+                className="text-xs px-3 h-8"
+              >
+                Falar Conosco
+              </Button>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-white h-8 w-8 ml-1">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="bg-neutral-900 border-neutral-800 text-white p-6 w-[300px] flex flex-col gap-8 pt-12">
+                  <div className="flex items-center gap-3 border-b border-neutral-800 pb-6">
+                    <img src={tkbLogo} alt="TKB Asset" className="h-8 w-8" />
+                    <div>
+                      <h1 className="text-base font-display">TKB Asset</h1>
+                    </div>
+                  </div>
+                  <nav className="flex flex-col gap-6 text-base font-medium">
+                    <a href="#solucoes" className="text-neutral-300 hover:text-white transition-colors">
+                      Soluções
+                    </a>
+                    <a href="#setores" className="text-neutral-300 hover:text-white transition-colors">
+                      Setores
+                    </a>
+                    <a href="#sobre" className="text-neutral-300 hover:text-white transition-colors">
+                      Sobre
+                    </a>
+                    <a href="/blog" className="text-neutral-300 hover:text-white transition-colors">
+                      Blog
+                    </a>
+                    <a href="#contato" className="text-neutral-300 hover:text-white transition-colors">
+                      Contato
+                    </a>
+                  </nav>
+
+                  <div className="mt-auto flex flex-col gap-4">
+                    <Button
+                      variant="tkb"
+                      onClick={() => navigate("/register")}
+                      className="w-full justify-center text-sm shadow-xl"
+                    >
+                      Criar Conta
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={scrollToForm}
+                      className="w-full justify-center text-sm border-neutral-600 text-white hover:bg-neutral-800 hover:text-white"
+                    >
+                      Falar com especialista
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+
+            <div className="hidden lg:flex items-center gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/login")}
+                className="text-white hover:bg-neutral-800"
               >
                 Login
               </Button>
