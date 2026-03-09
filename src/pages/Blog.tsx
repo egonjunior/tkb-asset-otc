@@ -72,10 +72,10 @@ export default function Blog() {
                             Login
                         </Link>
                         <Link
-                            to="/cotacao"
+                            to="/auth"
                             className="px-4 py-2 bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity"
                         >
-                            Comprar USDT
+                            Criar Conta na TKB
                         </Link>
                     </div>
                 </div>

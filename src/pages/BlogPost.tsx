@@ -87,10 +87,10 @@ export default function BlogPost() {
                     <div className="flex items-center gap-4">
                         <img src={tkbLogo} alt="TKB Asset" className="h-6 w-6 opacity-50 hidden sm:block" />
                         <Link
-                            to="/cotacao"
+                            to="/auth"
                             className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-medium rounded-full transition-all hover:scale-105 active:scale-95"
                         >
-                            Comprar USDT
+                            Acessar Plataforma
                         </Link>
                     </div>
                 </div>
