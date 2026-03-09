@@ -62,9 +62,12 @@ export default function Partner() {
 
       if (data) {
         setExistingRequest(data);
+      } else {
+        setExistingRequest({ error: 'No request found', status: 'unknown' });
       }
     } catch (error) {
       console.error('Error checking request:', error);
+      setExistingRequest({ error: error.message, status: 'unknown' });
     } finally {
       setIsCheckingRequest(false);
     }
@@ -145,6 +148,13 @@ export default function Partner() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
+          {/* TEMP DEBUG BOX */}
+          <div className="bg-black/80 text-green-400 p-4 font-mono text-xs rounded-lg mb-4 overflow-auto">
+            <p>DEBUG INFO:</p>
+            <p>isPartner context: {String(isPartner)}</p>
+            <p>existingRequest state: {JSON.stringify(existingRequest, null, 2)}</p>
+          </div>
+
           <Card className="shadow-lg">
             <CardHeader className="text-center space-y-4">
               <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
