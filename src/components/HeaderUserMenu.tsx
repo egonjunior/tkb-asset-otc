@@ -110,7 +110,7 @@ export function HeaderUserMenu({ userName, userEmail, onLogout }: HeaderUserMenu
                         className="px-3 py-2.5 rounded-lg cursor-pointer text-muted-foreground hover:text-foreground hover:bg-white/[0.04] focus:bg-white/[0.04] focus:text-foreground gap-3 transition-colors"
                     >
                         <Handshake className="h-4 w-4" />
-                        Parceiro Comercial
+                        {isPartner ? "Visão Parceiro" : "Parceiro Comercial"}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem

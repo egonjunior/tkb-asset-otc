@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
     LayoutDashboard, Users, BarChart3, Wallet, Settings,
-    MessageCircle, LogOut, ChevronLeft, Menu, X
+    MessageCircle, LogOut, X, Menu, ArrowLeftRight
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import tkbLogo from "@/assets/tkb-logo.png";
@@ -22,6 +22,7 @@ const menuItems = [
 ];
 
 const bottomItems = [
+    { id: "client_view", label: "Visão Cliente", icon: ArrowLeftRight, path: "/dashboard", highlight: true },
     { id: "support", label: "Suporte", icon: MessageCircle, path: "/suporte" },
 ];
 
@@ -100,7 +101,10 @@ export function PartnerLayout({ children, partnerName = "Parceiro", partnerId = 
                         <button
                             key={item.id}
                             onClick={() => navigate(item.path)}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/40 hover:text-white/70 hover:bg-white/[0.04] transition-all"
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${item.highlight
+                                    ? "text-[#00D4FF] bg-[#00D4FF]/[0.08] hover:bg-[#00D4FF]/[0.15] border border-[#00D4FF]/[0.12]"
+                                    : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
+                                }`}
                         >
                             <item.icon className="w-[18px] h-[18px]" />
                             {item.label}
