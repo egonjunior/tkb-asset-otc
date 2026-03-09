@@ -220,6 +220,13 @@ export default function AdminMarketing() {
                                         <h3 className="text-white font-medium line-clamp-2 text-sm group-hover:text-rose-400 transition-colors">
                                             {content.topic}
                                         </h3>
+                                        <div className="mt-2 flex w-full">
+                                            {content.content_json?.imageUrl && (
+                                                <span className="text-[10px] bg-gradient-to-r from-blue-500 to-[#00D4FF] text-white px-2 py-0.5 rounded-sm">
+                                                    Imagem DALL-E 3
+                                                </span>
+                                            )}
+                                        </div>
                                         <div className="mt-4 flex items-center text-xs text-[#00D4FF] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
                                             Ver Estúdio Visual <ExternalLink className="w-3 h-3 ml-1" />
                                         </div>
@@ -266,20 +273,29 @@ export default function AdminMarketing() {
                                 <div className="flex gap-6 pb-4">
                                     {(selectedContent.content_json.content as any[]).map((slide, idx) => (
                                         <div key={idx} className="w-[300px] h-[300px] md:w-[400px] md:h-[400px] flex-shrink-0 bg-gradient-to-br from-[#0F172A] to-[#1E293B] border border-white/10 rounded-xl relative overflow-hidden shadow-2xl flex flex-col justify-center p-8">
-                                            {/* Design Elements TKB */}
-                                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D4FF] rounded-full blur-[64px] opacity-10" />
-                                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-600 rounded-full blur-[64px] opacity-10" />
+                                            {/* Design Elements TKB (Fallback if no image) */}
+                                            {selectedContent.content_json.imageUrl ? (
+                                                <div className="absolute inset-0 w-full h-full">
+                                                    <img src={selectedContent.content_json.imageUrl} alt="AI Generated Background" className="object-cover w-full h-full opacity-40 mix-blend-screen" />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#1E293B]/80 to-transparent" />
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D4FF] rounded-full blur-[64px] opacity-10" />
+                                                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-600 rounded-full blur-[64px] opacity-10" />
+                                                </>
+                                            )}
 
-                                            <div className="absolute top-6 left-6 text-white/30 text-xs font-bold tracking-widest">
+                                            <div className="absolute top-6 left-6 text-white/30 text-xs font-bold tracking-widest z-20">
                                                 TKB ASSET
                                             </div>
 
                                             {slide.type === 'cover' ? (
-                                                <div className="text-center z-10">
+                                                <div className="text-center z-10 p-2">
                                                     <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-4 tracking-tight uppercase">
                                                         {slide.title}
                                                     </h2>
-                                                    <p className="text-[#00D4FF] font-medium text-lg">{slide.body}</p>
+                                                    <p className="text-[#00D4FF] font-medium text-lg drop-shadow-md">{slide.body}</p>
                                                 </div>
                                             ) : slide.type === 'cta' ? (
                                                 <div className="text-center z-10 w-full flex flex-col items-center">
@@ -302,11 +318,20 @@ export default function AdminMarketing() {
                             {selectedContent.platform === 'instagram_post' && (
                                 <div className="flex flex-col md:flex-row gap-8 w-full">
                                     <div className="w-[300px] h-[300px] md:w-[400px] md:h-[400px] mx-auto flex-shrink-0 bg-[#0A0A0A] border border-[#00D4FF]/20 rounded-xl relative overflow-hidden shadow-2xl flex flex-col items-center justify-center p-8 text-center">
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#00D4FF] rounded-full blur-[100px] opacity-15" />
-                                        <h2 className="text-2xl md:text-3xl font-bold text-white leading-snug z-10 text-balance">
+                                        {/* Background generation */}
+                                        {selectedContent.content_json.imageUrl ? (
+                                            <div className="absolute inset-0 w-full h-full">
+                                                <img src={selectedContent.content_json.imageUrl} alt="AI Generated Graphic" className="object-cover w-full h-full opacity-60 mix-blend-screen" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] to-transparent" />
+                                            </div>
+                                        ) : (
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#00D4FF] rounded-full blur-[100px] opacity-15" />
+                                        )}
+
+                                        <h2 className="text-2xl md:text-3xl font-bold text-white leading-snug z-10 text-balance drop-shadow-lg">
                                             {selectedContent.content_json.content?.imageText}
                                         </h2>
-                                        <div className="absolute bottom-6 text-white/20 text-xs font-medium tracking-widest">
+                                        <div className="absolute bottom-6 text-white/40 text-xs font-medium tracking-widest z-20">
                                             TKB ASSET
                                         </div>
                                     </div>
