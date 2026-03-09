@@ -50,9 +50,6 @@ export function HeaderUserMenu({ userName, userEmail, onLogout }: HeaderUserMenu
                         <span className="text-sm font-medium text-foreground truncate max-w-[140px] leading-tight">
                             {userName}
                         </span>
-                        <span className="badge-role">
-                            {isPartner ? "Parceiro" : "Operador"}
-                        </span>
                     </div>
 
                     {/* Chevron */}
@@ -80,7 +77,6 @@ export function HeaderUserMenu({ userName, userEmail, onLogout }: HeaderUserMenu
                             {userEmail && (
                                 <span className="text-[11px] text-muted-foreground truncate">{userEmail}</span>
                             )}
-                            <span className="badge-role mt-1">{isPartner ? "Parceiro" : "Operador"}</span>
                         </div>
                     </div>
                 </DropdownMenuLabel>
