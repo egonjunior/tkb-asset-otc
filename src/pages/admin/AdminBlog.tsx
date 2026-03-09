@@ -9,9 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { ArrowLeft, Sparkles, Edit, Trash2, Eye, Send, FileText, Plus } from "lucide-react";
+import { ArrowLeft, Sparkles, Edit, Trash2, Eye, Send, FileText, Plus, RefreshCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface BlogPost {
@@ -43,6 +44,7 @@ export default function AdminBlog() {
     const [showAIModal, setShowAIModal] = useState(false);
     const [aiTopic, setAiTopic] = useState("");
     const [aiCategory, setAiCategory] = useState("mercado");
+    const [filter, setFilter] = useState("all");
     const navigate = useNavigate();
     const { toast } = useToast();
 
@@ -269,6 +271,16 @@ export default function AdminBlog() {
                         <CardTitle>Todos os Artigos</CardTitle>
                         <CardDescription>Gerencie, edite e publique seus conteúdos</CardDescription>
                     </CardHeader>
+                    <div className="px-6 pb-2">
+                        <Tabs value={filter} onValueChange={setFilter}>
+                            <TabsList>
+                                <TabsTrigger value="all">Todos</TabsTrigger>
+                                <TabsTrigger value="published">Publicados</TabsTrigger>
+                                <TabsTrigger value="draft">Rascunhos</TabsTrigger>
+                                <TabsTrigger value="archived">Arquivados</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+                    </div>
                     <CardContent>
                         {isLoading ? (
                             <div className="text-center py-8 text-muted-foreground">Carregando...</div>
@@ -285,70 +297,83 @@ export default function AdminBlog() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {posts.map((post) => (
-                                            <TableRow key={post.id}>
-                                                <TableCell className="font-medium">{post.title}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">{post.category}</Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge className={statusConfig[post.status]?.className}>
-                                                        {statusConfig[post.status]?.label || post.status}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-sm text-muted-foreground">
-                                                    {format(new Date(post.created_at), "dd/MM/yyyy")}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex gap-1">
-                                                        <Button variant="ghost" size="sm" onClick={() => openEditor(post)} title="Editar">
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                        {post.status === "published" && (
+                                        {posts
+                                            .filter(post => filter === "all" ? true : post.status === filter)
+                                            .map((post) => (
+                                                <TableRow key={post.id}>
+                                                    <TableCell className="font-medium">{post.title}</TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="outline">{post.category}</Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge className={statusConfig[post.status]?.className}>
+                                                            {statusConfig[post.status]?.label || post.status}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-sm text-muted-foreground">
+                                                        {format(new Date(post.created_at), "dd/MM/yyyy")}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex gap-1">
+                                                            <Button variant="ghost" size="sm" onClick={() => openEditor(post)} title="Editar">
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                            {post.status === "published" && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => window.open(`/blog/${post.slug}`, "_blank")}
+                                                                    title="Ver publicado"
+                                                                >
+                                                                    <Eye className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
+                                                            {post.status === "draft" && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="text-green-600"
+                                                                    onClick={() => handlePublish(post.id)}
+                                                                    title="Publicar"
+                                                                >
+                                                                    <Send className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
+                                                            {post.status === "published" && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="text-yellow-600"
+                                                                    onClick={() => handleArchive(post.id)}
+                                                                    title="Arquivar"
+                                                                >
+                                                                    <FileText className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
+                                                            {post.status === "archived" && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="text-green-600"
+                                                                    onClick={() => handlePublish(post.id)}
+                                                                    title="Postar novamente"
+                                                                >
+                                                                    <RefreshCcw className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                onClick={() => window.open(`/blog/${post.slug}`, "_blank")}
-                                                                title="Ver publicado"
+                                                                className="text-red-600"
+                                                                onClick={() => handleDelete(post.id)}
+                                                                title="Excluir"
                                                             >
-                                                                <Eye className="h-4 w-4" />
+                                                                <Trash2 className="h-4 w-4" />
                                                             </Button>
-                                                        )}
-                                                        {post.status === "draft" && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="text-green-600"
-                                                                onClick={() => handlePublish(post.id)}
-                                                                title="Publicar"
-                                                            >
-                                                                <Send className="h-4 w-4" />
-                                                            </Button>
-                                                        )}
-                                                        {post.status === "published" && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="text-yellow-600"
-                                                                onClick={() => handleArchive(post.id)}
-                                                                title="Arquivar"
-                                                            >
-                                                                <FileText className="h-4 w-4" />
-                                                            </Button>
-                                                        )}
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="text-red-600"
-                                                            onClick={() => handleDelete(post.id)}
-                                                            title="Excluir"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
                                     </TableBody>
                                 </Table>
                             </div>
