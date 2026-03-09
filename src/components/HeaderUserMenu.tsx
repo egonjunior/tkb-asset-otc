@@ -51,7 +51,7 @@ export function HeaderUserMenu({ userName, userEmail, onLogout }: HeaderUserMenu
                             {userName}
                         </span>
                         <span className="badge-role">
-                            Operador
+                            {isPartner ? "Parceiro" : "Operador"}
                         </span>
                     </div>
 
@@ -80,7 +80,7 @@ export function HeaderUserMenu({ userName, userEmail, onLogout }: HeaderUserMenu
                             {userEmail && (
                                 <span className="text-[11px] text-muted-foreground truncate">{userEmail}</span>
                             )}
-                            <span className="badge-role mt-1">Operador</span>
+                            <span className="badge-role mt-1">{isPartner ? "Parceiro" : "Operador"}</span>
                         </div>
                     </div>
                 </DropdownMenuLabel>
@@ -110,7 +110,7 @@ export function HeaderUserMenu({ userName, userEmail, onLogout }: HeaderUserMenu
                         className="px-3 py-2.5 rounded-lg cursor-pointer text-muted-foreground hover:text-foreground hover:bg-white/[0.04] focus:bg-white/[0.04] focus:text-foreground gap-3 transition-colors"
                     >
                         <Handshake className="h-4 w-4" />
-                        {isPartner ? "Visão Parceiro" : "Parceiro Comercial"}
+                        {isPartner ? "Dashboard Parceiro Comercial" : "Parceiro Comercial"}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
