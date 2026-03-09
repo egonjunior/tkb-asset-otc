@@ -49,6 +49,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import AdminBlog from "./pages/admin/AdminBlog";
+import AdminMarketing from "./pages/admin/AdminMarketing";
 
 const queryClient = new QueryClient();
 
@@ -135,6 +136,7 @@ const App = () => (
             <Route path="/admin/okx-operations" element={<AdminProtectedRoute><AdminOkxOperations /></AdminProtectedRoute>} />
             <Route path="/admin/operational-notes" element={<AdminProtectedRoute><AdminOperationalNotes /></AdminProtectedRoute>} />
             <Route path="/admin/blog" element={<AdminProtectedRoute><AdminBlog /></AdminProtectedRoute>} />
+            <Route path="/admin/marketing" element={<AdminProtectedRoute><AdminMarketing /></AdminProtectedRoute>} />
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="/:slug" element={<OtcQuote />} />

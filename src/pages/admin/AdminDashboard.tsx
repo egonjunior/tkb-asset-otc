@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users, Handshake, MessageCircle, Building2, UserCog, FileText, Percent } from "lucide-react";
+import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users, Handshake, MessageCircle, Building2, UserCog, FileText, Percent, Presentation } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VolumeCard } from "@/components/admin/VolumeCard";
@@ -478,7 +478,24 @@ const AdminDashboard = () => {
                 <p className="text-xs text-muted-foreground mt-2">Gerar artigos com Claude e publicar no blog</p>
               </CardContent>
             </Card>
+
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-rose-500"
+              onClick={() => navigate('/admin/marketing')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">🎨 Sala de Marketing</p>
+                    <p className="text-xl font-bold text-rose-600">Painel Canva →</p>
+                  </div>
+                  <Presentation className="h-8 w-8 text-rose-600" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Criar e editar posts para LinkedIn e Instagram</p>
+              </CardContent>
+            </Card>
           </div>
+
 
           {/* Volume Card */}
           <VolumeCard
