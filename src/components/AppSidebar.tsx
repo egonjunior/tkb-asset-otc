@@ -27,7 +27,7 @@ export function AppSidebar() {
     { title: "Notas Operacionais", url: "/dashboard#notas", icon: Receipt },
     { title: "Configurações", url: "/settings", icon: Settings },
     {
-      title: isPartner ? "Painel Parceiro" : "Seja um Parceiro",
+      title: "Parceiro Comercial",
       url: isPartner ? "/partner/dashboard" : "/parceiro",
       icon: Handshake
     },

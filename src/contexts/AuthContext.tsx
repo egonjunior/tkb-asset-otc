@@ -55,9 +55,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .eq('user_id', userId)
           .maybeSingle();
 
+        const { data: partnerReq } = await supabase
+          .from('partner_requests')
+          .select('status')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
         if (isMounted) {
           setProfile(profileData);
-          setIsPartner(!!partnerConfig?.is_active);
+          setIsPartner(!!partnerConfig?.is_active || partnerReq?.status === 'approved');
         }
       } catch (error) {
         console.error('[AuthContext] Error fetching profile:', error);

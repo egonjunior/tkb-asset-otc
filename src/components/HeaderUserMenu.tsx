@@ -106,22 +106,12 @@ export function HeaderUserMenu({ userName, userEmail, onLogout }: HeaderUserMenu
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
-                        onClick={() => navigate("/parceiro")}
+                        onClick={() => navigate(isPartner ? "/partner/dashboard" : "/parceiro")}
                         className="px-3 py-2.5 rounded-lg cursor-pointer text-muted-foreground hover:text-foreground hover:bg-white/[0.04] focus:bg-white/[0.04] focus:text-foreground gap-3 transition-colors"
                     >
                         <Handshake className="h-4 w-4" />
-                        Seja um Parceiro
+                        Parceiro Comercial
                     </DropdownMenuItem>
-
-                    {isPartner && (
-                        <DropdownMenuItem
-                            onClick={() => navigate("/partner/dashboard")}
-                            className="px-3 py-2.5 rounded-lg cursor-pointer text-[hsl(45,60%,58%)] hover:text-[hsl(45,70%,65%)] hover:bg-[hsl(45,60%,58%,0.1)] gap-3 transition-colors"
-                        >
-                            <Building2 className="h-4 w-4" />
-                            Painel do Parceiro
-                        </DropdownMenuItem>
-                    )}
 
                     <DropdownMenuItem
                         onClick={() => navigate("/suporte")}
