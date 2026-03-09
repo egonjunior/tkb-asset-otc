@@ -12,7 +12,6 @@ import { z } from "zod";
 import { Handshake, Phone, Linkedin, Instagram, ArrowLeft, Building2, Users, Clock, CheckCircle, Loader2, FileSignature } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PartnerContractGenerator } from "@/components/partner/PartnerContractGenerator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 
 type PartnerFormData = z.infer<typeof partnerRequestSchema>;
@@ -38,8 +37,12 @@ export default function Partner() {
   });
 
   useEffect(() => {
-    checkExistingRequest();
-  }, []);
+    if (isPartner) {
+      navigate('/partner/dashboard', { replace: true });
+    } else {
+      checkExistingRequest();
+    }
+  }, [isPartner, navigate]);
 
   const checkExistingRequest = async () => {
     try {
@@ -154,178 +157,137 @@ export default function Partner() {
             </CardHeader>
 
             <CardContent>
-              <Tabs defaultValue="apply" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-8 bg-black/5">
-                  <TabsTrigger value="apply">Quero ser Parceiro</TabsTrigger>
-                  <TabsTrigger value="access">Já sou Parceiro</TabsTrigger>
-                </TabsList>
+              <div className="bg-primary/5 p-4 rounded-lg mb-6">
+                <h3 className="font-semibold text-lg mb-2">Seja um Parceiro Homologado</h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Você é um assessor de investimentos, corretor ou tem uma rede de contatos
+                  que podem se interessar em comprar USDT com cotação premium?
+                </p>
+                <p className="text-sm font-semibold text-foreground">
+                  Traga seus clientes para a TKB Asset e seja comissionado por cada operação realizada!
+                </p>
+              </div>
 
-                <TabsContent value="apply">
-                  <div className="bg-primary/5 p-4 rounded-lg mb-6">
-                    <h3 className="font-semibold text-lg mb-2">Seja um Parceiro Homologado</h3>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Você é um assessor de investimentos, corretor ou tem uma rede de contatos
-                      que podem se interessar em comprar USDT com cotação premium?
-                    </p>
-                    <p className="text-sm font-semibold text-foreground">
-                      Traga seus clientes para a TKB Asset e seja comissionado por cada operação realizada!
-                    </p>
-                  </div>
-
-                  {isCheckingRequest ? (
-                    <div className="text-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                      <p className="text-muted-foreground mt-2">Verificando solicitação...</p>
+              {isCheckingRequest ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                  <p className="text-muted-foreground mt-2">Verificando solicitação...</p>
+                </div>
+              ) : showContractGenerator ? (
+                <PartnerContractGenerator onComplete={() => checkExistingRequest()} />
+              ) : existingRequest ? (
+                <Card className="border-primary/20">
+                  <CardContent className="pt-6">
+                    <div className="text-center space-y-4">
+                      {existingRequest.status === 'pending' && (
+                        <>
+                          <div className="bg-blue-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
+                            <FileSignature className="h-8 w-8 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg">Próximo Passo: Assinatura</h3>
+                            <p className="text-muted-foreground mt-2 mb-4">
+                              Para finalizarmos sua parceria, precisamos que você assine digitalmente o contrato.
+                            </p>
+                            <Button onClick={() => setShowContractGenerator(true)} className="w-full">
+                              Gerar e Assinar Contrato
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                      {existingRequest.status === 'approved' && (
+                        <>
+                          <div className="bg-green-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
+                            <CheckCircle className="h-8 w-8 text-green-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg text-green-700">Parceria Aprovada! 🎉</h3>
+                            <p className="text-muted-foreground mt-2">
+                              Sua parceria foi aprovada. Verifique seu dashboard para iniciar as operações.
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
-                  ) : showContractGenerator ? (
-                    <PartnerContractGenerator onComplete={() => checkExistingRequest()} />
-                  ) : existingRequest ? (
-                    <Card className="border-primary/20">
-                      <CardContent className="pt-6">
-                        <div className="text-center space-y-4">
-                          {existingRequest.status === 'pending' && (
-                            <>
-                              <div className="bg-blue-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
-                                <FileSignature className="h-8 w-8 text-blue-600" />
-                              </div>
-                              <div>
-                                <h3 className="font-semibold text-lg">Próximo Passo: Assinatura</h3>
-                                <p className="text-muted-foreground mt-2 mb-4">
-                                  Para finalizarmos sua parceria, precisamos que você assine digitalmente o contrato.
-                                </p>
-                                <Button onClick={() => setShowContractGenerator(true)} className="w-full">
-                                  Gerar e Assinar Contrato
-                                </Button>
-                              </div>
-                            </>
-                          )}
-                          {existingRequest.status === 'approved' && (
-                            <>
-                              <div className="bg-green-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
-                                <CheckCircle className="h-8 w-8 text-green-600" />
-                              </div>
-                              <div>
-                                <h3 className="font-semibold text-lg text-green-700">Parceria Aprovada! 🎉</h3>
-                                <p className="text-muted-foreground mt-2 mb-4">
-                                  Sua parceria foi aprovada. Verifique seu dashboard para iniciar as operações.
-                                </p>
-                                <Button onClick={() => navigate('/partner/dashboard')} className="w-full">
-                                  Acessar Dashboard
-                                </Button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Nome Completo *</Label>
-                        <Input
-                          id="name"
-                          {...register("name")}
-                          placeholder="Seu nome completo"
-                          disabled={isSubmitting}
-                        />
-                        {errors.name && (
-                          <p className="text-sm text-destructive">{errors.name.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Telefone/WhatsApp *</Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="phone"
-                            {...register("phone")}
-                            onChange={handlePhoneChange}
-                            placeholder="(11) 99999-9999"
-                            className="pl-10"
-                            disabled={isSubmitting}
-                          />
-                        </div>
-                        {errors.phone && (
-                          <p className="text-sm text-destructive">{errors.phone.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="linkedin">LinkedIn (opcional)</Label>
-                        <div className="relative">
-                          <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="linkedin"
-                            {...register("linkedin")}
-                            placeholder="https://linkedin.com/in/seu-perfil"
-                            className="pl-10"
-                            disabled={isSubmitting}
-                          />
-                        </div>
-                        {errors.linkedin && (
-                          <p className="text-sm text-destructive">{errors.linkedin.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="instagram">Instagram (opcional)</Label>
-                        <div className="relative">
-                          <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="instagram"
-                            {...register("instagram")}
-                            placeholder="@seu_usuario ou https://instagram.com/seu_usuario"
-                            className="pl-10"
-                            disabled={isSubmitting}
-                          />
-                        </div>
-                        {errors.instagram && (
-                          <p className="text-sm text-destructive">{errors.instagram.message}</p>
-                        )}
-                      </div>
-
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isSubmitting}
-                        size="lg"
-                      >
-                        {isSubmitting ? "Enviando..." : "Enviar Solicitação"}
-                      </Button>
-                    </form>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="access">
-                  <div className="pt-4 text-center">
-                    <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                      <Building2 className="h-8 w-8 text-primary" />
-                    </div>
-                    <h3 className="font-semibold text-xl mb-3">Painel do Parceiro B2B</h3>
-
-                    {isPartner ? (
-                      <>
-                        <p className="text-muted-foreground mb-6">
-                          Você possui uma conta de parceria ativa. Acesse o seu painel gerencial para acompanhar comissões e novas operações.
-                        </p>
-                        <Button onClick={() => navigate('/partner/dashboard')} className="w-full" size="lg">
-                          Acessar Dashboard
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-muted-foreground mb-6">
-                          Você ainda não possui acesso ao painel de parcerias B2B ativado, ou sua solicitação ainda está em análise.
-                        </p>
-                        <Button onClick={() => document.querySelector<HTMLButtonElement>('[value="apply"]')?.click()} variant="outline" className="w-full">
-                          Fazer Solicitação
-                        </Button>
-                      </>
+                  </CardContent>
+                </Card>
+              ) : (
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome Completo *</Label>
+                    <Input
+                      id="name"
+                      {...register("name")}
+                      placeholder="Seu nome completo"
+                      disabled={isSubmitting}
+                    />
+                    {errors.name && (
+                      <p className="text-sm text-destructive">{errors.name.message}</p>
                     )}
                   </div>
-                </TabsContent>
-              </Tabs>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Telefone/WhatsApp *</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="phone"
+                        {...register("phone")}
+                        onChange={handlePhoneChange}
+                        placeholder="(11) 99999-9999"
+                        className="pl-10"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    {errors.phone && (
+                      <p className="text-sm text-destructive">{errors.phone.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="linkedin">LinkedIn (opcional)</Label>
+                    <div className="relative">
+                      <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="linkedin"
+                        {...register("linkedin")}
+                        placeholder="https://linkedin.com/in/seu-perfil"
+                        className="pl-10"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    {errors.linkedin && (
+                      <p className="text-sm text-destructive">{errors.linkedin.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram">Instagram (opcional)</Label>
+                    <div className="relative">
+                      <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="instagram"
+                        {...register("instagram")}
+                        placeholder="@seu_usuario ou https://instagram.com/seu_usuario"
+                        className="pl-10"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    {errors.instagram && (
+                      <p className="text-sm text-destructive">{errors.instagram.message}</p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isSubmitting}
+                    size="lg"
+                  >
+                    {isSubmitting ? "Enviando..." : "Enviar Solicitação"}
+                  </Button>
+                </form>
+              )}
             </CardContent>
           </Card>
         </div>
