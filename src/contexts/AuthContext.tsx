@@ -22,6 +22,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   session: Session | null;
+  isPartner: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [isPartner, setIsPartner] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -46,9 +48,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .select('*')
           .eq('id', userId)
           .single();
-        
+
+        const { data: partnerConfig } = await supabase
+          .from('partner_b2b_config')
+          .select('is_active')
+          .eq('user_id', userId)
+          .maybeSingle();
+
         if (isMounted) {
           setProfile(profileData);
+          setIsPartner(!!partnerConfig?.is_active);
         }
       } catch (error) {
         console.error('[AuthContext] Error fetching profile:', error);
@@ -59,10 +68,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!isMounted) return;
-        
+
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         // Fetch profile when user logs in - use setTimeout to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
@@ -72,6 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }, 0);
         } else {
           setProfile(null);
+          setIsPartner(false);
         }
       }
     );
@@ -80,12 +90,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (!isMounted) return;
-        
+
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           await fetchProfile(session.user.id);
         }
@@ -111,11 +121,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     setProfile(null);
     setSession(null);
+    setIsPartner(false);
     navigate('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, profile, session, isPartner, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

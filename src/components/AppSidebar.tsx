@@ -1,5 +1,6 @@
 import { FileText, Handshake, MessageCircle, Settings, Receipt, BarChart2, History } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -13,20 +14,25 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const items = [
-  { title: "Analytics", url: "/analytics", icon: BarChart2 },
-  { title: "Histórico", url: "/dashboard#historico", icon: History },
-  { title: "Meus Documentos", url: "/documents", icon: FileText },
-  { title: "Notas Operacionais", url: "/dashboard#notas", icon: Receipt },
-  { title: "Configurações", url: "/settings", icon: Settings },
-  { title: "Seja um Parceiro", url: "/parceiro", icon: Handshake },
-  { title: "Suporte", url: "/suporte", icon: MessageCircle },
-];
-
 export function AppSidebar() {
   const { state } = useSidebar();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isPartner } = useAuth();
+
+  const items = [
+    { title: "Analytics", url: "/analytics", icon: BarChart2 },
+    { title: "Histórico", url: "/dashboard#historico", icon: History },
+    { title: "Meus Documentos", url: "/documents", icon: FileText },
+    { title: "Notas Operacionais", url: "/dashboard#notas", icon: Receipt },
+    { title: "Configurações", url: "/settings", icon: Settings },
+    {
+      title: isPartner ? "Painel Parceiro" : "Seja um Parceiro",
+      url: isPartner ? "/partner/dashboard" : "/parceiro",
+      icon: Handshake
+    },
+    { title: "Suporte", url: "/suporte", icon: MessageCircle },
+  ];
 
   const isActive = (path: string) => {
     if (path.includes('#')) {

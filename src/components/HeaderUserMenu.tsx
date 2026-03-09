@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Settings, FileText, MessageCircle, Handshake, LogOut, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -28,6 +29,7 @@ function getInitials(name: string): string {
 
 export function HeaderUserMenu({ userName, userEmail, onLogout }: HeaderUserMenuProps) {
     const navigate = useNavigate();
+    const { isPartner } = useAuth();
     const initials = getInitials(userName);
 
     return (
@@ -104,11 +106,11 @@ export function HeaderUserMenu({ userName, userEmail, onLogout }: HeaderUserMenu
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
-                        onClick={() => navigate("/parceiro")}
+                        onClick={() => navigate(isPartner ? "/partner/dashboard" : "/parceiro")}
                         className="px-3 py-2.5 rounded-lg cursor-pointer text-muted-foreground hover:text-foreground hover:bg-white/[0.04] focus:bg-white/[0.04] focus:text-foreground gap-3 transition-colors"
                     >
                         <Handshake className="h-4 w-4" />
-                        Seja um Parceiro
+                        {isPartner ? "Painel Parceiro" : "Seja um Parceiro"}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
