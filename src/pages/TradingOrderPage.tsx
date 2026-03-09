@@ -100,10 +100,10 @@ const TradingOrderPage = () => {
             cotacao: orderData.lockedPrice.toFixed(3),
             rede: orderData.network,
             tempo_validade: 5,
-            banco: 'Banco do Brasil',
+            banco: 'Banco Corpx',
             titular_conta: 'TKB ASSET LTDA',
             cnpj_conta: '45.933.866/0001-93',
-            pix_cnpj: '45933866000193',
+            pix_cnpj: 'gestao@tkbasset.com',
             link_enviar_comprovante: `${window.location.origin}/order/${data.id}`
           }
         }

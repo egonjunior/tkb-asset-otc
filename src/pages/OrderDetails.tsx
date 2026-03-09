@@ -44,12 +44,12 @@ const OrderDetails = () => {
 
   // Dados bancários fixos (não mudam)
   const bankData = {
-    bank: "Banco do Brasil",
+    bank: "Banco Corpx",
     agency: "6869-1",
     account: "33826-5",
     cnpj: "45.933.866/0001-93",
     name: "Tokenizacao Management Gestao de negocios e Patrimonio e Inv",
-    pix: "45.933.866/0001-93",
+    pix: "gestao@tkbasset.com",
   };
 
   // Buscar ordem e eventos da timeline
@@ -59,15 +59,15 @@ const OrderDetails = () => {
 
       try {
         setLoading(true);
-        
+
         // Primeiro verificar se o usuário está autenticado
         const { data: { user } } = await supabase.auth.getUser();
-        
+
         if (!user) {
           setError('Você precisa estar logado para ver esta ordem');
           return;
         }
-        
+
         const { data, error } = await supabase
           .from('orders')
           .select('*')
@@ -84,7 +84,7 @@ const OrderDetails = () => {
           }
           return;
         }
-        
+
         if (!data) {
           setError('Ordem não encontrada ou você não tem permissão para visualizá-la');
           return;
@@ -243,18 +243,18 @@ const OrderDetails = () => {
     const interval = setInterval(async () => {
       const remaining = calculateTimeRemaining();
       setTimeRemaining(remaining);
-      
+
       // Quando o tempo expirar e o status ainda for pending, atualizar para expired
       if (remaining <= 0) {
         clearInterval(interval);
-        
+
         if (order.status === 'pending') {
           try {
             await supabase
               .from('orders')
               .update({ status: 'expired' })
               .eq('id', order.id);
-            
+
             // Registrar evento na timeline
             await supabase
               .from('order_timeline')
@@ -303,10 +303,10 @@ const OrderDetails = () => {
         });
         return;
       }
-      
+
       // Adicionar à fila (não substituir)
       setSelectedFiles(prev => [...prev, file]);
-      
+
       // Limpar input para permitir selecionar outro arquivo
       e.target.value = '';
     }
@@ -318,31 +318,31 @@ const OrderDetails = () => {
 
   const handleSendReceipt = async () => {
     if (selectedFiles.length === 0 || !order) return;
-    
+
     setIsUploading(true);
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Não autenticado');
-      
+
       const uploadedFiles: string[] = [];
-      
+
       // Processar cada arquivo da fila
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
         const receiptNumber = receipts.length + i + 1;
-        
+
         // 1. Upload para Supabase Storage
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}/${order.id}_${Date.now()}_${i}.${fileExt}`;
-        
+
         const { error: uploadError } = await supabase.storage
           .from('receipts')
           .upload(fileName, file);
-        
+
         if (uploadError) throw uploadError;
         uploadedFiles.push(fileName);
-        
+
         // 2. Inserir na tabela order_receipts
         const { error: insertError } = await supabase
           .from('order_receipts')
@@ -382,7 +382,7 @@ const OrderDetails = () => {
           .update({ status: 'paid' })
           .eq('id', order.id);
       }
-      
+
       toast({
         title: "Comprovantes enviados!",
         description: `${selectedFiles.length} arquivo(s) enviado(s) com sucesso`,
@@ -408,10 +408,10 @@ const OrderDetails = () => {
           }
         }
       }).catch(err => console.error('Error sending critical notification:', err));
-      
+
       // Limpar fila de arquivos
       setSelectedFiles([]);
-      
+
     } catch (error: any) {
       console.error('Erro ao enviar comprovante:', error);
       toast({
@@ -462,13 +462,13 @@ const OrderDetails = () => {
               {error || 'Esta ordem não existe ou você não tem permissão para visualizá-la'}
             </p>
             <div className="pt-2 space-y-2">
-              <Button 
+              <Button
                 className="w-full"
                 onClick={() => window.location.reload()}
               >
                 Tentar Novamente
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 className="w-full"
                 onClick={() => navigate('/dashboard')}
@@ -512,18 +512,17 @@ const OrderDetails = () => {
                     <Badge className={getStatusBadge(order.status).className}>
                       {getStatusBadge(order.status).label}
                     </Badge>
-                    
+
                     {/* Mostrar timer APENAS se status for 'pending' */}
                     {order.status === 'pending' && (
-                      <div className={`flex items-center gap-2 font-mono text-lg font-bold ${
-                        isExpired ? "text-danger" : isExpiringSoon ? "text-warning" : "text-foreground"
-                      }`}>
+                      <div className={`flex items-center gap-2 font-mono text-lg font-bold ${isExpired ? "text-danger" : isExpiringSoon ? "text-warning" : "text-foreground"
+                        }`}>
                         <Clock className="h-5 w-5" />
                         {formatTime(timeRemaining)}
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Alertas condicionais baseados no status */}
                   {order.status === 'pending' && isExpiringSoon && !isExpired && (
                     <div className="flex items-start gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg">
@@ -605,57 +604,57 @@ const OrderDetails = () => {
 
               {/* Dados Bancários - mostrar apenas se pendente */}
               {order.status === 'pending' && (
-              <Card className="shadow-lg border-primary/20">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">Dados Bancários</CardTitle>
-                  <Button variant="outline" size="sm" onClick={handleCopyBankData}>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copiar
-                  </Button>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="grid gap-3">
-                    <div>
-                      <p className="text-muted-foreground">Banco</p>
-                      <p className="font-semibold">{bankData.bank}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+                <Card className="shadow-lg border-primary/20">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-lg">Dados Bancários</CardTitle>
+                    <Button variant="outline" size="sm" onClick={handleCopyBankData}>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copiar
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div className="grid gap-3">
                       <div>
-                        <p className="text-muted-foreground">Agência</p>
-                        <p className="font-semibold">{bankData.agency}</p>
+                        <p className="text-muted-foreground">Banco</p>
+                        <p className="font-semibold">{bankData.bank}</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-muted-foreground">Agência</p>
+                          <p className="font-semibold">{bankData.agency}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Conta</p>
+                          <p className="font-semibold">{bankData.account}</p>
+                        </div>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Conta</p>
-                        <p className="font-semibold">{bankData.account}</p>
+                        <p className="text-muted-foreground">CNPJ</p>
+                        <p className="font-semibold">{bankData.cnpj}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Favorecido</p>
+                        <p className="font-semibold">{bankData.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Chave PIX (E-mail)</p>
+                        <p className="font-semibold font-mono">{bankData.pix}</p>
+                      </div>
+                      <div className="pt-2 border-t">
+                        <p className="text-muted-foreground">Valor exato</p>
+                        <p className="font-bold text-primary text-lg">
+                          R$ {order.total.toFixed(2)}
+                        </p>
                       </div>
                     </div>
-                    <div>
-                      <p className="text-muted-foreground">CNPJ</p>
-                      <p className="font-semibold">{bankData.cnpj}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Favorecido</p>
-                      <p className="font-semibold">{bankData.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Chave PIX (CNPJ)</p>
-                      <p className="font-semibold font-mono">{bankData.pix}</p>
-                    </div>
-                    <div className="pt-2 border-t">
-                      <p className="text-muted-foreground">Valor exato</p>
-                      <p className="font-bold text-primary text-lg">
-                        R$ {order.total.toFixed(2)}
+                    <div className="bg-warning/10 border border-warning/20 rounded-lg p-3 flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                      <p className="text-xs text-muted-foreground">
+                        Use o número da ordem <strong>{order.id}</strong> como identificador no PIX/TED
                       </p>
                     </div>
-                  </div>
-                  <div className="bg-warning/10 border border-warning/20 rounded-lg p-3 flex items-start gap-2">
-                    <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-                    <p className="text-xs text-muted-foreground">
-                      Use o número da ordem <strong>{order.id}</strong> como identificador no PIX/TED
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
               )}
             </div>
 
@@ -701,10 +700,9 @@ const OrderDetails = () => {
                     {/* Eventos da timeline */}
                     {timelineEvents.map((event) => (
                       <div key={event.id} className="flex gap-3 items-start">
-                        <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
-                          event.event_type === 'payment_confirmed' ? 'bg-success/10' :
-                          event.event_type === 'usdt_sent' ? 'bg-primary/10' : 'bg-muted'
-                        }`}>
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${event.event_type === 'payment_confirmed' ? 'bg-success/10' :
+                            event.event_type === 'usdt_sent' ? 'bg-primary/10' : 'bg-muted'
+                          }`}>
                           {event.event_type === 'payment_confirmed' ? (
                             <CheckCircle2 className="h-4 w-4 text-success" />
                           ) : event.event_type === 'usdt_sent' ? (
@@ -762,7 +760,7 @@ const OrderDetails = () => {
                         <Badge variant="secondary">Limite atingido</Badge>
                       )}
                     </div>
-                    
+
                     {/* Lista de comprovantes já enviados */}
                     {allReceipts.length > 0 && (
                       <div className="space-y-2">
@@ -777,7 +775,7 @@ const OrderDetails = () => {
                         ))}
                       </div>
                     )}
-                    
+
                     {/* Área de upload - habilitada se ordem não está completa/expirada E menos de 7 comprovantes */}
                     {!['completed', 'expired'].includes(order.status) && allReceipts.length + selectedFiles.length < MAX_RECEIPTS && (
                       <>
@@ -790,11 +788,11 @@ const OrderDetails = () => {
                           disabled={isUploading}
                           className="hidden"
                         />
-                        
+
                         {/* Botão para adicionar comprovante */}
-                        <Button 
-                          variant="outline" 
-                          className="w-full" 
+                        <Button
+                          variant="outline"
+                          className="w-full"
                           onClick={() => document.getElementById('receipt')?.click()}
                           disabled={isUploading}
                         >
@@ -804,13 +802,13 @@ const OrderDetails = () => {
                             : `Adicionar mais comprovante (${allReceipts.length + selectedFiles.length}/${MAX_RECEIPTS})`
                           }
                         </Button>
-                        
+
                         <p className="text-xs text-muted-foreground">
                           Aceita imagens (JPG, PNG) e PDFs • Máximo {MAX_RECEIPTS} comprovantes
                         </p>
                       </>
                     )}
-                    
+
                     {/* Fila de arquivos selecionados (antes de enviar) */}
                     {selectedFiles.length > 0 && (
                       <div className="space-y-2 p-3 border border-primary/30 bg-primary/5 rounded-lg">
@@ -833,7 +831,7 @@ const OrderDetails = () => {
                             </Button>
                           </div>
                         ))}
-                        
+
                         {/* Botão para adicionar mais (se não atingiu limite) */}
                         {allReceipts.length + selectedFiles.length < MAX_RECEIPTS && (
                           <Button
@@ -847,21 +845,21 @@ const OrderDetails = () => {
                             Adicionar mais arquivo
                           </Button>
                         )}
-                        
+
                         {/* Botão de enviar todos */}
-                        <Button 
+                        <Button
                           className="w-full"
                           onClick={handleSendReceipt}
                           disabled={isUploading}
                         >
-                          {isUploading 
-                            ? "Enviando..." 
+                          {isUploading
+                            ? "Enviando..."
                             : `Enviar ${selectedFiles.length} comprovante${selectedFiles.length > 1 ? 's' : ''}`
                           }
                         </Button>
                       </div>
                     )}
-                    
+
                     {/* Mensagem quando atingir limite */}
                     {allReceipts.length >= MAX_RECEIPTS && !['completed', 'expired'].includes(order.status) && (
                       <p className="text-xs text-muted-foreground">
