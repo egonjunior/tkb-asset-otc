@@ -22,7 +22,7 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     let slug = url.searchParams.get('slug');
-    
+
     // Se não vier na URL, tentar pegar do body
     if (!slug) {
       try {
@@ -32,10 +32,15 @@ serve(async (req) => {
         // Body vazio ou inválido
       }
     }
-    
+
     if (!slug) {
-      throw new Error('Slug do cliente é obrigatório');
+      return new Response(
+        JSON.stringify({ error: 'Slug do cliente é obrigatório' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    slug = slug.toLowerCase();
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -49,7 +54,10 @@ serve(async (req) => {
       .maybeSingle();
 
     if (dbError || !clientConfig) {
-      throw new Error('Cliente OTC não encontrado ou inativo');
+      return new Response(
+        JSON.stringify({ error: 'Cliente OTC não encontrado ou inativo.' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const priceSource = clientConfig.price_source || 'binance';
@@ -68,54 +76,61 @@ serve(async (req) => {
     }
 
     console.log(`🔍 Buscando preço de ${priceSource.toUpperCase()} para ${slug}`);
-    
+
     let basePrice: number;
     let tickerData: any;
 
-    if (priceSource === 'okx') {
-      // Fetch from OKX
-      const okxResponse = await fetch(
-        'https://www.okx.com/api/v5/market/ticker?instId=USDT-BRL'
-      );
-
-      if (!okxResponse.ok) {
-        throw new Error('Falha ao buscar preço da OKX');
-      }
-
+    // Funções de busca por corretora
+    const fetchFromOKX = async () => {
+      const okxResponse = await fetch('https://www.okx.com/api/v5/market/ticker?instId=USDT-BRL');
+      if (!okxResponse.ok) throw new Error('Falha ao buscar preço da OKX');
       const okxData = await okxResponse.json();
-      
       if (okxData.code !== '0' || !okxData.data || okxData.data.length === 0) {
         throw new Error('Dados inválidos da OKX');
       }
+      return okxData.data[0];
+    };
 
-      tickerData = okxData.data[0];
-      basePrice = parseFloat(tickerData.last);
-    } else {
-      // Fetch from Binance (default)
+    const fetchFromBinance = async () => {
       const [priceResponse, ticker24hResponse] = await Promise.all([
         fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'),
         fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL'),
       ]);
-
       if (!priceResponse.ok || !ticker24hResponse.ok) {
-        throw new Error('Falha ao buscar preço da Binance');
+        throw new Error('Falha HTTP ao buscar preço da Binance');
       }
-
       const priceData = await priceResponse.json();
       const ticker24h = await ticker24hResponse.json();
-      
-      basePrice = parseFloat(priceData.price);
-      
-      // Adapt Binance data to match OKX format
-      tickerData = {
-        last: basePrice.toString(),
+      return {
+        last: priceData.price,
         high24h: ticker24h.highPrice,
         low24h: ticker24h.lowPrice,
         vol24h: ticker24h.volume,
         sodUtc8: ticker24h.priceChangePercent,
       };
+    };
+
+    try {
+      if (priceSource === 'okx') {
+        try {
+          tickerData = await fetchFromOKX();
+        } catch (e) {
+          console.warn('⚠️ OKX falhou, tentando Binance como fallback', e);
+          tickerData = await fetchFromBinance();
+        }
+      } else {
+        try {
+          tickerData = await fetchFromBinance();
+        } catch (e) {
+          console.warn('⚠️ Binance falhou, tentando OKX como fallback', e);
+          tickerData = await fetchFromOKX();
+        }
+      }
+      basePrice = parseFloat(tickerData.last);
+    } catch (e) {
+      throw new Error('Ambas as fontes de cotação (Binance e OKX) estão indisponíveis no momento.');
     }
-    
+
     const markup = 1 + clientConfig.spread_percent / 100;
     const clientPrice = basePrice * markup;
 
@@ -160,9 +175,11 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('❌ Erro em get-otc-quote:', error);
+    // Retornamos status 200 com JSON {error: ...} para que o cliente supabase frontend não estoure
+    // o "FunctionsHttpError: Edge Function returned a non-2xx status code" ocultando o erro real.
     return new Response(
-      JSON.stringify({ error: error.message || 'Erro desconhecido' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: error.message || 'Erro desconhecido na Edge Function' }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
