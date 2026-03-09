@@ -28,6 +28,8 @@ interface PartnerOrder {
     status: string;
     created_at: string;
     network: string;
+    quote_client_id: string | null;
+    commission?: number;
 }
 
 interface QuoteClient {
@@ -80,15 +82,27 @@ export function usePartnerDashboard() {
                 });
             }
 
+            // Fetch OTC quote clients for this user FIRST so we can use them for commission calculation
+            const { data: clientsData } = await supabase
+                .from("otc_quote_clients")
+                .select("*")
+                .eq("created_by", user.id);
+
+            const activeClients = clientsData ? clientsData.filter((c) => c.is_active) : [];
+            const clientsMap = new Map((clientsData || []).map(c => [c.id, c.spread_percent]));
+
+            if (clientsData) {
+                setQuoteClients(clientsData);
+            }
+
             // Fetch orders for this user (B2B partner orders)
             const { data: ordersData } = await supabase
                 .from("orders")
-                .select("id, amount, total, locked_price, status, created_at, network")
+                .select("id, amount, total, locked_price, status, created_at, network, quote_client_id")
                 .eq("user_id", user.id)
                 .order("created_at", { ascending: false });
 
             const allOrders = ordersData || [];
-            setOrders(allOrders);
 
             // Calculate stats from real orders
             const now = new Date();
@@ -106,18 +120,42 @@ export function usePartnerDashboard() {
                 }
             );
 
-            const markup = configData?.markup_percent || 1.0;
+            const partnerBaseMarkup = configData?.markup_percent || 1.0;
+
+            // Helper to calculate commission based on spread diff
+            const calcOrderCommission = (order: PartnerOrder) => {
+                if (!order.quote_client_id) return 0; // Trata como volume próprio (sem comissão)
+                const clientSpread = clientsMap.get(order.quote_client_id);
+                if (clientSpread === undefined) return 0;
+
+                const spreadDiff = clientSpread - partnerBaseMarkup;
+                if (spreadDiff <= 0) return 0; // Sem margem de lucro neste cliente
+
+                return order.amount * (spreadDiff / 100);
+            };
+
+            const enrichedOrders = allOrders.map(o => ({
+                ...o,
+                commission: calcOrderCommission(o)
+            }));
+            setOrders(enrichedOrders);
+
             const thisMonthVolume = thisMonthOrders.reduce((sum, o) => sum + o.amount, 0);
             const prevMonthVolume = prevMonthOrders.reduce((sum, o) => sum + o.amount, 0);
-            const comissaoMes = thisMonthVolume * (markup / 100);
-            const comissaoAnterior = prevMonthVolume * (markup / 100);
+
+            const comissaoMes = thisMonthOrders.reduce((sum, o) => sum + calcOrderCommission(o), 0);
+            const comissaoAnterior = prevMonthOrders.reduce((sum, o) => sum + calcOrderCommission(o), 0);
+
+            const avgClientSpread = activeClients.length > 0
+                ? activeClients.reduce((sum, c) => sum + c.spread_percent, 0) / activeClients.length
+                : partnerBaseMarkup;
 
             setStats({
                 comissaoMes,
                 comissaoAnterior,
                 volumeProcessado: thisMonthVolume,
-                clientesAtivos: 0, // Will be calculated from quote clients
-                margemMedia: markup,
+                clientesAtivos: activeClients.length,
+                margemMedia: avgClientSpread,
                 totalOrders: thisMonthOrders.length,
             });
 
@@ -133,10 +171,11 @@ export function usePartnerDashboard() {
             const weekMap = new Map<string, { comissao: number; volume: number }>();
             recentOrders.forEach((order) => {
                 const d = new Date(order.created_at);
+                // "DD/MM" week format
                 const weekKey = `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}`;
                 const cur = weekMap.get(weekKey) || { comissao: 0, volume: 0 };
                 cur.volume += order.amount;
-                cur.comissao += order.amount * (markup / 100);
+                cur.comissao += calcOrderCommission(order);
                 weekMap.set(weekKey, cur);
             });
 
@@ -145,21 +184,9 @@ export function usePartnerDashboard() {
                 comissao: Math.round(vals.comissao),
                 volume: Math.round(vals.volume),
             }));
+
             setChartData(chart);
 
-            // Fetch OTC quote clients for this user
-            const { data: clientsData } = await supabase
-                .from("otc_quote_clients")
-                .select("*")
-                .eq("created_by", user.id);
-
-            if (clientsData) {
-                setQuoteClients(clientsData);
-                setStats((prev) => ({
-                    ...prev,
-                    clientesAtivos: clientsData.filter((c) => c.is_active).length,
-                }));
-            }
         } catch (err: any) {
             console.error("Dashboard error:", err);
             setError(err.message);

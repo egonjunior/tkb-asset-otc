@@ -9,7 +9,7 @@ interface Payment {
 }
 
 interface PartnerPaymentsProps {
-    orders?: { amount: number; total: number; status: string; created_at: string }[];
+    orders?: { amount: number; total: number; status: string; created_at: string; commission?: number }[];
     markupPercent?: number;
 }
 
@@ -25,7 +25,7 @@ export function PartnerPayments({ orders = [], markupPercent = 1.0 }: PartnerPay
 
     completedOrders.forEach((order, i) => {
         const d = new Date(order.created_at);
-        const commission = Math.round(order.amount * (markupPercent / 100));
+        const commission = Math.round(order.commission || 0);
         payments.push({
             id: `real-${i}`,
             date: `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}`,
