@@ -112,8 +112,8 @@ export default function Blog() {
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
                                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === cat
-                                            ? "bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] text-white"
-                                            : "bg-[#111111] text-white/40 hover:text-white/70 border border-white/[0.06]"
+                                        ? "bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] text-white"
+                                        : "bg-[#111111] text-white/40 hover:text-white/70 border border-white/[0.06]"
                                         }`}
                                 >
                                     {cat === "all" ? "Todos" : config?.label || cat}
@@ -132,49 +132,82 @@ export default function Blog() {
                             <div className="w-8 h-8 border-2 border-[#00D4FF] border-t-transparent rounded-full animate-spin" />
                         </div>
                     ) : filteredPosts.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredPosts.map((post) => {
-                                const config = categoryConfig[post.category] || categoryConfig.mercado;
-                                const Icon = config.icon;
-                                return (
-                                    <Link
-                                        key={post.id}
-                                        to={`/blog/${post.slug}`}
-                                        className="group bg-[#111111] border border-white/[0.04] rounded-2xl overflow-hidden hover:border-[#00D4FF]/20 transition-all hover:shadow-lg hover:shadow-[#00D4FF]/5"
-                                    >
-                                        {/* Cover */}
-                                        <div className={`h-40 bg-gradient-to-br ${config.color} opacity-80 group-hover:opacity-100 transition-opacity flex items-center justify-center`}>
-                                            <Icon className="w-12 h-12 text-white/60" />
-                                        </div>
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredPosts.map((post) => {
+                                    const config = categoryConfig[post.category] || categoryConfig.mercado;
 
-                                        {/* Content */}
-                                        <div className="p-5">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r ${config.color} text-white`}>
-                                                    {config.label}
-                                                </span>
-                                                {post.published_at && (
-                                                    <span className="text-white/20 text-xs flex items-center gap-1">
-                                                        <Calendar className="w-3 h-3" />
-                                                        {format(new Date(post.published_at), "dd MMM yyyy", { locale: ptBR })}
+                                    const coverImageUrl = post.cover_url || `https://source.unsplash.com/800x600/?${post.category === 'mercado' ? 'wall-street,finance,stock-market' :
+                                        post.category === 'educacional' ? 'library,technology,data' :
+                                            post.category === 'regulacao' ? 'architecture,law,building' :
+                                                'finance,business,abstract'
+                                        }`;
+
+                                    return (
+                                        <Link
+                                            key={post.id}
+                                            to={`/blog/${post.slug}`}
+                                            className="group bg-[#111111] border border-white/[0.04] rounded-2xl overflow-hidden hover:border-[#00D4FF]/20 transition-all hover:shadow-lg hover:shadow-[#00D4FF]/5 flex flex-col"
+                                        >
+                                            {/* Cover Image Container */}
+                                            <div className="h-48 relative overflow-hidden bg-[#0A0A0A]">
+                                                <div className="absolute inset-0 z-0">
+                                                    <img
+                                                        src={coverImageUrl}
+                                                        alt={post.title}
+                                                        className="w-full h-full object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-700 ease-out mix-blend-luminosity group-hover:mix-blend-normal"
+                                                    />
+                                                </div>
+                                                <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#111111] via-[#111111]/40 to-transparent" />
+                                                <div className={`absolute inset-0 z-10 bg-gradient-to-br ${config.color} opacity-20 mix-blend-overlay group-hover:opacity-10 transition-opacity`} />
+
+                                                {/* Category Badge overlaying image */}
+                                                <div className="absolute top-4 left-4 z-20">
+                                                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white flex items-center gap-1.5 shadow-xl`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${config.color}`} />
+                                                        {config.label}
                                                     </span>
-                                                )}
+                                                </div>
                                             </div>
-                                            <h3 className="text-white font-semibold text-lg mb-2 group-hover:text-[#00D4FF] transition-colors line-clamp-2">
-                                                {post.title}
-                                            </h3>
-                                            <p className="text-white/30 text-sm line-clamp-3 mb-4">{post.summary}</p>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-white/15 text-xs">{post.author}</span>
-                                                <span className="text-[#00D4FF] text-xs font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
-                                                    Ler artigo <ArrowRight className="w-3 h-3" />
-                                                </span>
+
+                                            {/* Content View */}
+                                            <div className="p-6 flex-1 flex flex-col pt-4 relative z-20 bg-[#111111]">
+                                                <div className="flex items-center gap-3 mb-3 text-white/40 text-xs font-medium">
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Calendar className="w-3.5 h-3.5" />
+                                                        {post.published_at ? format(new Date(post.published_at), "dd MMM yyyy", { locale: ptBR }) : 'Em breve'}
+                                                    </span>
+                                                    <span>•</span>
+                                                    <span>5 min leitura</span>
+                                                </div>
+
+                                                <h3 className="text-white font-display font-bold text-[1.15rem] leading-[1.4] mb-3 group-hover:text-[#00D4FF] transition-colors line-clamp-2">
+                                                    {post.title.replace('Título: ', '')}
+                                                </h3>
+
+                                                <p className="text-[#94A3B8] text-[0.95rem] line-clamp-3 mb-6 leading-relaxed flex-1">
+                                                    {post.summary}
+                                                </p>
+
+                                                <div className="flex items-center justify-between pt-4 border-t border-white/[0.04] mt-auto">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 rounded-full bg-[#222] border border-white/10 flex items-center justify-center">
+                                                            <span className="bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] bg-clip-text text-transparent text-[9px] font-bold">
+                                                                {post.author.split(' ').map(nSeparator => nSeparator[0]).join('').substring(0, 2).toUpperCase()}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-white/50 text-xs font-medium">{post.author}</span>
+                                                    </div>
+                                                    <span className="text-[#00D4FF] text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 group-hover:gap-2.5 transition-all">
+                                                        Ler <ArrowRight className="w-3.5 h-3.5" />
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </Link>
-                                );
-                            })}
-                        </div>
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        </>
                     ) : (
                         <div className="text-center py-20">
                             <BookOpen className="w-16 h-16 text-white/10 mx-auto mb-4" />
