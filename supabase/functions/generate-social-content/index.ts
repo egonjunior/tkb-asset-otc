@@ -56,7 +56,7 @@ Exemplo JSON Esperado rigorosamente:
 }`;
 
         // 1. Chamar Claude 3 para Copy + Image Prompt
-        console.log(\`[generate-social-content] Calling Anthropic for platform \${platform}\`);
+        console.log(`[generate-social-content] Calling Anthropic for platform ${platform}`);
         const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -65,8 +65,8 @@ Exemplo JSON Esperado rigorosamente:
                 'anthropic-version': '2023-06-01',
             },
             body: JSON.stringify({
-                model: 'claude-3-opus-20240229',
-                max_tokens: 3000,
+                model: 'claude-3-5-sonnet-20241022',
+                max_tokens: 4000,
                 system: systemPrompt,
                 messages: [
                     { role: 'user', content: userPrompt }
@@ -77,7 +77,7 @@ Exemplo JSON Esperado rigorosamente:
         const claudeData = await claudeResponse.json();
 
         if (!claudeResponse.ok) {
-            throw new Error(\`Claude API error: \${claudeData.error?.message || JSON.stringify(claudeData)}\`);
+            throw new Error(`Claude API error: ${claudeData.error?.message || JSON.stringify(claudeData)}`);
         }
 
         const aiResponseText = claudeData.content?.[0]?.text;
@@ -98,15 +98,15 @@ Exemplo JSON Esperado rigorosamente:
 
         // 2. Chamar DALL-E 3 para gerar Imagem
         if (dalleApiKey && parsedJson.image_prompt) {
-            console.log(\`[generate-social-content] Generated image prompt: \${parsedJson.image_prompt}\`);
-            console.log(\`[generate-social-content] Calling OpenAI DALL-E 3\`);
-            
+            console.log(`[generate-social-content] Generated image prompt: ${parsedJson.image_prompt}`);
+            console.log(`[generate-social-content] Calling OpenAI DALL-E 3`);
+
             try {
                 const dalleResponse = await fetch('https://api.openai.com/v1/images/generations', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': \`Bearer \${dalleApiKey}\`
+                        'Authorization': `Bearer ${dalleApiKey}`
                     },
                     body: JSON.stringify({
                         model: "dall-e-3",
@@ -118,16 +118,16 @@ Exemplo JSON Esperado rigorosamente:
                 });
 
                 const dalleData = await dalleResponse.json();
-                
+
                 if (dalleResponse.ok && dalleData.data && dalleData.data.length > 0) {
                     imageUrl = dalleData.data[0].url;
                     finalResponse.imageUrl = imageUrl;
-                    console.log(\`[generate-social-content] Successfully generated Image URL\`);
+                    console.log(`[generate-social-content] Successfully generated Image URL`);
                 } else {
-                    console.error(\`[generate-social-content] DALL-E API Error: \${JSON.stringify(dalleData)}\`);
+                    console.error(`[generate-social-content] DALL-E API Error: ${JSON.stringify(dalleData)}`);
                 }
             } catch (dalleErr) {
-                 console.error(\`[generate-social-content] Failed running DALL-E fetch:\`, dalleErr);
+                console.error(`[generate-social-content] Failed running DALL-E fetch:`, dalleErr);
             }
         } else {
             if (!dalleApiKey) console.log("[generate-social-content] Skipping DALL-E 3, missing OPENAI_API_KEY.");
