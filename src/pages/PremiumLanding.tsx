@@ -11,6 +11,7 @@ import tkbLogo from "@/assets/tkb-logo.png";
 const PremiumLanding = () => {
     const navigate = useNavigate();
     const [modalOpen, setModalOpen] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     const openModal = () => { setModalOpen(true); document.body.style.overflow = "hidden"; };
     const closeModal = () => { setModalOpen(false); document.body.style.overflow = ""; };
@@ -32,12 +33,15 @@ const PremiumLanding = () => {
         return () => observer.disconnect();
     }, []);
 
-    const scrollTo = (id: string) => {
-        const el = document.getElementById(id);
-        if (el) {
-            const top = el.getBoundingClientRect().top + window.scrollY - 100;
-            window.scrollTo({ top, behavior: "smooth" });
-        }
+    const scrollTo = (id: string, closeMobile = false) => {
+        if (closeMobile) setMobileOpen(false);
+        setTimeout(() => {
+            const el = document.getElementById(id);
+            if (el) {
+                const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                window.scrollTo({ top, behavior: "smooth" });
+            }
+        }, closeMobile ? 300 : 0);
     };
 
     return (
@@ -50,25 +54,52 @@ const PremiumLanding = () => {
                         <img src={tkbLogo} alt="TKB Asset" style={{ height: 32, width: 32, objectFit: "contain" }} />
                         <span className="pl-logo">TKB ASSET</span>
                     </div>
-                    <ul className="pl-nav-links">
+                    {/* Desktop links */}
+                    <ul className="pl-nav-links pl-nav-desktop">
                         <li><a href="#rotas">Como funciona</a></li>
                         <li><a href="#para-quem">Para quem serve</a></li>
                         <li><a href="#faq">Dúvidas</a></li>
                         <li><a href="/blog">Blog</a></li>
                     </ul>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <button
-                            onClick={() => navigate("/login")}
-                            className="pl-nav-login"
-                        >
+                    <div className="pl-nav-actions">
+                        <button onClick={() => navigate("/login")} className="pl-nav-login pl-nav-desktop">
                             Login
                         </button>
-                        <button className="pl-btn-cta" onClick={() => navigate("/register")}>
+                        <button className="pl-btn-cta pl-nav-desktop" onClick={() => navigate("/register")}>
                             Criar conta
+                        </button>
+                        {/* Hamburger */}
+                        <button
+                            className="pl-hamburger"
+                            onClick={() => setMobileOpen(o => !o)}
+                            aria-label="Menu"
+                        >
+                            <span className={`pl-ham-line ${mobileOpen ? "open" : ""}`} />
+                            <span className={`pl-ham-line mid ${mobileOpen ? "open" : ""}`} />
+                            <span className={`pl-ham-line ${mobileOpen ? "open" : ""}`} />
                         </button>
                     </div>
                 </nav>
             </header>
+
+            {/* ── Mobile Drawer ── */}
+            <div className={`pl-drawer ${mobileOpen ? "open" : ""}`}>
+                <nav className="pl-drawer-nav">
+                    <a href="#rotas" onClick={() => setMobileOpen(false)}>Como funciona</a>
+                    <a href="#para-quem" onClick={() => setMobileOpen(false)}>Para quem serve</a>
+                    <a href="#faq" onClick={() => setMobileOpen(false)}>Dúvidas</a>
+                    <a href="/blog" onClick={() => setMobileOpen(false)}>Blog</a>
+                </nav>
+                <div className="pl-drawer-actions">
+                    <button className="pl-btn pl-btn-ghost" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setMobileOpen(false); navigate("/login"); }}>
+                        Login
+                    </button>
+                    <button className="pl-btn pl-btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setMobileOpen(false); navigate("/register"); }}>
+                        Criar conta
+                    </button>
+                </div>
+            </div>
+            {mobileOpen && <div className="pl-drawer-backdrop" onClick={() => setMobileOpen(false)} />}
 
             {/* ── Modal: O que é Dólar Digital ── */}
             {modalOpen && (
