@@ -9,6 +9,7 @@ import { AdminProtectedRoute } from "./components/AdminProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
+import PremiumLanding from "./pages/PremiumLanding";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminLogin from "./pages/AdminLogin";
@@ -62,7 +63,9 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/home" element={<Landing />} />
+            <Route path="/home" element={<PremiumLanding />} />
+            <Route path="/premium" element={<PremiumLanding />} />
+            <Route path="/old-home" element={<Landing />} />
             <Route path="/empresas" element={<Empresas />} />
             <Route path="/cotacao" element={<QuotePage />} />
             <Route path="/blog" element={<Blog />} />
