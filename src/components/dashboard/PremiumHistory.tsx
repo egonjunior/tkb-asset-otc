@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Download, CheckCircle, Clock, XCircle, Eye, TrendingUp, Zap } from "lucide-react";
+import { Download, CheckCircle, Clock, XCircle, Eye, TrendingUp, Zap, ChevronRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 interface Order {
@@ -53,105 +53,78 @@ export function PremiumHistory({ orders, onCreateOrder }: PremiumHistoryProps) {
     };
 
     return (
-        <div className="bg-[#111111] border border-white/[0.04] rounded-2xl p-6 mb-8">
+        <div className="bg-black/40 backdrop-blur-2xl border border-white/[0.05] rounded-3xl p-8 mb-10 overflow-hidden shadow-2xl">
             {/* Header & Filters */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
                 <div>
-                    <h3 className="text-white text-xl font-bold mb-1 tracking-tight">Histórico de Operações</h3>
-                    <p className="text-white/30 text-xs font-mono">{orders.length} operações encontradas</p>
+                    <h3 className="text-white text-xl font-brand tracking-widest uppercase italic mb-1">Livro de Operações</h3>
+                    <p className="text-white/20 text-[9px] uppercase font-mono tracking-[0.2em]">{orders.length} Registros Auditados</p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <select className="px-4 py-2 bg-black/40 border border-white/[0.06] rounded-xl text-white text-xs font-mono focus:border-[#00D4FF]/30 outline-none appearance-none cursor-pointer">
-                        <option>Todos Status</option>
-                        <option>Concluídas</option>
-                        <option>Pendentes</option>
-                        <option>Canceladas</option>
+                <div className="flex flex-wrap items-center gap-2">
+                    <select className="px-3 py-2 bg-white/[0.02] border border-white/[0.05] rounded-lg text-white/40 text-[10px] font-mono tracking-widest outline-none uppercase cursor-pointer transition-all hover:border-white/10">
+                        <option>Filtro Global</option>
+                        <option>Completed</option>
+                        <option>Processing</option>
+                        <option>Cancelled</option>
                     </select>
 
-                    <select className="px-4 py-2 bg-black/40 border border-white/[0.06] rounded-xl text-white text-xs font-mono focus:border-[#00D4FF]/30 outline-none appearance-none cursor-pointer">
-                        <option>Últimos 30 dias</option>
-                        <option>Últimos 7 dias</option>
-                        <option>Este ano</option>
-                    </select>
-
-                    <button className="p-2 bg-black/40 border border-white/[0.06] rounded-xl text-white/40 hover:text-white hover:border-white/[0.1] transition-all" title="Exportar CSV">
-                        <Download className="w-4 h-4" />
+                    <button className="flex items-center gap-2 px-3 py-2 bg-white/[0.02] border border-white/[0.05] rounded-lg text-white/40 text-[10px] font-mono tracking-widest hover:text-[#00D4FF] hover:border-[#00D4FF]/30 transition-all uppercase">
+                        <Download className="w-3 h-3" /> Relatórios
                     </button>
                 </div>
             </div>
 
             {orders.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                     {orders.map((op, index) => {
                         const status = getStatusProps(op.status);
-                        const isLast = index === orders.length - 1;
 
                         return (
                             <div
                                 key={op.id}
-                                onClick={(e) => {
-                                    console.log("Navigating to:", `/order/${op.id}`);
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    navigate(`/order/${op.id}`);
-                                }}
-                                className="group flex gap-6 p-4 bg-black/20 border border-white/[0.02] rounded-xl hover:bg-black/40 hover:border-white/[0.1] transition-all cursor-pointer relative z-50 pointer-events-auto"
+                                onClick={() => navigate(`/order/${op.id}`)}
+                                className="group p-4 bg-white/[0.01] border border-white/[0.02] rounded-xl hover:bg-white/[0.03] hover:border-[#00D4FF]/20 transition-all cursor-pointer relative"
                             >
-                                {/* Timeline connector */}
-                                <div className="flex flex-col items-center shrink-0">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${status.badgeBg} ${status.border} ring-4 ring-[#111111]`}>
-                                        {status.icon}
-                                    </div>
-                                    {!isLast && (
-                                        <div className="w-0.5 h-full bg-white/[0.04] my-1" />
-                                    )}
-                                </div>
-
-                                <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-1">
-                                    {/* Left info */}
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-1.5">
-                                            <p className="text-white font-bold tracking-tight">
-                                                Compra USDT
-                                            </p>
-                                            <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wider uppercase ${status.badgeBg} ${status.badgeText}`}>
-                                                {status.label}
-                                            </span>
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${status.badgeBg} ${status.border} shadow-lg transition-all group-hover:scale-105`}>
+                                            <div className="scale-75">{status.icon}</div>
                                         </div>
-                                        <div className="flex items-center gap-3 text-[11px] font-mono text-white/30">
-                                            <span>{format(new Date(op.createdAt), "dd/MM/yyyy 'às' HH:mm")}</span>
-                                            <span>•</span>
-                                            <span>ID: #{op.id.substring(0, 8)}</span>
+
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <p className="text-white font-brand text-sm tracking-widest uppercase italic">USDT Liquidity</p>
+                                                <span className={`px-1.5 py-0.5 rounded text-[7px] font-mono font-bold tracking-[0.15em] uppercase ${status.badgeBg} ${status.badgeText} border ${status.border}`}>
+                                                    {status.label}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-[9px] font-mono text-white/15 uppercase tracking-widest">
+                                                <span>{format(new Date(op.createdAt), "dd MMM yyyy · HH:mm")}</span>
+                                                <span className="w-1 h-1 bg-white/5 rounded-full" />
+                                                <span>ID: {op.id.substring(0, 8)}</span>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Amounts */}
-                                    <div className="text-left sm:text-right shrink-0">
-                                        <p className="text-white font-bold text-lg mb-0.5 tracking-tight">
-                                            USDT {op.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    <div className="flex flex-col md:items-end gap-0.5">
+                                        <p className="text-white font-brand text-xl tracking-tighter">
+                                            USDT {op.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                         </p>
-                                        <p className="text-white/40 text-xs font-mono">
-                                            R$ {op.total.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        <p className="text-white/20 text-[9px] font-mono uppercase tracking-[0.1em]">
+                                            R$ {op.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                                         </p>
                                     </div>
 
-                                    {/* Rate & Action */}
-                                    <div className="flex items-center justify-between sm:justify-end gap-6 min-w-[120px]">
-                                        <div className="text-left sm:text-right w-full">
-                                            <p className="text-white/30 text-[10px] uppercase font-bold tracking-widest mb-1">Cotação Executada</p>
-                                            <p className="text-[#00D4FF] font-mono font-bold">
-                                                R$ {(op.total / op.amount).toFixed(4)}
-                                            </p>
-                                        </div>
+                                    <div className="flex items-center md:items-end flex-col gap-0.5 min-w-[120px]">
+                                        <p className="text-white/10 text-[8px] uppercase font-mono tracking-widest">Avg Price</p>
+                                        <p className="text-[#00D4FF]/60 font-mono font-bold text-sm">
+                                            R$ {op.amount > 0 ? (op.total / op.amount).toFixed(4) : (0).toFixed(4)}
+                                        </p>
+                                    </div>
 
-                                        <Link
-                                            to={`/order/${op.id}`}
-                                            className="p-2 opacity-0 group-hover:opacity-100 hover:bg-white/[0.06] rounded-lg transition-all shrink-0 cursor-pointer"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <Eye className="w-4 h-4 text-white/40 group-hover:text-white" />
-                                        </Link>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all hidden md:block">
+                                        <ChevronRight className="w-4 h-4 text-[#00D4FF]" />
                                     </div>
                                 </div>
                             </div>
@@ -159,23 +132,19 @@ export function PremiumHistory({ orders, onCreateOrder }: PremiumHistoryProps) {
                     })}
                 </div>
             ) : (
-                /* PREMIUM EMPTY STATE */
                 <div className="py-16 flex flex-col items-center justify-center text-center">
-                    <div className="w-24 h-24 bg-gradient-to-br from-[#00D4FF]/[0.08] to-[#3B82F6]/[0.08] rounded-3xl flex items-center justify-center mb-6 rotate-12 shadow-[0_0_40px_rgba(0,212,255,0.05)]">
-                        <TrendingUp className="w-10 h-10 text-[#00D4FF] -rotate-12 drop-shadow-lg" />
+                    <div className="w-24 h-24 bg-white/[0.01] rounded-3xl flex items-center justify-center mb-6 border border-white/[0.03]">
+                        <Activity className="w-8 h-8 text-white/10" />
                     </div>
-                    <h4 className="text-white text-xl font-bold mb-2 tracking-tight">
-                        Seu histórico está vazio
-                    </h4>
-                    <p className="text-white/40 text-sm max-w-sm mx-auto mb-8 font-mono">
-                        Comece agora mesmo! Solicite sua primeira ordem e acompanhe todas as movimentações por aqui.
+                    <h4 className="text-white text-lg font-brand tracking-widest uppercase italic mb-2">Sem Atividade</h4>
+                    <p className="text-white/20 text-[10px] max-w-xs mx-auto mb-8 font-mono tracking-[0.1em] uppercase">
+                        Aguardando primeira liquidação de ativos.
                     </p>
                     <button
                         onClick={onCreateOrder}
-                        className="flex items-center justify-center gap-2 px-8 py-3.5 bg-white text-black font-bold rounded-xl hover:bg-white/90 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] transition-all active:scale-[0.98]"
+                        className="px-8 py-3 bg-[#00D4FF] text-black font-bold rounded-lg hover:shadow-[0_0_20px_#00D4FF66] transition-all uppercase tracking-[0.2em] text-[10px]"
                     >
-                        <Zap className="w-4 h-4" />
-                        Criar Primeira Ordem
+                        Nova Operação
                     </button>
                 </div>
             )}

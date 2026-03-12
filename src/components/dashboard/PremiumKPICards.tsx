@@ -92,43 +92,65 @@ export function PremiumKPICards({
                             <CountUp end={avgVolume} separator="." duration={2} />
                         </p>
                     </div>
-                    <p className="text-white/30 text-[11px] mt-2 font-mono">
-                        Maior: <span className="text-emerald-400">USDT {maxOperation.toLocaleString("pt-BR")}</span>
+
+                    <div className="mt-4 flex items-center gap-2">
+                        <div className="flex-1 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                            <div className="h-full bg-purple-500" style={{ width: `${successRate}%` }} />
+                        </div>
+                        <span className="text-[10px] font-bold text-purple-400">{successRate}%</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Card 4: Pendente / Status */}
+            <div className="premium-card flex flex-col justify-between hover:border-[#D4A853]/20">
+                <div className="flex items-center justify-between">
+                    <div className={`p-2 rounded-xl ${pendingAmount > 0 ? "bg-[#D4A853]/10 text-[#D4A853]" : "bg-white/5 text-white/20"}`}>
+                        <TrendingUp className="w-4 h-4" />
+                    </div>
+                    <span className="text-[10px] font-mono text-white/20 uppercase tracking-widest">Liquidez</span>
+                </div>
+
+                <div className="mt-4">
+                    <p className="text-white/40 text-[10px] uppercase font-mono tracking-widest mb-1">Média/Op</p>
+                    <p className="text-3xl font-brand text-white flex items-baseline gap-1">
+                        <span className="text-xs font-mono text-white/30">USDT</span>
+                        <CountUp end={avgVolume} separator="." duration={2} />
+                    </p>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-white/[0.04]">
+                    <p className="text-[10px] text-white/20 font-mono uppercase truncate">
+                        Maior: <span className="text-white/40">USDT {maxOperation.toLocaleString("pt-BR")}</span>
                     </p>
                 </div>
             </div>
 
-            {/* Card 4: Próxima Execução */}
-            <div className="bg-gradient-to-br from-[#0A0A0A] to-[#111111] border border-white/[0.04] rounded-2xl p-6 relative overflow-hidden group hover:border-[#D4A853]/30 transition-all duration-300">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#D4A853]/0 to-yellow-500/0 group-hover:from-[#D4A853]/[0.02] group-hover:to-yellow-500/[0.02] rounded-2xl transition-all duration-300" />
-                <div className="relative">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-[#D4A853]/[0.08] rounded-xl text-[#D4A853]">
-                            <Clock className="w-5 h-5" />
-                        </div>
+            {/* Card 5: Ordem Pendente (Full Width on Mobile, Full Row on Desktop to complete bento) */}
+            <div className="md:col-span-2 lg:col-span-4 premium-card flex flex-col md:flex-row items-center justify-between border-[#D4A853]/10 bg-gradient-to-r from-[#D4A853]/[0.02] to-transparent">
+                <div className="flex items-center gap-6">
+                    <div className={`p-4 rounded-2xl ${pendingAmount > 0 ? "bg-[#D4A853]/10 text-[#D4A853]" : "bg-white/5 text-white/20"}`}>
+                        <Clock className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/30 mb-1">Status de Operação em Aberto</p>
                         {pendingAmount > 0 ? (
-                            <div className="px-2 py-1 bg-[#D4A853]/[0.08] text-[#D4A853] text-[10px] uppercase font-bold tracking-wider rounded-lg border border-[#D4A853]/[0.12]">
-                                Ativa
+                            <div className="flex items-center gap-3">
+                                <h4 className="text-2xl font-brand text-white">USDT {pendingAmount.toLocaleString("pt-BR")}</h4>
+                                <div className="px-2 py-1 bg-[#D4A853]/10 text-[#D4A853] text-[9px] font-bold uppercase tracking-widest border border-[#D4A853]/20 rounded-lg">
+                                    Aguardando Liquidação
+                                </div>
                             </div>
                         ) : (
-                            <div className="text-white/20 text-xs">
-                                Nenhuma
-                            </div>
+                            <h4 className="text-xl font-brand text-white/20">Nenhuma Negociação Ativa</h4>
                         )}
                     </div>
-                    <p className="text-white/40 text-xs mb-1">Ordem Pendente</p>
-                    {pendingAmount > 0 ? (
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-white/50 text-xl font-bold">USDT</span>
-                            <p className="text-white text-3xl font-bold tracking-tight">
-                                {pendingAmount.toLocaleString("pt-BR")}
-                            </p>
-                        </div>
-                    ) : (
-                        <p className="text-white/30 text-3xl font-bold tracking-tight">—</p>
-                    )}
-                    <p className="text-white/30 text-[11px] mt-2 font-mono">
-                        Trava: <span className={pendingAmount > 0 ? "text-[#D4A853]" : "text-white/30"}>R$ {lockedPrice > 0 ? lockedPrice.toFixed(4) : "0.0000"}</span>
+                </div>
+
+                <div className="mt-6 md:mt-0 text-right">
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-white/25 mb-1">Cotação Travada</p>
+                    <p className={`text-2xl font-mono ${pendingAmount > 0 ? "text-[#D4A853]" : "text-white/10"}`}>
+                        R$ {lockedPrice > 0 ? lockedPrice.toFixed(4) : "0.0000"}
                     </p>
                 </div>
             </div>

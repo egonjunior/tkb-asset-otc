@@ -378,50 +378,97 @@ const OrderFormCard = ({
               <h3 className="font-semibold">Cotação e Trava de Preço</h3>
             </div>
 
-            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Cotação Base:</span>
-                <span className="font-medium">
-                  {binancePrice ? `R$ ${binancePrice.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}` : "Carregando..."}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Cotação TKB:</span>
-                <span className="font-semibold text-primary">
-                  {tkbPrice ? `R$ ${tkbPrice.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}` : "Carregando..."}
-                </span>
-              </div>
-
-              {/* Lock Button */}
-              {!isLocked ? (
-                <Button
-                  type="button"
-                  size="lg"
-                  className="w-full"
-                  onClick={handleLockPrice}
-                  disabled={!canLock || isLoading}
-                >
-                  <Lock className="h-4 w-4 mr-2" />
-                  Travar Preço por 5min
-                </Button>
-              ) : (
-                <div className="bg-primary/10 border-2 border-primary rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Lock className="h-5 w-5 text-primary" />
-                      <span className="font-semibold">Preço Travado</span>
-                    </div>
-                    <Badge variant="default" className="text-base">
-                      <Clock className="h-4 w-4 mr-1" />
-                      {formatTime(timeRemaining)}
-                    </Badge>
+            <Card className="w-full bg-black/40 backdrop-blur-xl border-white/[0.05] shadow-2xl overflow-hidden group">
+              <CardHeader className="pb-6 border-b border-white/[0.03]">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-[12px] font-brand tracking-[0.3em] text-white uppercase italic">Nova Operação USDT</CardTitle>
+                    <CardDescription className="text-[8px] text-[#00D4FF]/60 font-mono tracking-[0.2em] uppercase">Liquidez Spot OTC</CardDescription>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Preço garantido até expirar ou confirmar
-                  </p>
+                  <div className="px-3 py-1 rounded-full bg-[#00D4FF]/10 border border-[#00D4FF]/20">
+                    <span className="text-[9px] font-bold text-[#00D4FF] uppercase tracking-wider">Market Order</span>
+                  </div>
                 </div>
-              )}
-            </div>
+              </CardHeader>
+
+              <CardContent className="pt-8 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Lado Esquerdo: Input */}
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-mono">Volume da Ordem</Label>
+                      <div className="relative group/input">
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          className="h-14 bg-white/[0.02] border-white/[0.05] text-xl font-medium text-white pl-4 pr-16 focus:ring-1 focus:ring-[#00D4FF]/30 transition-all"
+                          value={usdtAmount}
+                          onChange={(e) => handleUSDTChange(e.target.value)}
+                        />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-mono text-white/20">USDT</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <Label className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-mono">Rede de Transferência</Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {['TRC20', 'ERC20'].map((r) => (
+                          <button
+                            key={r}
+                            onClick={() => setNetwork(r)}
+                            className={`h-11 rounded-xl border text-[11px] font-bold tracking-widest transition-all ${network === r
+                              ? 'bg-[#00D4FF] border-[#00D4FF] text-black shadow-[0_0_15px_rgba(0,212,255,0.3)]'
+                              : 'bg-white/[0.02] border-white/[0.05] text-white/40 hover:bg-white/[0.05]'
+                              }`}
+                          >
+                            {r}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lado Direito: Cotação */}
+                  <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/[0.03] space-y-4 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-3 opacity-10">
+                      <TrendingUp className="w-12 h-12 text-[#00D4FF]" />
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[9px] uppercase tracking-widest text-white/20 font-mono">Cotação Travada (5m)</span>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-brand tracking-tighter text-white">R$ {tkbPrice ? tkbPrice.toFixed(3) : "0.000"}</span>
+                        {timeRemaining > 0 && <span className="text-[10px] text-[#00D4FF] font-mono">{formatTime(timeRemaining)}</span>}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 pt-4 border-t border-white/[0.03]">
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-white/30">Subtotal</span>
+                        <span className="text-white/60 font-mono">R$ {(parseFloat(usdtAmount || '0') * (tkbPrice || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-white/30">Taxa de Execução</span>
+                        <span className="text-emerald-500 font-mono">Zerada (OTC)</span>
+                      </div>
+                      <div className="pt-2 flex justify-between items-center border-t border-white/[0.05]">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#00D4FF]">Total a Pagar</span>
+                        <span className="text-lg font-bold text-white font-mono">R$ {(parseFloat(usdtAmount || '0') * (tkbPrice || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full h-14 bg-[#00D4FF] hover:bg-[#00D4FF]/90 text-black font-bold text-xs uppercase tracking-[0.3em] shadow-xl group/btn"
+                  disabled={isSubmitting || !usdtAmount || parseFloat(usdtAmount) <= 0 || !network || !walletAddress || walletError !== null}
+                  onClick={handleSubmitOrder}
+                >
+                  {isSubmitting ? "Processando Ordem..." : "Abrir Ordem de Compra"}
+                  <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Resumo da Ordem - só aparece quando travado */}
@@ -474,24 +521,21 @@ const OrderFormCard = ({
               variant="outline"
               className="flex-1"
               disabled={isSubmitting}
+              onClick={() => {
+                setIsLocked(false);
+                setLockedPrice(null);
+              }}
             >
-              Cancelar
+              Resetar Operação
             </Button>
             <Button
               type="submit"
-              className="flex-1"
+              className="flex-[2] h-14 bg-[#00D4FF] hover:bg-[#00D4FF]/90 text-[#06080E] rounded-2xl font-bold text-sm uppercase tracking-[0.2em] shadow-[0_0_40px_rgba(0,212,255,0.2)] disabled:opacity-20 transition-apple"
               disabled={!isLocked || !lockedPrice || isSubmitting}
             >
-              {isSubmitting ? "Criando..." : "✅ Confirmar Ordem"}
+              {isSubmitting ? "Autenticando..." : "✅ Confirmar e Executar Ordem"}
             </Button>
           </div>
-
-          {/* Helper text */}
-          {!isLocked && isFormValid && (
-            <p className="text-xs text-center text-muted-foreground">
-              ℹ️ Preencha os campos e trave o preço por 5 minutos
-            </p>
-          )}
         </form>
       </CardContent>
     </Card>

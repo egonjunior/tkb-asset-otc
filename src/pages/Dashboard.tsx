@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { HeaderUserMenu } from "@/components/HeaderUserMenu";
-import { HeaderMarketTicker } from "@/components/HeaderMarketTicker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +56,11 @@ const Dashboard = () => {
       }, 300);
     }
   }, [location]);
+
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+    // fetchClients and other logic...
+  }, []);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -125,7 +129,7 @@ const Dashboard = () => {
         onClose={() => setShowOnboarding(false)}
         userName={userName}
       />
-      <div className="dark min-h-screen w-full bg-[#0A0A0A] relative overflow-x-hidden">
+      <div className="dark min-h-screen bg-black relative overflow-x-hidden font-inter text-white">
         {/* Subtle ambient glow - Premium Depth */}
         <div className="absolute -top-[400px] left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full blur-[150px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(0,212,255,0.08) 0%, transparent 100%)' }}></div>
         <div className="absolute top-[40%] right-[-20%] w-[600px] h-[600px] rounded-full blur-[150px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(59,130,246,0.05) 0%, transparent 80%)' }}></div>
@@ -143,7 +147,7 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              <HeaderMarketTicker binancePrice={binancePrice} tkbPrice={tkbPrice} isLoading={priceLoading} />
+              <div className="flex-1" />
               <div className="flex items-center gap-2">
                 {user && <BellNotifications userId={user.id} />}
                 <HeaderUserMenu userName={userName} userEmail={user?.email} onLogout={() => signOut()} />

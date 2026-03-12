@@ -25,33 +25,35 @@ export function PremiumHeader({ userName, onNewOrder }: PremiumHeaderProps) {
     const currentTime = format(time, "HH:mm");
 
     return (
-        <div className="mb-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-                <div>
-                    <h1 className="text-3xl font-bold text-white mb-1">
-                        {greeting}, {userName.split(" ")[0]} 👋
+        <div className="mb-12 bg-black/40 backdrop-blur-2xl p-10 rounded-3xl border border-white/[0.05] relative overflow-hidden group shadow-2xl">
+            {/* Background elements - very subtle */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-[#00D4FF]/[0.02] blur-[120px] rounded-full -mr-32 -mt-32 transition-all duration-1000 group-hover:bg-[#00D4FF]/[0.04]" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/[0.01] blur-[100px] rounded-full -ml-24 -mb-24" />
+
+            <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3 text-[9px] font-mono uppercase tracking-[0.4em] text-[#00D4FF]/40 mb-3">
+                        <Zap className="w-3 h-3 animate-pulse" />
+                        Acesso Institucional · {currentTime} UTC
+                    </div>
+                    <h1 className="text-3xl md:text-5xl font-brand tracking-tighter text-white uppercase italic">
+                        {greeting}, <span className="text-[#00D4FF]">{userName?.split(" ")[0] || "Trader"}</span>
                     </h1>
-                    <p className="text-slate-400 capitalize">
-                        {currentDate} • {currentTime}
+                    <p className="text-white/20 font-mono text-[10px] uppercase tracking-[0.2em]">
+                        Liquidez OTC · {currentDate}
                     </p>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-4">
                     <button
                         onClick={onNewOrder}
-                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#00D4FF] to-[#3B82F6] rounded-xl text-white hover:shadow-lg hover:shadow-[#00D4FF]/20 transition-all font-bold text-sm w-full md:w-auto"
+                        className="group relative px-10 py-4 bg-[#00D4FF] rounded-xl text-black transition-all hover:shadow-[0_0_40px_rgba(0,212,255,0.4)] hover:scale-[1.02] active:scale-[0.98] font-bold text-[11px] uppercase tracking-[0.3em] overflow-hidden"
                     >
-                        <Zap className="w-5 h-5" />
-                        Nova Ordem
+                        <span className="relative z-10 flex items-center gap-3">
+                            Nova Ordem <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </span>
                     </button>
                 </div>
-
-            </div>
-
-            <div className="flex items-center gap-2 text-sm text-slate-400 hidden md:flex">
-                <Home className="w-4 h-4" />
-                <ChevronRight className="w-3 h-3" />
-                <span>Mesa OTC</span>
             </div>
         </div>
     );
