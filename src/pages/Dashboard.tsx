@@ -13,6 +13,7 @@ import { PremiumLiveQuote } from "@/components/dashboard/PremiumLiveQuote";
 import { PremiumHistory } from "@/components/dashboard/PremiumHistory";
 import { PremiumCTA } from "@/components/dashboard/PremiumCTA";
 import { OperationalNotesList } from "@/components/operational-notes/OperationalNotesList";
+import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import tkbLogo from "@/assets/tkb-logo.png";
 
 const Dashboard = () => {
@@ -22,6 +23,7 @@ const Dashboard = () => {
   const userName = profile?.full_name || user?.email?.split("@")[0] || "Usuário";
   const { binancePrice, tkbPrice, isLoading: priceLoading } = useBinancePrice();
 
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalPatrimonio: 0,
@@ -32,6 +34,13 @@ const Dashboard = () => {
     maxOperation: 0,
     pendingAmount: 0,
   });
+
+  useEffect(() => {
+    // Show onboarding if user hasn't accepted documents yet
+    if (profile && !(profile as any).documents_accepted_at && localStorage.getItem("onboarding_completed") !== "true") {
+      setShowOnboarding(true);
+    }
+  }, [profile]);
 
   useEffect(() => {
     // Scroll to #historico if hash is present
@@ -110,6 +119,11 @@ const Dashboard = () => {
         ["--sidebar-width-mobile" as any]: "18rem"
       }}
     >
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        userName={userName}
+      />
       <div className="dark min-h-screen w-full bg-[#0A0A0A] relative overflow-x-hidden">
         {/* Subtle ambient glow - Premium Depth */}
         <div className="absolute -top-[400px] left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full blur-[150px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(0,212,255,0.08) 0%, transparent 100%)' }}></div>
