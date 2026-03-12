@@ -95,7 +95,7 @@ const Login = () => {
           <div className="space-y-1">
             <CardTitle className="text-2xl font-brand tracking-widest text-white">TKB ASSET</CardTitle>
             <CardDescription className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#00D4FF]">
-              Institutional OTC Desk
+              Asset Manager Cambial
             </CardDescription>
           </div>
         </CardHeader>
@@ -154,7 +154,7 @@ const Login = () => {
 
               <div className="h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
 
-              <div className="text-[9px] uppercase tracking-[0.25em] text-white/10 font-mono">
+              <div className="text-[9px] uppercase tracking-[0.25em] text-white/60 font-mono">
                 Acesso Restrito · Criptografia de Ponta a Ponta
               </div>
             </div>

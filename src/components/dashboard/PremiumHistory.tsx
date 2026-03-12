@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Download, CheckCircle, Clock, XCircle, Eye, TrendingUp, Zap, ChevronRight } from "lucide-react";
+import { Download, CheckCircle, Clock, XCircle, Eye, TrendingUp, Zap, ChevronRight, Activity } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 interface Order {
