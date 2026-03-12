@@ -494,6 +494,22 @@ const AdminDashboard = () => {
                 <p className="text-xs text-muted-foreground mt-2">Criar e editar posts para LinkedIn e Instagram</p>
               </CardContent>
             </Card>
+
+            <Card
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-cyan-500"
+              onClick={() => navigate('/admin/notifications')}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">🔔 Caixa Postal</p>
+                    <p className="text-xl font-bold text-cyan-600">Enviar Mensagens →</p>
+                  </div>
+                  <span className="text-3xl">📣</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Broadcasts para todos os usuários da plataforma</p>
+              </CardContent>
+            </Card>
           </div>
 
 

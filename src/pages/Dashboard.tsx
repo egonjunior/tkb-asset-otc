@@ -14,6 +14,7 @@ import { PremiumHistory } from "@/components/dashboard/PremiumHistory";
 import { PremiumCTA } from "@/components/dashboard/PremiumCTA";
 import { OperationalNotesList } from "@/components/operational-notes/OperationalNotesList";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
+import { BellNotifications } from "@/components/BellNotifications";
 import tkbLogo from "@/assets/tkb-logo.png";
 
 const Dashboard = () => {
@@ -143,7 +144,10 @@ const Dashboard = () => {
                 </div>
               </div>
               <HeaderMarketTicker binancePrice={binancePrice} tkbPrice={tkbPrice} isLoading={priceLoading} />
-              <HeaderUserMenu userName={userName} userEmail={user?.email} onLogout={() => signOut()} />
+              <div className="flex items-center gap-2">
+                {user && <BellNotifications userId={user.id} />}
+                <HeaderUserMenu userName={userName} userEmail={user?.email} onLogout={() => signOut()} />
+              </div>
             </div>
             <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00D4FF]/20 to-transparent" />
           </header>

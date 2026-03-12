@@ -59,13 +59,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .from('partner_requests')
           .select('status')
           .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(1)
+          .eq('status', 'approved')
           .maybeSingle();
 
         if (isMounted) {
           setProfile(profileData);
-          setIsPartner(!!partnerConfig?.is_active || partnerReq?.status === 'approved');
+          setIsPartner(!!partnerConfig?.is_active || !!partnerReq);
         }
       } catch (error) {
         console.error('[AuthContext] Error fetching profile:', error);
