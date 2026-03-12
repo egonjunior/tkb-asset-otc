@@ -93,15 +93,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
+    // Safety timeout to ensure app doesn't stay stuck on loading
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted && loading) {
+        console.warn('[AuthContext] Safety timeout triggered - forcing loading false');
+        setLoading(false);
+      }
+    }, 6000);
+
     // THEN check for existing session
     const initializeAuth = async () => {
+      console.log('[AuthContext] Initializing auth...');
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error('[AuthContext] getSession error:', sessionError);
+        }
 
         if (!isMounted) return;
 
         setSession(session);
         setUser(session?.user ?? null);
+        console.log('[AuthContext] Session checked:', !!session);
 
         if (session?.user) {
           await fetchProfile(session.user.id);
@@ -110,7 +124,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error('[AuthContext] Error initializing auth:', error);
       } finally {
         if (isMounted) {
+          console.log('[AuthContext] Initialization complete, setting loading false');
           setLoading(false);
+          clearTimeout(safetyTimeout);
         }
       }
     };
@@ -120,6 +136,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       isMounted = false;
       subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
     };
   }, []);
 
