@@ -9,6 +9,9 @@ import RetroactiveOrderForm from "@/components/partner/RetroactiveOrderForm";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BankWireOrderForm from "@/components/BankWireOrderForm";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const TradingOrderPage = () => {
   const navigate = useNavigate();
@@ -23,27 +26,27 @@ const TradingOrderPage = () => {
     tradesCount,
     lastUpdate,
   } = useBinancePrice();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [quoteClients, setQuoteClients] = useState<any[]>([]);
 
-  useEffect(() => {
-    document.documentElement.classList.add('dark');
-    const fetchClients = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
+  // Optimized fetching with React Query
+  const { data: quoteClients = [], isLoading: isLoadingClients } = useQuery({
+    queryKey: ['otc-quote-clients', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
       const { data } = await supabase
         .from('otc_quote_clients')
         .select('id, client_name, spread_percent')
         .eq('created_by', user.id)
         .eq('is_active', true)
         .order('client_name');
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
-      if (data) {
-        setQuoteClients(data);
-      }
-    };
-    fetchClients();
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
   }, []);
 
   const handleSubmit = async (orderData: {
@@ -58,8 +61,6 @@ const TradingOrderPage = () => {
     setIsSubmitting(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
       if (!user) {
         toast({
           title: "Erro de autenticação",
@@ -138,8 +139,6 @@ const TradingOrderPage = () => {
     setIsSubmitting(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
       if (!user) {
         toast({
           title: "Erro de autenticação",
@@ -198,7 +197,6 @@ const TradingOrderPage = () => {
     setIsSubmitting(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
       let receiptUrl = null;
@@ -323,7 +321,14 @@ const TradingOrderPage = () => {
             </TabsList>
 
             <TabsContent value="digital_dollar" className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-              {quoteClients.length > 0 ? (
+              {isLoadingClients ? (
+                <div className="space-y-6">
+                  <div className="flex justify-center">
+                    <Skeleton className="h-11 w-full max-w-md rounded-xl bg-white/5" />
+                  </div>
+                  <Skeleton className="h-[400px] w-full rounded-3xl bg-white/5 border border-white/10" />
+                </div>
+              ) : quoteClients.length > 0 ? (
                 <Tabs defaultValue="live" className="w-full">
                   <div className="flex justify-center mb-8">
                     <TabsList className="grid w-full max-w-md grid-cols-2 h-11 bg-white/[0.03] border border-white/[0.05] p-1 rounded-xl">

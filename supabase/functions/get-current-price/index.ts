@@ -52,17 +52,38 @@ serve(async (req) => {
       authPromise
     ]);
 
-    // 2. Processar dados da Binance se foram buscados
+    // 3. Processar tanto os dados da Binance quanto o Profile em paralelo
+    let markupPromise = Promise.resolve(DEFAULT_MARKUP);
+    const user = authResult?.data?.user;
+    const userId = user?.id || 'anonymous';
+    let userMarkup = DEFAULT_MARKUP;
+
+    if (user) {
+      markupPromise = supabaseClient
+        .from('profiles')
+        .select('markup_percent')
+        .eq('id', user.id)
+        .single()
+        .then(({ data: profile }) => {
+          if (profile && profile.markup_percent !== null && profile.markup_percent !== undefined) {
+            return 1 + (profile.markup_percent / 100);
+          }
+          return DEFAULT_MARKUP;
+        });
+    }
+
     if (updateCache) {
-      if (!priceResponse.ok || !tickerResponse.ok) {
+      if (!priceResponse?.ok || !tickerResponse?.ok) {
         throw new Error('Failed to fetch price from Binance');
       }
 
-      const [priceJSON, tickerJSON] = await Promise.all([
+      const [priceJSON, tickerJSON, resolvedMarkup] = await Promise.all([
         priceResponse.json(),
-        tickerResponse.json()
+        tickerResponse.json(),
+        markupPromise
       ]);
 
+      userMarkup = resolvedMarkup;
       binanceData = {
         binancePrice: parseFloat(priceJSON.price),
         timestamp: now,
@@ -73,33 +94,13 @@ serve(async (req) => {
         tradesCount: parseInt(tickerJSON.count || '0'),
       };
       binanceCache = binanceData;
-      console.log('Fresh price from Binance fetched in parallel');
+      console.log(`Fresh price from Binance fetched in parallel | Markup: ${((userMarkup - 1) * 100).toFixed(2)}%`);
     } else {
-      console.log('Using cached Binance price');
+      userMarkup = await markupPromise;
+      console.log(`Using cached Binance price | Markup: ${((userMarkup - 1) * 100).toFixed(2)}%`);
     }
 
     if (!binanceData) throw new Error("Erro ao obter cotação base");
-
-    // 3. Processar Auth e buscar Markup se necessário
-    let userMarkup = DEFAULT_MARKUP;
-    let userId = 'anonymous';
-
-    if (authResult?.data?.user) {
-      const user = authResult.data.user;
-      userId = user.id;
-
-      // Buscar markup exclusivo da tabela profiles
-      const { data: profile } = await supabaseClient!
-        .from('profiles')
-        .select('markup_percent')
-        .eq('id', user.id)
-        .single();
-
-      if (profile && profile.markup_percent !== null && profile.markup_percent !== undefined) {
-        userMarkup = 1 + (profile.markup_percent / 100);
-        console.log(`[USER ${userId}] Bespoke Markup: ${profile.markup_percent}%`);
-      }
-    }
 
     // 3. Calcular Preço TKB Dinâmico
     const tkbPrice = binanceData.binancePrice * userMarkup;

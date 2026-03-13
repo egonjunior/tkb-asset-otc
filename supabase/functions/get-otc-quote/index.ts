@@ -41,17 +41,57 @@ serve(async (req) => {
     }
 
     slug = slug.toLowerCase();
+    const now = Date.now();
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { data: clientConfig, error: dbError } = await supabase
+    // 1. Iniciar todas as buscas em paralelo (Banco de dados + Binance + OKX)
+    // Isso garante que os dados de mercado já estarão prontos quando o config chegar.
+    const fetchConfigPromise = supabase
       .from('otc_quote_clients')
       .select('*')
       .eq('slug', slug)
       .eq('is_active', true)
       .maybeSingle();
+
+    const fetchBinancePromise = (async () => {
+      try {
+        const [priceRes, tickerRes] = await Promise.all([
+          fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'),
+          fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL'),
+        ]);
+        if (!priceRes.ok || !tickerRes.ok) return null;
+        const [p, t] = await Promise.all([priceRes.json(), tickerRes.json()]);
+        return {
+          last: p.price,
+          high24h: t.highPrice,
+          low24h: t.lowPrice,
+          vol24h: t.volume,
+          sodUtc8: t.priceChangePercent,
+          source: 'binance'
+        };
+      } catch { return null; }
+    })();
+
+    const fetchOKXPromise = (async () => {
+      try {
+        const res = await fetch('https://www.okx.com/api/v5/market/ticker?instId=USDT-BRL');
+        if (!res.ok) return null;
+        const d = await res.json();
+        if (d.code !== '0' || !d.data?.[0]) return null;
+        return { ...d.data[0], source: 'okx' };
+      } catch { return null; }
+    })();
+
+    const [configResult, binanceResult, okxResult] = await Promise.all([
+      fetchConfigPromise,
+      fetchBinancePromise,
+      fetchOKXPromise
+    ]);
+
+    const { data: clientConfig, error: dbError } = configResult;
 
     if (dbError || !clientConfig) {
       return new Response(
@@ -62,74 +102,16 @@ serve(async (req) => {
 
     const priceSource = clientConfig.price_source || 'binance';
     const cacheKey = `otc_${slug}_${priceSource}`;
-    const now = Date.now();
 
-    if (priceCache.has(cacheKey)) {
-      const cached = priceCache.get(cacheKey)!;
-      if (now - cached.timestamp < CACHE_DURATION_MS) {
-        console.log(`✅ Cache hit para ${slug} (fonte: ${priceSource})`);
-        return new Response(
-          JSON.stringify({ ...cached.data, cached: true }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+    // ... resto da lógica de cache se necessário, mas como já buscamos tudo, vamos processar
+
+    let tickerData = priceSource === 'okx' ? (okxResult || binanceResult) : (binanceResult || okxResult);
+
+    if (!tickerData) {
+      throw new Error('Todas as fontes de cotação estão indisponíveis.');
     }
 
-    console.log(`🔍 Buscando preço de ${priceSource.toUpperCase()} para ${slug}`);
-
-    let basePrice: number;
-    let tickerData: any;
-
-    // Funções de busca por corretora
-    const fetchFromOKX = async () => {
-      const okxResponse = await fetch('https://www.okx.com/api/v5/market/ticker?instId=USDT-BRL');
-      if (!okxResponse.ok) throw new Error('Falha ao buscar preço da OKX');
-      const okxData = await okxResponse.json();
-      if (okxData.code !== '0' || !okxData.data || okxData.data.length === 0) {
-        throw new Error('Dados inválidos da OKX');
-      }
-      return okxData.data[0];
-    };
-
-    const fetchFromBinance = async () => {
-      const [priceResponse, ticker24hResponse] = await Promise.all([
-        fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'),
-        fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL'),
-      ]);
-      if (!priceResponse.ok || !ticker24hResponse.ok) {
-        throw new Error('Falha HTTP ao buscar preço da Binance');
-      }
-      const priceData = await priceResponse.json();
-      const ticker24h = await ticker24hResponse.json();
-      return {
-        last: priceData.price,
-        high24h: ticker24h.highPrice,
-        low24h: ticker24h.lowPrice,
-        vol24h: ticker24h.volume,
-        sodUtc8: ticker24h.priceChangePercent,
-      };
-    };
-
-    try {
-      if (priceSource === 'okx') {
-        try {
-          tickerData = await fetchFromOKX();
-        } catch (e) {
-          console.warn('⚠️ OKX falhou, tentando Binance como fallback', e);
-          tickerData = await fetchFromBinance();
-        }
-      } else {
-        try {
-          tickerData = await fetchFromBinance();
-        } catch (e) {
-          console.warn('⚠️ Binance falhou, tentando OKX como fallback', e);
-          tickerData = await fetchFromOKX();
-        }
-      }
-      basePrice = parseFloat(tickerData.last);
-    } catch (e) {
-      throw new Error('Ambas as fontes de cotação (Binance e OKX) estão indisponíveis no momento.');
-    }
+    const basePrice = parseFloat(tickerData.last);
 
     const markup = 1 + clientConfig.spread_percent / 100;
     const clientPrice = basePrice * markup;
