@@ -30,73 +30,81 @@ serve(async (req) => {
     const now = Date.now();
     let binanceData = binanceCache;
 
-    // 1. Atualizar cache da Binance se necessário
-    if (!binanceCache || (now - binanceCache.timestamp) >= CACHE_DURATION_MS) {
-      console.log('Fetching fresh price from Binance');
-      const [priceResponse, tickerResponse] = await Promise.all([
-        fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'),
-        fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL'),
-      ]);
+    // 1. Iniciar busca da Binance e Auth/Profile em paralelo se o cache expirou
+    const updateCache = !binanceCache || (now - binanceCache.timestamp) >= CACHE_DURATION_MS;
 
+    // Preparar promessas
+    const binancePromises = updateCache ? [
+      fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'),
+      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL')
+    ] : [];
+
+    const authHeader = req.headers.get('Authorization');
+    let supabaseClient = null;
+    let authPromise = null;
+
+    if (authHeader) {
+      supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      authPromise = supabaseClient.auth.getUser();
+    }
+
+    // Executar todas as promessas iniciais em paralelo
+    const [priceResponse, tickerResponse, authResult] = await Promise.all([
+      ...(binancePromises as any),
+      authPromise
+    ]);
+
+    // 2. Processar dados da Binance se foram buscados
+    if (updateCache) {
       if (!priceResponse.ok || !tickerResponse.ok) {
         throw new Error('Failed to fetch price from Binance');
       }
 
-      const priceData = await priceResponse.json();
-      const tickerData = await tickerResponse.json();
+      const [priceJSON, tickerJSON] = await Promise.all([
+        priceResponse.json(),
+        tickerResponse.json()
+      ]);
 
       binanceData = {
-        binancePrice: parseFloat(priceData.price),
+        binancePrice: parseFloat(priceJSON.price),
         timestamp: now,
-        dailyChangePercent: parseFloat(tickerData.priceChangePercent || '0'),
-        volumeUSDT: parseFloat(tickerData.volume || '0'),
-        highPrice24h: parseFloat(tickerData.highPrice || '0'),
-        lowPrice24h: parseFloat(tickerData.lowPrice || '0'),
-        tradesCount: parseInt(tickerData.count || '0'),
+        dailyChangePercent: parseFloat(tickerJSON.priceChangePercent || '0'),
+        volumeUSDT: parseFloat(tickerJSON.volume || '0'),
+        highPrice24h: parseFloat(tickerJSON.highPrice || '0'),
+        lowPrice24h: parseFloat(tickerJSON.lowPrice || '0'),
+        tradesCount: parseInt(tickerJSON.count || '0'),
       };
       binanceCache = binanceData;
+      console.log('Fresh price from Binance fetched in parallel');
     } else {
       console.log('Using cached Binance price');
     }
 
     if (!binanceData) throw new Error("Erro ao obter cotação base");
 
-    // 2. Autenticar usuário para buscar Markup Exclusivo
-    const authHeader = req.headers.get('Authorization');
+    // 3. Processar Auth e buscar Markup se necessário
     let userMarkup = DEFAULT_MARKUP;
     let userId = 'anonymous';
 
-    if (authHeader) {
-      const supabaseClient = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-        {
-          global: { headers: { Authorization: authHeader } },
-        }
-      );
+    if (authResult?.data?.user) {
+      const user = authResult.data.user;
+      userId = user.id;
 
-      // Obter usuário logado
-      const { data: { user } } = await supabaseClient.auth.getUser();
+      // Buscar markup exclusivo da tabela profiles
+      const { data: profile } = await supabaseClient!
+        .from('profiles')
+        .select('markup_percent')
+        .eq('id', user.id)
+        .single();
 
-      if (user) {
-        userId = user.id;
-        // Buscar markup exclusivo da tabela profiles
-        const { data: profile } = await supabaseClient
-          .from('profiles')
-          .select('markup_percent')
-          .eq('id', user.id)
-          .single();
-
-        if (profile && profile.markup_percent !== null && profile.markup_percent !== undefined) {
-          // Convert percentage (e.g. 1.5) to multiplier (1.015)
-          userMarkup = 1 + (profile.markup_percent / 100);
-          console.log(`[USER ${userId}] Bespoke Markup Encontrado: ${profile.markup_percent}% -> Multiplier: ${userMarkup}`);
-        } else {
-          console.log(`[USER ${userId}] Sem markup exclusivo. Usando DEFAULT: ${DEFAULT_MARKUP}`);
-        }
+      if (profile && profile.markup_percent !== null && profile.markup_percent !== undefined) {
+        userMarkup = 1 + (profile.markup_percent / 100);
+        console.log(`[USER ${userId}] Bespoke Markup: ${profile.markup_percent}%`);
       }
-    } else {
-      console.log(`[UNAUTH] Sem Auth Header. Usando DEFAULT: ${DEFAULT_MARKUP}`);
     }
 
     // 3. Calcular Preço TKB Dinâmico

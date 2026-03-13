@@ -43,7 +43,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-white/[0.02] bg-black md:top-[64px] md:h-[calc(100svh-64px)]">
+    <Sidebar collapsible="none" className="border-r border-white/[0.02] bg-black md:top-[64px] md:h-[calc(100svh-64px)] !w-[18rem]">
       {/* Botão X para fechar no mobile */}
       <div className="flex justify-end p-2 md:hidden">
         <SidebarTrigger className="text-white/20 hover:text-white transition-colors" />

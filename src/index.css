@@ -117,12 +117,17 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
-  body {
+  body,
+  #root {
     @apply bg-background text-foreground;
     font-family: 'Inter', -apple-system, system-ui, sans-serif;
     font-feature-settings: 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   h1,

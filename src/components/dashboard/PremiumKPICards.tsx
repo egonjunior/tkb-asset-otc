@@ -1,5 +1,6 @@
 import { Wallet, TrendingUp, CheckCircle, BarChart3, Clock } from "lucide-react";
 import CountUp from "react-countup";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PremiumKPICardsProps {
     totalPatrimonio: number;
@@ -11,6 +12,7 @@ interface PremiumKPICardsProps {
     pendingAmount: number;
     lockedPrice: number;
     dailyChangePercent: number;
+    isLoading?: boolean;
 }
 
 export function PremiumKPICards({
@@ -23,7 +25,25 @@ export function PremiumKPICards({
     pendingAmount,
     lockedPrice,
     dailyChangePercent,
+    isLoading = false,
 }: PremiumKPICardsProps) {
+    if (isLoading) {
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="bg-gradient-to-br from-[#0A0A0A] to-[#111111] border border-white/[0.04] rounded-2xl p-6 h-[160px]">
+                        <Skeleton className="w-10 h-10 rounded-xl mb-4" />
+                        <Skeleton className="w-24 h-4 mb-2" />
+                        <Skeleton className="w-32 h-8" />
+                    </div>
+                ))}
+                <div className="md:col-span-2 lg:col-span-4 bg-gradient-to-br from-[#0A0A0A] to-[#111111] border border-white/[0.04] rounded-2xl p-6 h-[100px]">
+                    <Skeleton className="w-full h-full rounded-xl" />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {/* Card 1: Patrimônio */}

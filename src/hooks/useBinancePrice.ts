@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PriceResponse {
@@ -13,22 +13,9 @@ interface PriceResponse {
 }
 
 export const useBinancePrice = () => {
-  const [price, setPrice] = useState<number | null>(null);
-  const [tkbPrice, setTkbPrice] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const [dailyChangePercent, setDailyChangePercent] = useState<number>(0);
-  const [volumeUSDT, setVolumeUSDT] = useState<number>(0);
-  const [highPrice24h, setHighPrice24h] = useState<number>(0);
-  const [lowPrice24h, setLowPrice24h] = useState<number>(0);
-  const [tradesCount, setTradesCount] = useState<number>(0);
-
-  const fetchPrice = async () => {
-    try {
-      setError(null);
-      
-      // Usar Edge Function centralizada ao invés de chamar Binance diretamente
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["current-price"],
+    queryFn: async () => {
       const { data, error: functionError } = await supabase.functions.invoke<PriceResponse>(
         'get-current-price',
         {
@@ -44,52 +31,33 @@ export const useBinancePrice = () => {
         throw new Error("No data received from price service");
       }
 
-      setPrice(data.binancePrice);
-      setTkbPrice(data.tkbPrice); // ✅ Usar preço JÁ calculado pela Edge Function
-      setDailyChangePercent(data.dailyChangePercent);
-      setVolumeUSDT(data.volumeUSDT);
-      setHighPrice24h(data.highPrice24h);
-      setLowPrice24h(data.lowPrice24h);
-      setTradesCount(data.tradesCount);
-      setLastUpdate(new Date());
-      
-      setIsLoading(false);
-    } catch (err) {
-      console.error('Erro ao buscar preço:', err);
-      setError('Não foi possível buscar a cotação. Usando valor de referência.');
-      // Fallback para um valor de referência
-      setPrice(5.40);
-      setTkbPrice(5.40 * 1.01); // Aplicar 1% no fallback
-      setDailyChangePercent(0);
-      setIsLoading(false);
-    }
-  };
+      return data;
+    },
+    refetchInterval: 5000, // Atualizar a cada 5 segundos
+    staleTime: 4000, // Considerar dados obsoletos após 4 segundos
+    gcTime: 1000 * 60 * 5, // Manter em cache por 5 minutos
+  });
 
-  useEffect(() => {
-    // Buscar preço inicial
-    fetchPrice();
-
-    // Atualizar a cada 5 segundos (apenas se tab estiver visível)
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        fetchPrice();
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
+  // Fallback values if error or loading
+  const binancePrice = data?.binancePrice ?? 5.40;
+  const tkbPrice = data?.tkbPrice ?? (binancePrice * 1.01);
+  const dailyChangePercent = data?.dailyChangePercent ?? 0;
+  const volumeUSDT = data?.volumeUSDT ?? 0;
+  const highPrice24h = data?.highPrice24h ?? 0;
+  const lowPrice24h = data?.lowPrice24h ?? 0;
+  const tradesCount = data?.tradesCount ?? 0;
 
   return {
-    binancePrice: price,
-    tkbPrice, // ✅ Retornar preço da Edge Function (sem cálculo local)
+    binancePrice,
+    tkbPrice,
     isLoading,
-    error,
-    lastUpdate,
+    error: error ? (error as Error).message : null,
+    lastUpdate: new Date(),
     dailyChangePercent,
     volumeUSDT,
     highPrice24h,
     lowPrice24h,
     tradesCount,
-    refetch: fetchPrice,
+    refetch,
   };
 };

@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { Download, CheckCircle, Clock, XCircle, Eye, TrendingUp, Zap, ChevronRight, Activity } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Order {
     id: string;
@@ -8,14 +9,16 @@ interface Order {
     total: number;
     status: "pending" | "paid" | "completed" | "expired" | "cancelled" | "rejected" | "processing";
     createdAt: Date;
+    network?: string;
 }
 
 interface PremiumHistoryProps {
     orders: Order[];
     onCreateOrder: () => void;
+    isLoading?: boolean;
 }
 
-export function PremiumHistory({ orders, onCreateOrder }: PremiumHistoryProps) {
+export function PremiumHistory({ orders, onCreateOrder, isLoading = false }: PremiumHistoryProps) {
     const navigate = useNavigate();
 
     const getStatusProps = (status: Order["status"]) => {
@@ -75,7 +78,22 @@ export function PremiumHistory({ orders, onCreateOrder }: PremiumHistoryProps) {
                 </div>
             </div>
 
-            {orders.length > 0 ? (
+            {isLoading ? (
+                <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="p-4 bg-white/[0.01] border border-white/[0.02] rounded-xl h-20">
+                            <div className="flex items-center gap-4 h-full">
+                                <Skeleton className="w-10 h-10 rounded-xl" />
+                                <div className="flex-1 space-y-2">
+                                    <Skeleton className="w-40 h-4" />
+                                    <Skeleton className="w-24 h-3" />
+                                </div>
+                                <Skeleton className="w-32 h-6" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : orders.length > 0 ? (
                 <div className="space-y-2">
                     {orders.map((op, index) => {
                         const status = getStatusProps(op.status);
@@ -94,13 +112,17 @@ export function PremiumHistory({ orders, onCreateOrder }: PremiumHistoryProps) {
 
                                         <div>
                                             <div className="flex items-center gap-2 mb-0.5">
-                                                <p className="text-white font-brand text-sm tracking-widest uppercase italic">USDT Liquidity</p>
+                                                <p className="text-white font-brand text-sm tracking-widest uppercase italic">
+                                                    {op.network === 'BANK_WIRE' ? 'Remessa Internacional' : 'USDT Liquidity'}
+                                                </p>
                                                 <span className={`px-1.5 py-0.5 rounded text-[7px] font-mono font-bold tracking-[0.15em] uppercase ${status.badgeBg} ${status.badgeText} border ${status.border}`}>
                                                     {status.label}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2 text-[9px] font-mono text-white/15 uppercase tracking-widest">
                                                 <span>{format(new Date(op.createdAt), "dd MMM yyyy · HH:mm")}</span>
+                                                <span className="w-1 h-1 bg-white/5 rounded-full" />
+                                                <span className="text-[#00D4FF]/40">{op.network === 'BANK_WIRE' ? 'BRL → USD' : 'BRL → USDT'}</span>
                                                 <span className="w-1 h-1 bg-white/5 rounded-full" />
                                                 <span>ID: {op.id.substring(0, 8)}</span>
                                             </div>
@@ -109,7 +131,7 @@ export function PremiumHistory({ orders, onCreateOrder }: PremiumHistoryProps) {
 
                                     <div className="flex flex-col md:items-end gap-0.5">
                                         <p className="text-white font-brand text-xl tracking-tighter">
-                                            USDT {op.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                            {op.network === 'BANK_WIRE' ? 'USD' : 'USDT'} {op.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                         </p>
                                         <p className="text-white/20 text-[9px] font-mono uppercase tracking-[0.1em]">
                                             R$ {op.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}

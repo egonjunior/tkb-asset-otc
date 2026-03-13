@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 interface OperationalNote {
   id: string;
@@ -41,14 +42,13 @@ interface OperationalNotesListProps {
 }
 
 export function OperationalNotesList({ refreshTrigger }: OperationalNotesListProps) {
-  const [notes, setNotes] = useState<OperationalNote[]>([]);
-  const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  const fetchNotes = async () => {
-    try {
+  const { data: notes = [], isLoading } = useQuery({
+    queryKey: ["operational-notes", refreshTrigger],
+    queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) return [];
 
       const { data, error } = await supabase
         .from("operational_notes")
@@ -57,22 +57,9 @@ export function OperationalNotesList({ refreshTrigger }: OperationalNotesListPro
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setNotes((data || []) as OperationalNote[]);
-    } catch (error) {
-      console.error("Error fetching operational notes:", error);
-      toast({
-        title: "Erro ao carregar notas",
-        description: "Não foi possível carregar suas notas operacionais",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotes();
-  }, [refreshTrigger]);
+      return data as OperationalNote[];
+    },
+  });
 
   const handleDownloadPDF = async (note: OperationalNote) => {
     if (!note.pdf_url) {
@@ -119,12 +106,12 @@ export function OperationalNotesList({ refreshTrigger }: OperationalNotesListPro
     return `${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <Card>
+      <Card className="bg-black/20 backdrop-blur-xl border-white/5">
         <CardContent className="py-8">
           <div className="flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin text-[#00D4FF]" />
           </div>
         </CardContent>
       </Card>
@@ -132,7 +119,7 @@ export function OperationalNotesList({ refreshTrigger }: OperationalNotesListPro
   }
 
   if (notes.length === 0) {
-    return null; // Don't show anything if there are no notes
+    return null;
   }
 
   return (
@@ -158,9 +145,9 @@ export function OperationalNotesList({ refreshTrigger }: OperationalNotesListPro
             </TableHeader>
             <TableBody>
               {notes.map((note) => {
-                const statusConfig = STATUS_CONFIG[note.status];
+                const statusConfig = STATUS_CONFIG[note.status] || STATUS_CONFIG.pending;
                 const StatusIcon = statusConfig.icon;
-                
+
                 return (
                   <TableRow key={note.id}>
                     <TableCell className="font-medium font-mono text-sm">

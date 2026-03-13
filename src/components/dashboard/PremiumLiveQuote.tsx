@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AreaChart, Area, ResponsiveContainer } from "recharts";
 import { Lock, ArrowRight, Activity, TrendingUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PremiumLiveQuoteProps {
     binancePrice: number | null;
@@ -12,6 +13,7 @@ interface PremiumLiveQuoteProps {
     trades24h?: number;
     sparklineData?: { price: number; time: string }[];
     onNewOrder?: () => void;
+    isLoading?: boolean;
 }
 
 export function PremiumLiveQuote({
@@ -23,7 +25,8 @@ export function PremiumLiveQuote({
     volume24h = 1254000,
     trades24h = 342,
     sparklineData = Array.from({ length: 24 }).map((_, i) => ({ time: `${i}:00`, price: 5.2 + Math.random() * 0.15 })),
-    onNewOrder
+    onNewOrder,
+    isLoading = false
 }: PremiumLiveQuoteProps) {
     const [lastUpdateSeconds, setLastUpdateSeconds] = useState(0);
 
@@ -33,6 +36,33 @@ export function PremiumLiveQuote({
         }, 1000);
         return () => clearInterval(timer);
     }, [binancePrice]);
+
+    if (isLoading) {
+        return (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+                <div className="lg:col-span-2 bg-black/40 backdrop-blur-2xl border border-white/[0.05] rounded-3xl p-8 h-[380px]">
+                    <Skeleton className="w-48 h-8 mb-4" />
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-12 mb-8">
+                        <Skeleton className="h-20" />
+                        <Skeleton className="h-20" />
+                        <Skeleton className="h-20 hidden md:block" />
+                    </div>
+                    <Skeleton className="h-32 w-full mb-4" />
+                    <div className="grid grid-cols-4 gap-6">
+                        <Skeleton className="h-10" />
+                        <Skeleton className="h-10" />
+                        <Skeleton className="h-10" />
+                        <Skeleton className="h-10" />
+                    </div>
+                </div>
+                <div className="bg-black/60 border border-[#D4A853]/20 rounded-3xl p-8 h-[380px] flex flex-col justify-between">
+                    <Skeleton className="w-1/2 h-8" />
+                    <Skeleton className="w-full h-24" />
+                    <Skeleton className="w-full h-12" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
