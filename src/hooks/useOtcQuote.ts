@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 interface OtcQuoteResponse {
@@ -27,41 +27,33 @@ interface OtcQuoteResponse {
 }
 
 export function useOtcQuote(slug: string) {
-  const [data, setData] = useState<OtcQuoteResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['otc-quote', slug],
+    queryFn: async () => {
+      if (!slug) throw new Error('Slug é obrigatório');
 
-  const fetchQuote = async () => {
-    try {
       const { data: result, error: fnError } = await supabase.functions.invoke(
         'get-otc-quote',
-        { 
+        {
           body: { slug },
         }
       );
 
       if (fnError) throw fnError;
       if (result?.error) throw new Error(result.error);
-      
-      setData(result);
-      setError(null);
-    } catch (err: any) {
-      console.error('Erro ao buscar cotação OTC:', err);
-      setError(err.message || 'Erro ao carregar cotação');
-    } finally {
-      setIsLoading(false);
-    }
+
+      return result as OtcQuoteResponse;
+    },
+    enabled: !!slug,
+    refetchInterval: 5000,
+    staleTime: 4000,
+    gcTime: 1000 * 60 * 5,
+  });
+
+  return {
+    data,
+    isLoading,
+    error: error ? (error as any).message : null,
+    refetch
   };
-
-  useEffect(() => {
-    if (!slug) return;
-    
-    fetchQuote();
-    
-    const interval = setInterval(fetchQuote, 5000);
-    
-    return () => clearInterval(interval);
-  }, [slug]);
-
-  return { data, isLoading, error, refetch: fetchQuote };
 }

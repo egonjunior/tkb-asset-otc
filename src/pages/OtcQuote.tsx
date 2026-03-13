@@ -14,12 +14,15 @@ export default function OtcQuote() {
   const { data, isLoading, error } = useOtcQuote(slug || '');
   const [brlAmount, setBrlAmount] = useState<number>(0);
 
+  // Somente mostrar loading se for o carregamento inicial (sem dados)
+  const isInitialLoading = isLoading && !data;
+
   // Cálculo preciso: BRL ÷ Cotação = USDT
   const usdtResult = brlAmount > 0 && data?.prices.clientPrice && data.prices.clientPrice > 0
     ? brlAmount / data.prices.clientPrice
     : 0;
 
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-primary/20 flex items-center justify-center p-4">
         <Card className="w-full max-w-2xl">
@@ -33,7 +36,9 @@ export default function OtcQuote() {
     );
   }
 
-  if (error || !data) {
+  // Se houver erro E não tivermos dados anteriores, mostramos o erro
+  // Se tivermos dados anteriores, ignoramos o erro momentâneo para manter a fluidez
+  if (error && !data) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-primary/20 flex items-center justify-center p-4">
         <Card className="w-full max-w-2xl border-destructive">
@@ -42,7 +47,7 @@ export default function OtcQuote() {
               Cotação não disponível
             </h2>
             <p className="text-muted-foreground">
-              {error || 'Cliente não encontrado'}
+              {error}
             </p>
           </CardContent>
         </Card>
@@ -57,9 +62,9 @@ export default function OtcQuote() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-primary/20 p-4">
       <div className="max-w-4xl mx-auto space-y-6 py-8">
         <div className="text-center space-y-2">
-          <img 
-            src={tkbLogo} 
-            alt="TKB Asset" 
+          <img
+            src={tkbLogo}
+            alt="TKB Asset"
             className="h-12 mx-auto mb-4"
           />
           <h1 className="text-4xl font-bold text-white">

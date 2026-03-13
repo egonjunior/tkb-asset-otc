@@ -17,6 +17,9 @@ const QuotePage = () => {
   const { candles } = useBinanceCandles();
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
+  // Somente mostrar loading se for o carregamento inicial (sem dados)
+  const isInitialLoading = isLoading && !binancePrice;
+
   const handleRefresh = async () => {
     await refetch();
     toast({
@@ -69,8 +72,8 @@ const QuotePage = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="default" 
+              <Button
+                variant="default"
                 size="sm"
                 onClick={handleShare}
                 className="bg-primary hover:bg-primary-hover text-white"
@@ -78,9 +81,9 @@ const QuotePage = () => {
                 <Share2 className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Compartilhar</span>
               </Button>
-                <Button 
-                variant="default" 
-                size="sm" 
+              <Button
+                variant="default"
+                size="sm"
                 onClick={handleRefresh}
                 className="bg-primary hover:bg-primary-hover text-white"
               >
@@ -94,8 +97,8 @@ const QuotePage = () => {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-10">
         <div className="max-w-6xl mx-auto space-y-8">
-          {/* Error Message */}
-          {error && (
+          {/* Error Message - Only show if we don't have prices yet */}
+          {error && !binancePrice && (
             <Card className="border-warning bg-warning/10">
               <CardContent className="pt-6">
                 <p className="text-sm text-warning font-inter">{error}</p>
@@ -114,7 +117,7 @@ const QuotePage = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
+                {isInitialLoading ? (
                   <div className="space-y-4 animate-pulse">
                     <div className="h-12 bg-neutral-100 rounded w-3/4" />
                     <div className="h-6 bg-neutral-100 rounded w-1/2" />
@@ -125,9 +128,8 @@ const QuotePage = () => {
                       <span className="text-6xl font-playfair font-bold text-foreground">
                         R$ {currentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
                       </span>
-                      <div className={`flex items-center gap-1.5 text-lg font-semibold ${
-                        isPositive ? "text-success" : "text-danger"
-                      }`}>
+                      <div className={`flex items-center gap-1.5 text-lg font-semibold ${isPositive ? "text-success" : "text-danger"
+                        }`}>
                         {isPositive ? (
                           <ArrowUpRight className="h-6 w-6" />
                         ) : (
@@ -139,8 +141,8 @@ const QuotePage = () => {
                     <div className="space-y-2">
                       <Badge variant="secondary" className="text-xs font-semibold">Par: USDT/BRL</Badge>
                       <p className="text-xs text-muted-foreground font-inter">
-                        Última atualização: {lastUpdate.toLocaleTimeString('pt-BR', { 
-                          hour: '2-digit', 
+                        Última atualização: {lastUpdate.toLocaleTimeString('pt-BR', {
+                          hour: '2-digit',
                           minute: '2-digit',
                           second: '2-digit'
                         })} • Auto-refresh 5s
@@ -161,7 +163,7 @@ const QuotePage = () => {
                 </div>
               </CardHeader>
               <CardContent className="relative">
-                {isLoading ? (
+                {isInitialLoading ? (
                   <div className="space-y-4 animate-pulse">
                     <div className="h-12 bg-white/20 rounded w-3/4" />
                     <div className="h-6 bg-white/20 rounded w-1/2" />
@@ -178,8 +180,8 @@ const QuotePage = () => {
                       <p className="text-sm text-white/90 font-semibold font-inter uppercase tracking-wider">
                         Cotação Institucional
                       </p>
-                      <Button 
-                        size="lg" 
+                      <Button
+                        size="lg"
                         className="bg-white text-primary hover:bg-neutral-100 shadow-xl font-semibold mt-2"
                         onClick={() => navigate("/login")}
                       >
@@ -203,19 +205,19 @@ const QuotePage = () => {
                     Últimas 24 horas • Candles de 15 minutos
                   </p>
                 </div>
-                  <Badge className="bg-success/20 text-success border-success/30 animate-pulse">
-                    <span className="relative flex h-2 w-2 mr-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
-                    </span>
-                    AO VIVO
-                  </Badge>
+                <Badge className="bg-success/20 text-success border-success/30 animate-pulse">
+                  <span className="relative flex h-2 w-2 mr-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                  </span>
+                  AO VIVO
+                </Badge>
               </div>
             </CardHeader>
             <CardContent>
               {candles.length > 1 ? (
                 <div className="h-96">
-                  <div 
+                  <div
                     ref={chartContainerRef}
                     className="w-full h-full"
                   />
@@ -254,8 +256,8 @@ const QuotePage = () => {
               <p className="text-lg text-white/90 max-w-2xl mx-auto font-inter leading-relaxed">
                 Aproveite nossa cotação competitiva e realize suas operações com segurança
               </p>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-white text-primary hover:bg-neutral-100 shadow-xl font-semibold"
                 onClick={() => navigate("/login")}
               >

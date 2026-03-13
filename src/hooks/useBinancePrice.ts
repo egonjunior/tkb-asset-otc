@@ -10,6 +10,7 @@ interface PriceResponse {
   lowPrice24h: number;
   tradesCount: number;
   cached: boolean;
+  timestamp?: number;
 }
 
 export const useBinancePrice = () => {
@@ -47,12 +48,16 @@ export const useBinancePrice = () => {
   const lowPrice24h = data?.lowPrice24h ?? 0;
   const tradesCount = data?.tradesCount ?? 0;
 
+  // Initial loading means it's loading AND we have no data yet
+  const isInitialLoading = isLoading && !data;
+
   return {
     binancePrice,
     tkbPrice,
     isLoading,
+    isInitialLoading,
     error: error ? (error as Error).message : null,
-    lastUpdate: new Date(),
+    lastUpdate: data ? new Date(data.timestamp || Date.now()) : new Date(),
     dailyChangePercent,
     volumeUSDT,
     highPrice24h,
