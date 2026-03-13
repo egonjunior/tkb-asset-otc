@@ -33,28 +33,22 @@ serve(async (req) => {
     // 1. Iniciar busca da Binance e Auth/Profile em paralelo se o cache expirou
     const updateCache = !binanceCache || (now - binanceCache.timestamp) >= CACHE_DURATION_MS;
 
-    // Preparar promessas
-    const binancePromises = updateCache ? [
-      fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'),
-      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL')
-    ] : [];
-
     const authHeader = req.headers.get('Authorization');
-    let supabaseClient = null;
-    let authPromise = null;
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      authHeader ? { global: { headers: { Authorization: authHeader } } } : undefined
+    );
 
-    if (authHeader) {
-      supabaseClient = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-        { global: { headers: { Authorization: authHeader } } }
-      );
-      authPromise = supabaseClient.auth.getUser();
-    }
+    const authPromise = authHeader ? supabaseClient.auth.getUser() : Promise.resolve({ data: { user: null }, error: null });
 
-    // Executar todas as promessas iniciais em paralelo
+    // Executar todas as promessas iniciais em paralelo de forma segura
+    const binancePricePromise = updateCache ? fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL') : Promise.resolve(null);
+    const binanceTickerPromise = updateCache ? fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL') : Promise.resolve(null);
+
     const [priceResponse, tickerResponse, authResult] = await Promise.all([
-      ...(binancePromises as any),
+      binancePricePromise,
+      binanceTickerPromise,
       authPromise
     ]);
 

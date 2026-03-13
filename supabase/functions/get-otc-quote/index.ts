@@ -146,20 +146,20 @@ serve(async (req) => {
         spreadPercent: clientConfig.spread_percent,
       },
       prices: {
-        basePrice: parseFloat(basePrice.toFixed(4)),
-        okxPrice: parseFloat(basePrice.toFixed(4)), // Backwards compatibility
-        clientPrice: parseFloat(clientPrice.toFixed(4)),
-        standardPrice: parseFloat(standardPrice.toFixed(4)),
+        basePrice: parseFloat((basePrice || 0).toFixed(4)),
+        okxPrice: parseFloat((basePrice || 0).toFixed(4)), // Backwards compatibility
+        clientPrice: parseFloat((clientPrice || 0).toFixed(4)),
+        standardPrice: parseFloat((standardPrice || 0).toFixed(4)),
       },
       savings: {
-        amount: parseFloat(savings.toFixed(4)),
-        percent: savingsPercent,
+        amount: parseFloat((savings || 0).toFixed(4)),
+        percent: savingsPercent || "0.00",
       },
       market24h: {
-        high: parseFloat(tickerData.high24h || '0'),
-        low: parseFloat(tickerData.low24h || '0'),
-        volume: parseFloat(tickerData.vol24h || '0'),
-        changePercent: parseFloat(tickerData.sodUtc8 || '0'),
+        high: parseFloat(tickerData?.high24h || tickerData?.high || '0'),
+        low: parseFloat(tickerData?.low24h || tickerData?.low || '0'),
+        volume: parseFloat(tickerData?.vol24h || tickerData?.vol || '0'),
+        changePercent: parseFloat(tickerData?.sodUtc8 || tickerData?.priceChangePercent || tickerData?.change24h || '0'),
       },
       timestamp: new Date().toISOString(),
     };
