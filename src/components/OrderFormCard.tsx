@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +27,9 @@ import {
   CheckCircle2,
   Coins,
   Wallet,
-  Users
+  Users,
+  ChevronRight,
+  TrendingUp
 } from "lucide-react";
 import { validateWalletAddress, type NetworkType } from "@/lib/walletValidation";
 
@@ -187,7 +195,19 @@ const OrderFormCard = ({
   const handleSubmitOrder = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!lockedPrice || !usdtAmount || !network || !walletAddress) return;
+    // Se não tiver preço travado, tenta usar o preço atual do TKB
+    const finalPrice = lockedPrice || tkbPrice;
+
+    if (!finalPrice || !usdtAmount || !network || !walletAddress) {
+      if (!finalPrice) {
+        toast({
+          title: "Aguardando cotação",
+          description: "Aguarde um instante até que a cotação seja carregada.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
 
     // Final validation before submit
     const validation = validateWalletAddress(walletAddress, network as NetworkType);
@@ -196,12 +216,12 @@ const OrderFormCard = ({
       return;
     }
 
-    const total = parseFloat(usdtAmount) * lockedPrice;
+    const total = parseFloat(usdtAmount) * finalPrice;
 
     onSubmit({
       amount: usdtAmount,
       network,
-      lockedPrice,
+      lockedPrice: finalPrice,
       total,
       lockedAt: new Date().toISOString(),
       walletAddress: walletAddress.trim(),

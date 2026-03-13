@@ -106,7 +106,7 @@ const TradingOrderPage = () => {
             titular_conta: 'TKB ASSET LTDA',
             cnpj_conta: '45.933.866/0001-93',
             pix_cnpj: 'gestao@tkbasset.com',
-            link_enviar_comprovante: `${window.location.origin} /order/${data.id} `
+            link_enviar_comprovante: `${window.location.origin}/order/${data.id}`
           }
         }
       }).catch(err => console.error('Error sending order email:', err));
@@ -174,7 +174,7 @@ const TradingOrderPage = () => {
         description: `Ordem ${data.id} aguardando comprovante de envio BRL`,
       });
 
-      navigate(`/ order / ${data.id} `);
+      navigate(`/order/${data.id}`);
     } catch (error) {
       console.error('Error creating bank wire order:', error);
       toast({
