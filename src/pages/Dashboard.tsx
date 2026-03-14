@@ -11,6 +11,7 @@ import { PremiumKPICards } from "@/components/dashboard/PremiumKPICards";
 import { PremiumLiveQuote } from "@/components/dashboard/PremiumLiveQuote";
 import { PremiumHistory } from "@/components/dashboard/PremiumHistory";
 import { PremiumCTA } from "@/components/dashboard/PremiumCTA";
+import { ApprovalLockedQuotes } from "@/components/dashboard/ApprovalLockedQuotes";
 import { OperationalNotesList } from "@/components/operational-notes/OperationalNotesList";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { BellNotifications } from "@/components/BellNotifications";
@@ -168,26 +169,37 @@ const Dashboard = () => {
                 onNewOrder={() => navigate("/order/new")}
               />
 
-              <PremiumKPICards
-                totalPatrimonio={stats.totalPatrimonio}
-                todayVolume={stats.todayVolume}
-                completedOperations={stats.completedOperations}
-                successRate={stats.successRate}
-                avgVolume={stats.avgVolume}
-                maxOperation={stats.maxOperation}
-                pendingAmount={stats.pendingAmount}
-                lockedPrice={tkbPrice || 0}
-                dailyChangePercent={12.5}
-                isLoading={ordersLoading || priceLoading}
-              />
+              {profile?.pricing_status === 'approved' ? (
+                <>
+                  <PremiumKPICards
+                    totalPatrimonio={stats.totalPatrimonio}
+                    todayVolume={stats.todayVolume}
+                    completedOperations={stats.completedOperations}
+                    successRate={stats.successRate}
+                    avgVolume={stats.avgVolume}
+                    maxOperation={stats.maxOperation}
+                    pendingAmount={stats.pendingAmount}
+                    lockedPrice={tkbPrice || 0}
+                    dailyChangePercent={12.5}
+                    isLoading={ordersLoading || priceLoading}
+                  />
 
-              <PremiumLiveQuote
-                binancePrice={binancePrice}
-                tkbPrice={tkbPrice}
-                variation24h={5.2}
-                onNewOrder={() => navigate("/order/new")}
-                isLoading={priceLoading}
-              />
+                  <PremiumLiveQuote
+                    binancePrice={binancePrice}
+                    tkbPrice={tkbPrice}
+                    variation24h={5.2}
+                    onNewOrder={() => navigate("/order/new")}
+                    isLoading={priceLoading}
+                  />
+                </>
+              ) : (
+                <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
+                  <ApprovalLockedQuotes
+                    status={profile?.pricing_status}
+                    onOpenOnboarding={() => setShowOnboarding(true)}
+                  />
+                </div>
+              )}
 
               {/* Operations History Table */}
               <div id="historico" className="scroll-mt-24">

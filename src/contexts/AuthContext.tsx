@@ -14,6 +14,9 @@ interface Profile {
   linkedin?: string | null;
   instagram?: string | null;
   twitter?: string | null;
+  pricing_status?: 'pending' | 'approved' | 'rejected' | null;
+  commercial_details?: string | null;
+  documents_accepted_at?: string | null;
   created_at: string;
   updated_at: string;
 }
