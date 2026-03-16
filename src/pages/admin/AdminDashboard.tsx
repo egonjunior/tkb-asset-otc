@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -11,10 +11,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, LogOut, TrendingUp, Clock, CheckCircle2, Users, Handshake, MessageCircle, Building2, UserCog, FileText, Percent, Presentation } from "lucide-react";
+import {
+  Shield, LogOut, TrendingUp, Clock, CheckCircle2,
+  Users, Handshake, MessageCircle, Building2,
+  UserCog, FileText, Percent, Presentation,
+  ArrowUpRight, ArrowDownRight, Zap, Bell,
+  Search, RefreshCw, Loader2, Briefcase, Newspaper
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VolumeCard } from "@/components/admin/VolumeCard";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 
 type VolumePeriod = 'day' | 'week' | 'month' | 'all';
 
@@ -45,51 +54,40 @@ const AdminDashboard = () => {
     let isMounted = true;
 
     const fetchOrders = async () => {
-      const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (ordersError) {
-        console.error('Erro ao buscar ordens:', ordersError);
-        if (isMounted) {
-          toast({
-            title: "Erro ao carregar ordens",
-            description: "Tente recarregar a página",
-            variant: "destructive",
-          });
+        if (ordersError) throw ordersError;
+
+        if (!isMounted) return;
+
+        if (ordersData && ordersData.length > 0) {
+          const userIds = [...new Set(ordersData.map(o => o.user_id))];
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', userIds);
+
+          const profilesMap = new Map(profilesData?.map(p => [p.id, p.full_name]));
+
+          const ordersWithNames = ordersData.map(order => ({
+            ...order,
+            full_name: profilesMap.get(order.user_id) || 'N/A'
+          }));
+
+          if (isMounted) {
+            setOrders(ordersWithNames as Order[]);
+          }
+        } else {
+          if (isMounted) setOrders([]);
         }
-        return;
-      }
-
-      if (!isMounted) return;
-
-      // Buscar os perfis dos usuários
-      if (ordersData && ordersData.length > 0) {
-        const userIds = [...new Set(ordersData.map(o => o.user_id))];
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', userIds);
-
-        const profilesMap = new Map(profilesData?.map(p => [p.id, p.full_name]));
-
-        const ordersWithNames = ordersData.map(order => ({
-          ...order,
-          full_name: profilesMap.get(order.user_id) || 'N/A'
-        }));
-
-        if (isMounted) {
-          setOrders(ordersWithNames as Order[]);
-        }
-      } else {
-        if (isMounted) {
-          setOrders([]);
-        }
-      }
-
-      if (isMounted) {
-        setLoading(false);
+      } catch (error) {
+        console.error('Erro ao buscar ordens:', error);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
 
@@ -160,7 +158,6 @@ const AdminDashboard = () => {
     checkAdminAndFetchOrders();
     fetchMetrics();
 
-    // Realtime subscription
     const channel = supabase
       .channel('admin-orders')
       .on('postgres_changes',
@@ -196,404 +193,284 @@ const AdminDashboard = () => {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { label: string; className: string }> = {
-      pending: { label: "Aguardando", className: "bg-warning text-warning-foreground" },
-      paid: { label: "Pago", className: "bg-primary text-primary-foreground" },
-      completed: { label: "Concluído", className: "bg-success text-success-foreground" },
-      expired: { label: "Expirado", className: "bg-muted text-muted-foreground" },
-      rejected: { label: "Rejeitado", className: "bg-destructive text-destructive-foreground" },
+      pending: { label: "Aguardando", className: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+      paid: { label: "Pago", className: "bg-[#00D4FF]/10 text-[#00D4FF] border-[#00D4FF]/20" },
+      completed: { label: "Concluído", className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+      expired: { label: "Expirado", className: "bg-white/10 text-white/40 border-white/5" },
+      rejected: { label: "Rejeitado", className: "bg-red-500/10 text-red-500 border-red-500/20" },
     };
 
-    const variant = variants[status] || { label: status, className: "bg-muted text-muted-foreground" };
-    return <Badge className={variant.className}>{variant.label}</Badge>;
+    const variant = variants[status] || { label: status, className: "bg-white/5 text-white/20 border-white/5" };
+    return <Badge variant="outline" className={variant.className}>{variant.label}</Badge>;
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
-                <Shield className="h-6 w-6 text-primary-foreground" />
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex w-full min-h-screen bg-black text-white">
+        <AppSidebar />
+        <main className="flex-1 p-8 overflow-y-auto">
+          <div className="max-w-7xl mx-auto space-y-8">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#00D4FF] to-[#00D4FF]/20 flex items-center justify-center shadow-[0_0_20px_rgba(0,212,255,0.3)]">
+                  <Shield className="h-6 w-6 text-black" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 tracking-tight">
+                    Painel Administrativo
+                  </h1>
+                  <p className="text-white/40 mt-1 font-mono text-[10px] uppercase tracking-[0.2em]">TKB Asset · Control Protocol v2.0</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">Painel Administrativo</h1>
-                <p className="text-xs text-muted-foreground">TKB Asset</p>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="border-white/10 hover:bg-white/5 h-10 px-4">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Sincronizar
+                </Button>
+                <Button variant="destructive" size="sm" onClick={handleLogout} className="bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all h-10 px-4">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
+                </Button>
               </div>
+            </header>
+
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="bg-white/[0.02] border-white/5 backdrop-blur-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D4FF]/5 rounded-full -mr-16 -mt-16 blur-3xl transition-all group-hover:bg-[#00D4FF]/10" />
+                <CardContent className="pt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs font-mono uppercase tracking-[0.2em] text-white/40">Ordens Abertas</p>
+                    <Clock className="h-5 w-5 text-amber-500" />
+                  </div>
+                  <div className="flex items-baseline gap-3">
+                    <h3 className="text-4xl font-bold text-white tracking-tighter">{metrics.openOrders}</h3>
+                    <span className="text-[10px] text-amber-500/60 font-mono">PENDING CONFIRMATION</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/[0.02] border-white/5 backdrop-blur-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D4FF]/5 rounded-full -mr-16 -mt-16 blur-3xl transition-all group-hover:bg-[#00D4FF]/10" />
+                <CardContent className="pt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs font-mono uppercase tracking-[0.2em] text-white/40">Pago / Aguardando</p>
+                    <TrendingUp className="h-5 w-5 text-[#00D4FF]" />
+                  </div>
+                  <div className="flex items-baseline gap-3">
+                    <h3 className="text-4xl font-bold text-[#00D4FF] tracking-tighter">{metrics.awaitingConfirmation}</h3>
+                    <span className="text-[10px] text-[#00D4FF]/60 font-mono">READY FOR RELEASE</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/[0.02] border-white/5 backdrop-blur-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 blur-3xl transition-all group-hover:bg-emerald-500/10" />
+                <CardContent className="pt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs font-mono uppercase tracking-[0.2em] text-white/40">Concluídas</p>
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                  </div>
+                  <div className="flex items-baseline gap-3">
+                    <h3 className="text-4xl font-bold text-emerald-500 tracking-tighter">{metrics.completedToday}</h3>
+                    <span className="text-[10px] text-emerald-500/60 font-mono">LIFETIME VOLUME</span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
-          </div>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto space-y-8">
-          {/* Métricas */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card className="shadow-md">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">Ordens Abertas</p>
-                  <Clock className="h-5 w-5 text-warning" />
+            {/* Ações Rápidas Bento Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <QuickActionCard
+                title="Usuários"
+                subtitle="Gestão de Perfis"
+                icon={Users}
+                onClick={() => navigate('/admin/users')}
+                color="blue"
+              />
+              <QuickActionCard
+                title="Contratos"
+                subtitle="Validação KYC"
+                icon={FileText}
+                onClick={() => navigate('/admin/documents')}
+                color="cyan"
+              />
+              <QuickActionCard
+                title="Parceiros"
+                subtitle={`${pendingPartnersCount} Pendentes`}
+                icon={Handshake}
+                onClick={() => navigate('/admin/partners')}
+                color="green"
+              />
+              <QuickActionCard
+                title="Suporte"
+                subtitle={`${openTicketsCount} Abertos`}
+                icon={MessageCircle}
+                onClick={() => navigate('/admin/support')}
+                color="orange"
+              />
+              <QuickActionCard
+                title="Leads"
+                subtitle={`${newLeadsCount} Novos`}
+                icon={Building2}
+                onClick={() => navigate('/admin/leads')}
+                color="purple"
+              />
+              <QuickActionCard
+                title="B2B OTC"
+                subtitle={`${pendingB2BCount} Pendentes`}
+                icon={Briefcase}
+                onClick={() => navigate('/admin/partners-b2b')}
+                color="indigo"
+              />
+              <QuickActionCard
+                title="Offline"
+                subtitle="Gestão Manual"
+                icon={UserCog}
+                onClick={() => navigate('/admin/offline-clients')}
+                color="blue"
+              />
+              <QuickActionCard
+                title="Operações"
+                subtitle="Relatório OKX"
+                icon={Zap}
+                onClick={() => navigate('/admin/okx-operations')}
+                color="amber"
+              />
+              <QuickActionCard
+                title="Spread"
+                subtitle="Precificação"
+                icon={Percent}
+                onClick={() => navigate('/admin/pricing')}
+                color="cyan"
+              />
+              <QuickActionCard
+                title="Blog"
+                subtitle="IA Content"
+                icon={Newspaper}
+                onClick={() => navigate('/admin/blog')}
+                color="pink"
+              />
+            </div>
+
+            {/* Volume Analytics */}
+            <div className="bg-white/[0.01] border border-white/5 rounded-3xl p-1 shadow-inner">
+              <VolumeCard
+                orders={orders}
+                period={volumePeriod}
+                onPeriodChange={setVolumePeriod}
+              />
+            </div>
+
+            {/* Tabela de Ordens Recentes */}
+            <Card className="bg-white/[0.02] border-white/5 shadow-2xl overflow-hidden backdrop-blur-xl">
+              <CardHeader className="bg-white/[0.01] border-b border-white/5 p-6 flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg font-bold">Fluxo de Ordens</CardTitle>
+                  <CardDescription className="text-white/20">Monitoramento em tempo real das movimentações OTC.</CardDescription>
                 </div>
-                <p className="text-3xl font-bold text-foreground">{metrics.openOrders}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-md">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">Aguardando Confirmação</p>
-                  <TrendingUp className="h-5 w-5 text-primary" />
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
+                  <Input placeholder="Filtrar ordens..." className="pl-9 bg-white/[0.03] border-white/10 w-64 focus:border-[#00D4FF] transition-all" />
                 </div>
-                <p className="text-3xl font-bold text-foreground">{metrics.awaitingConfirmation}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-md">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">Concluídas</p>
-                  <CheckCircle2 className="h-5 w-5 text-success" />
-                </div>
-                <p className="text-3xl font-bold text-foreground">{metrics.completedToday}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Ações Rápidas */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-primary"
-              onClick={() => navigate('/admin/users')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Gestão de Usuários</p>
-                    <p className="text-xl font-bold text-primary">Ver Todos →</p>
+              </CardHeader>
+              <CardContent className="p-0">
+                {loading ? (
+                  <div className="flex flex-col justify-center items-center p-20 space-y-4">
+                    <Loader2 className="h-10 w-10 animate-spin text-[#00D4FF]" />
+                    <p className="text-white/20 font-mono text-xs uppercase tracking-widest text-center">Interrogando Blockchain e Servidores...</p>
                   </div>
-                  <Users className="h-8 w-8 text-primary" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Visualizar e gerenciar todos os usuários</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-tkb-cyan"
-              onClick={() => navigate('/admin/documents')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Validação de Contratos</p>
-                    <p className="text-xl font-bold text-tkb-cyan">Gerenciar →</p>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-20 text-white/20">
+                    <Zap className="h-10 w-10 mx-auto mb-4 opacity-10" />
+                    <p className="font-medium">Nenhum registro encontrado no protocolo.</p>
                   </div>
-                  <span className="text-3xl">📄</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Aprovar e reprovar documentos dos clientes</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-green-500"
-              onClick={() => navigate('/admin/partners')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Solicitações de Parceria</p>
-                    <p className="text-xl font-bold text-green-600">{pendingPartnersCount} Pendentes →</p>
-                  </div>
-                  <Handshake className="h-8 w-8 text-green-600" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Novos interessados em ser assessores</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-orange-500"
-              onClick={() => navigate('/admin/support')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Chamados de Suporte</p>
-                    <p className="text-xl font-bold text-orange-600">{openTicketsCount} Abertos →</p>
-                  </div>
-                  <MessageCircle className="h-8 w-8 text-orange-600" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Tickets aguardando resposta</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-purple-500"
-              onClick={() => navigate('/admin/leads')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Leads Empresas</p>
-                    <p className="text-xl font-bold text-purple-600">{newLeadsCount} Novos →</p>
-                  </div>
-                  <Building2 className="h-8 w-8 text-purple-600" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Cadastros via landing page /empresas</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Parceiros B2B Card */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-indigo-500"
-              onClick={() => navigate('/admin/partners-b2b')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">🏢 Parceiros B2B - Mesas OTC</p>
-                    <p className="text-xl font-bold text-indigo-600">{pendingB2BCount} Pendentes →</p>
-                  </div>
-                  <Building2 className="h-8 w-8 text-indigo-600" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Solicitações de mesas OTC com markup diferenciado</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-blue-500"
-              onClick={() => navigate('/admin/offline-clients')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">👤 Clientes Offline</p>
-                    <p className="text-xl font-bold text-blue-600">Gerenciar →</p>
-                  </div>
-                  <UserCog className="h-8 w-8 text-blue-600" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Operações manuais e relatórios mensais</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-teal-500"
-              onClick={() => navigate('/admin/otc-clients')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">💰 Clientes OTC Personalizados</p>
-                    <p className="text-xl font-bold text-teal-600">Gerenciar →</p>
-                  </div>
-                  <TrendingUp className="h-8 w-8 text-teal-600" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Cotações exclusivas com spreads personalizados</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-emerald-500"
-              onClick={() => navigate('/admin/pld-compliance')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">🛡️ Compliance PLD</p>
-                    <p className="text-xl font-bold text-emerald-600">Verificar →</p>
-                  </div>
-                  <Shield className="h-8 w-8 text-emerald-600" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Aceites de Política PLD para auditoria</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-orange-500"
-              onClick={() => navigate('/admin/okx-operations')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">📊 Operações OKX</p>
-                    <p className="text-xl font-bold text-orange-600">Ver Movimentação →</p>
-                  </div>
-                  <TrendingUp className="h-8 w-8 text-orange-600" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Depósitos BRL, compras e saques USDT</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-tkb-cyan"
-              onClick={() => navigate('/admin/pricing')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">🏷️ Precificação Exclusiva</p>
-                    <p className="text-xl font-bold text-tkb-cyan">Analisar →</p>
-                  </div>
-                  <Percent className="h-8 w-8 text-tkb-cyan" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Aprovar perfis e definir spread</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-amber-500"
-              onClick={() => navigate('/admin/operational-notes')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">📋 Notas Operacionais</p>
-                    <p className="text-xl font-bold text-amber-600">{pendingNotesCount} Pendentes →</p>
-                  </div>
-                  <FileText className="h-8 w-8 text-amber-600" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Solicitações de comprovantes para aprovação</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-pink-500"
-              onClick={() => navigate('/admin/blog')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">📝 Blog & Conteúdo IA</p>
-                    <p className="text-xl font-bold text-pink-600">Gerenciar →</p>
-                  </div>
-                  <FileText className="h-8 w-8 text-pink-600" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Gerar artigos com Claude e publicar no blog</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-rose-500"
-              onClick={() => navigate('/admin/marketing')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">🎨 Sala de Marketing</p>
-                    <p className="text-xl font-bold text-rose-600">Painel Canva →</p>
-                  </div>
-                  <Presentation className="h-8 w-8 text-rose-600" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Criar e editar posts para LinkedIn e Instagram</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-cyan-500"
-              onClick={() => navigate('/admin/notifications')}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">🔔 Caixa Postal</p>
-                    <p className="text-xl font-bold text-cyan-600">Enviar Mensagens →</p>
-                  </div>
-                  <span className="text-3xl">📣</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Broadcasts para todos os usuários da plataforma</p>
-              </CardContent>
-            </Card>
-          </div>
-
-
-          {/* Volume Card */}
-          <VolumeCard
-            orders={orders}
-            period={volumePeriod}
-            onPeriodChange={setVolumePeriod}
-          />
-
-          {/* Tabela de Ordens */}
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle>Todas as Ordens</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-                  <p className="text-muted-foreground mt-3">Carregando ordens...</p>
-                </div>
-              ) : orders.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhuma ordem encontrada
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Cliente</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Rede</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Comprovante</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orders.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.id}</TableCell>
-                          <TableCell>{order.full_name || 'N/A'}</TableCell>
-                          <TableCell>{Number(order.amount).toLocaleString()} USDT</TableCell>
-                          <TableCell>{order.network}</TableCell>
-                          <TableCell>R$ {Number(order.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                          <TableCell>{getStatusBadge(order.status)}</TableCell>
-                          <TableCell>
-                            {order.receipt_url ? (
-                              <Badge className="bg-success/10 text-success border-success">
-                                Enviado
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-muted-foreground">
-                                Pendente
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(order.created_at).toLocaleDateString('pt-BR')}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/admin/order/${order.id}`)}
-                            >
-                              Gerenciar
-                            </Button>
-                          </TableCell>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader className="bg-white/[0.02]">
+                        <TableRow className="border-white/5 hover:bg-transparent">
+                          <TableHead className="text-white/40 text-[10px] uppercase font-mono tracking-wider">Identificador</TableHead>
+                          <TableHead className="text-white/40 text-[10px] uppercase font-mono tracking-wider">Protocolo de Cliente</TableHead>
+                          <TableHead className="text-white/40 text-[10px] uppercase font-mono tracking-wider">Volume (USDT)</TableHead>
+                          <TableHead className="text-white/40 text-[10px] uppercase font-mono tracking-wider">Network / Rede</TableHead>
+                          <TableHead className="text-white/40 text-[10px] uppercase font-mono tracking-wider">Liquidação (BRL)</TableHead>
+                          <TableHead className="text-white/40 text-[10px] uppercase font-mono tracking-wider">Estado</TableHead>
+                          <TableHead className="text-white/40 text-[10px] uppercase font-mono tracking-wider">Timestamp</TableHead>
+                          <TableHead className="text-white/40 text-[10px] uppercase font-mono tracking-wider text-right">Ações</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                      </TableHeader>
+                      <TableBody>
+                        {orders.map((order) => (
+                          <TableRow key={order.id} className="border-white/5 hover:bg-white/[0.01] transition-colors group">
+                            <TableCell className="font-mono text-[10px] text-white/60">{order.id.slice(0, 8)}...</TableCell>
+                            <TableCell>
+                              <div className="flex flex-col">
+                                <span className="font-medium text-white group-hover:text-[#00D4FF] transition-colors">{order.full_name || 'N/A'}</span>
+                                <span className="text-[10px] text-white/20 uppercase font-mono tracking-tighter">ID: {order.user_id.slice(0, 8)}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-bold text-white tracking-widest">{Number(order.amount).toLocaleString()} <span className="text-white/20 font-normal">USDT</span></TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-[9px] border-white/10 text-white/40 font-mono tracking-widest">{order.network}</Badge>
+                            </TableCell>
+                            <TableCell className="text-emerald-500/80 font-mono font-bold">R$ {Number(order.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                            <TableCell>{getStatusBadge(order.status)}</TableCell>
+                            <TableCell className="text-white/20 text-[10px] font-mono whitespace-nowrap">
+                              {new Date(order.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-[#00D4FF]/20 text-[#00D4FF] hover:bg-[#00D4FF]/10 h-8"
+                                onClick={() => navigate(`/admin/order/${order.id}`)}
+                              >
+                                Release
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
+  );
+};
+
+const QuickActionCard = ({ title, subtitle, icon: Icon, onClick, color }: any) => {
+  const colors: Record<string, string> = {
+    blue: "border-blue-500/20 text-blue-500 bg-blue-500/5",
+    cyan: "border-[#00D4FF]/20 text-[#00D4FF] bg-[#00D4FF]/5",
+    green: "border-emerald-500/20 text-emerald-500 bg-emerald-500/5",
+    orange: "border-amber-500/20 text-amber-500 bg-amber-500/5",
+    purple: "border-purple-500/20 text-purple-500 bg-purple-500/5",
+    pink: "border-pink-500/20 text-pink-500 bg-pink-500/5",
+    amber: "border-amber-500/20 text-amber-500 bg-amber-500/5",
+    indigo: "border-indigo-500/20 text-indigo-500 bg-indigo-500/5",
+  };
+
+  return (
+    <Card
+      className={`relative overflow-hidden cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all border ${colors[color] || colors.cyan}`}
+      onClick={onClick}
+    >
+      <CardContent className="p-5">
+        <div className="flex flex-col items-center text-center space-y-3">
+          <Icon className="h-6 w-6 opacity-60" />
+          <div>
+            <p className="text-[12px] font-bold tracking-tight text-white mb-0.5">{title}</p>
+            <p className="text-[9px] font-mono text-white/30 uppercase tracking-[0.1em]">{subtitle}</p>
+          </div>
         </div>
-      </main>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

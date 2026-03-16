@@ -63,41 +63,27 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
 
   const handleDownload = async (doc: AdminDocument, fileType: 'client' | 'tkb' = 'client') => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-document`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ documentId: doc.id, fileType })
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('get-document', {
+        body: { documentId: doc.id, fileType }
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao obter documento');
-      }
+      if (error) throw error;
+      if (!data?.signedUrl) throw new Error('URL não recebida');
 
-      const { signedUrl } = await response.json();
-      
-      // Download
+      // Trigger download using the signed URL
       const link = document.createElement('a');
-      link.href = signedUrl;
-      const suffix = fileType === 'tkb' ? '-TKB' : '';
-      link.download = `${documentTypeLabels[doc.document_type] || doc.document_type}${suffix}.pdf`;
-      link.target = '_blank';
+      link.href = data.signedUrl;
+      link.setAttribute('target', '_blank');
+      // For images/PDFs, browsers often open instead of download, 
+      // but link.click() on a signed URL is the most reliable way to initiate access.
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       toast.success('Download iniciado');
     } catch (error: any) {
       console.error('Error downloading document:', error);
-      toast.error('Erro ao baixar documento: ' + error.message);
+      toast.error('Erro ao baixar documento: ' + (error.message || 'Tente novamente'));
     }
   };
 
@@ -114,124 +100,142 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0">
-          <DialogHeader className="px-6 py-4 border-b">
-            <DialogTitle className="text-xl">
-              Documentos de {user.full_name}
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {user.document_number}
-            </p>
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 bg-black border-white/10 outline-none overflow-hidden">
+          <DialogHeader className="px-8 py-6 border-b border-white/5 bg-white/[0.01] shrink-0">
+            <div className="flex flex-col gap-1">
+              <DialogTitle className="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+                <FileText className="h-6 w-6 text-[#00D4FF]" />
+                Dossiê de Conformidade
+              </DialogTitle>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-white/40 font-mono text-xs uppercase tracking-widest">{user.full_name}</p>
+                <div className="h-1 w-1 rounded-full bg-white/20" />
+                <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest">{user.document_number}</p>
+              </div>
+            </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8 bg-[#050505]">
             {/* Progress Section */}
-            <Card className="mb-6">
-              <CardContent className="pt-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">Progresso de Revisão</span>
-                    <span className="text-muted-foreground">
-                      {approvedCount}/{user.total_count} documentos aprovados
-                    </span>
+            <Card className="bg-white/[0.02] border-white/5 backdrop-blur-xl relative overflow-hidden group border border-white/5">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D4FF]/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-[#00D4FF]/10 transition-all duration-500" />
+              <CardContent className="pt-8 pb-8 px-8">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-tkb-cyan">Status de Revisão</p>
+                      <h4 className="text-sm font-light text-white/60">Auditando <span className="text-white font-bold">{user.total_count} assets</span> institucionais</h4>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-black text-white tracking-tighter">{Math.round(progressPercent)}%</p>
+                      <p className="text-[10px] font-mono text-white/20 uppercase tracking-widest">{approvedCount} de {user.total_count} validados</p>
+                    </div>
                   </div>
-                  <Progress value={progressPercent} className="h-2" />
+                  <div className="relative h-1.5 w-full bg-white/[0.05] rounded-full overflow-hidden border border-white/[0.05]">
+                    <div
+                      className="absolute top-0 left-0 h-full bg-[#00D4FF] shadow-[0_0_15px_rgba(0,212,255,0.4)] transition-all duration-1000 ease-out"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Documents List */}
-            <div className="space-y-3">
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/20 pl-1">Massa de Dados Processada</h3>
               {user.documents
                 .sort((a, b) => {
-                  // Pendentes primeiro
                   const statusOrder = { 'pending': 0, 'under_review': 1, 'rejected': 2, 'approved': 3 };
                   return (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
                 })
                 .map((doc) => (
-                  <Card key={doc.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 p-3 bg-primary/10 rounded-lg">
-                          <FileText className="h-6 w-6 text-primary" />
+                  <Card key={doc.id} className="bg-white/[0.01] border-white/5 hover:border-white/10 hover:bg-white/[0.02] transition-all duration-300 group border border-white/5">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-6">
+                        <div className="flex-shrink-0 p-4 bg-white/[0.03] rounded-2xl border border-white/5 group-hover:bg-[#00D4FF]/10 group-hover:border-[#00D4FF]/20 transition-colors">
+                          <FileText className="h-6 w-6 text-white/40 group-hover:text-[#00D4FF]" />
                         </div>
-                        
+
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-4 mb-2">
+                          <div className="flex items-start justify-between gap-4 mb-1">
                             <div>
-                              <h4 className="font-semibold text-base">
+                              <h4 className="font-bold text-lg text-white tracking-tight group-hover:text-[#00D4FF] transition-colors">
                                 {documentTypeLabels[doc.document_type] || doc.document_type}
                               </h4>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                Enviado em {new Date(doc.uploaded_at).toLocaleDateString('pt-BR', {
-                                  day: '2-digit',
-                                  month: 'long',
-                                  year: 'numeric'
-                                })}
+                              <p className="text-[10px] font-mono text-white/20 uppercase tracking-widest mt-1">
+                                Ingresso em {new Date(doc.uploaded_at).toLocaleDateString('pt-BR')}
                               </p>
                             </div>
                             <DocumentStatusBadge status={doc.status} />
                           </div>
 
                           {doc.rejection_reason && (
-                            <div className="mt-2 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-                              <p className="text-sm text-destructive">
-                                <strong>Motivo da reprovação:</strong> {doc.rejection_reason}
+                            <div className="mt-4 p-4 bg-red-500/5 border border-red-500/10 rounded-xl relative overflow-hidden group/alert">
+                              <div className="absolute left-0 top-0 h-full w-1 bg-red-500/40" />
+                              <p className="text-xs text-red-500/80 leading-relaxed">
+                                <span className="font-black uppercase text-[9px] mr-2 text-red-500/60 font-mono tracking-widest">Inconsistência:</span>
+                                {doc.rejection_reason}
                               </p>
                             </div>
                           )}
 
-                          <div className="flex flex-wrap gap-2 mt-3">
+                          <div className="flex flex-wrap gap-3 mt-6">
                             {(doc.status === 'pending' || doc.status === 'under_review') && (
                               <Button
                                 size="sm"
                                 onClick={() => handleReview(doc)}
-                                className="bg-primary hover:bg-primary/90"
+                                className="bg-[#00D4FF] hover:bg-[#00D4FF]/80 text-black font-black uppercase text-[10px] tracking-widest px-6 h-10 shadow-lg shadow-[#00D4FF]/10 transition-all"
                               >
-                                <Eye className="h-4 w-4 mr-1" />
-                                Revisar
+                                <Eye className="h-3.5 w-3.5 mr-2" />
+                                Auditoria
                               </Button>
                             )}
-                            
+
                             {doc.status === 'approved' && (
                               <>
                                 {doc.tkb_file_url ? (
-                                  <Badge variant="outline" className="text-green-600 border-green-600">
-                                    ✓ Com documento TKB
-                                  </Badge>
+                                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Certificado Ativo</span>
+                                  </div>
                                 ) : (
                                   <Button
                                     size="sm"
                                     variant="outline"
                                     onClick={() => handleAttachTKB(doc)}
-                                    className="border-primary text-primary hover:bg-primary/10"
+                                    className="border-[#00D4FF]/20 text-[#00D4FF] hover:bg-[#00D4FF]/10 h-10 px-6 uppercase text-[10px] font-bold tracking-widest"
                                   >
-                                    <Upload className="h-4 w-4 mr-1" />
-                                    Anexar TKB
+                                    <Upload className="h-3.5 w-3.5 mr-2" />
+                                    Vincular TKB
                                   </Button>
                                 )}
                               </>
                             )}
-                            
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDownload(doc, 'client')}
-                            >
-                              <Download className="h-4 w-4 mr-1" />
-                              Baixar Cliente
-                            </Button>
-                            
-                            {doc.status === 'approved' && doc.tkb_file_url && (
+
+                            <div className="flex gap-2 ml-auto">
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleDownload(doc, 'tkb')}
+                                onClick={() => handleDownload(doc, 'client')}
+                                className="bg-white/5 border-white/5 text-white/40 hover:text-white hover:bg-white/10 h-10 px-4"
+                                title="Baixar Original"
                               >
-                                <Download className="h-4 w-4 mr-1" />
-                                Baixar TKB
+                                <Download className="h-3.5 w-3.5" />
                               </Button>
-                            )}
+
+                              {doc.status === 'approved' && doc.tkb_file_url && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDownload(doc, 'tkb')}
+                                  className="bg-[#00D4FF]/5 border-[#00D4FF]/10 text-[#00D4FF] hover:bg-[#00D4FF]/20 h-10 px-4"
+                                  title="Baixar Certificado"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -258,7 +262,7 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
               setSelectedDocument(null);
             }}
           />
-          
+
           <TKBUploadModal
             isOpen={tkbUploadModalOpen}
             onClose={() => {

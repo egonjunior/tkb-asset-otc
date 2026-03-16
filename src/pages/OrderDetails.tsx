@@ -248,7 +248,10 @@ const OrderDetails = () => {
       if (remaining <= 0) {
         clearInterval(interval);
 
-        if (order.status === 'pending') {
+        // Só expira se o status for pending E não houver comprovantes enviados
+        const hasReceipts = receipts.length > 0 || !!order.receipt_url;
+
+        if (order.status === 'pending' && !hasReceipts) {
           try {
             await supabase
               .from('orders')
@@ -267,6 +270,8 @@ const OrderDetails = () => {
           } catch (error) {
             console.error('Error expiring order:', error);
           }
+        } else if (order.status === 'pending' && hasReceipts) {
+          console.log('[OrderDetails] Order expired chronologically but has receipts, skipping status update');
         }
       }
     }, 1000);
@@ -701,7 +706,7 @@ const OrderDetails = () => {
                     {timelineEvents.map((event) => (
                       <div key={event.id} className="flex gap-3 items-start">
                         <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${event.event_type === 'payment_confirmed' ? 'bg-success/10' :
-                            event.event_type === 'usdt_sent' ? 'bg-primary/10' : 'bg-muted'
+                          event.event_type === 'usdt_sent' ? 'bg-primary/10' : 'bg-muted'
                           }`}>
                           {event.event_type === 'payment_confirmed' ? (
                             <CheckCircle2 className="h-4 w-4 text-success" />

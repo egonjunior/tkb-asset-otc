@@ -26,6 +26,7 @@ interface AuthContextType {
   profile: Profile | null;
   session: Session | null;
   isPartner: boolean;
+  isAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -37,6 +38,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isPartner, setIsPartner] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -65,9 +67,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .eq('status', 'approved')
           .maybeSingle();
 
+        const { data: adminRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .eq('role', 'admin')
+          .maybeSingle();
+
         if (isMounted) {
           setProfile(profileData as any);
           setIsPartner(!!partnerConfig?.is_active || !!partnerReq);
+          setIsAdmin(!!adminRole);
         }
       } catch (error) {
         console.error('[AuthContext] Error fetching profile:', error);
@@ -148,12 +158,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     setProfile(null);
     setSession(null);
+    setProfile(null);
+    setSession(null);
     setIsPartner(false);
+    setIsAdmin(false);
     navigate('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, session, isPartner, loading, signOut }}>
+    <AuthContext.Provider value={{ user, profile, session, isPartner, isAdmin, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

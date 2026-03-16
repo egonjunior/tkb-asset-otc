@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { UserDocumentsModal } from "@/components/admin/UserDocumentsModal";
-import { Eye, Search } from "lucide-react";
+import { Eye, Search, FileText, CheckCircle2, XCircle, Clock, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import type { DocumentStatus } from "@/lib/documentHelpers";
 
 interface AdminDocument {
@@ -61,11 +63,12 @@ export default function AdminDocuments() {
 
   const fetchDocuments = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('documents')
         .select('*, profiles!documents_user_id_fkey(full_name, document_number)')
         .in('document_type', [
-          'contrato-quadro', 
+          'contrato-quadro',
           'dossie-kyc',
           'kyc-faturamento',
           'kyc-cnpj',
@@ -107,10 +110,13 @@ export default function AdminDocuments() {
     const grouped = docs.reduce((acc, doc) => {
       const userId = doc.user_id;
       if (!acc[userId]) {
+        const profile = doc.profiles;
+        const profileData = Array.isArray(profile) ? profile[0] : profile;
+
         acc[userId] = {
           user_id: userId,
-          full_name: doc.profiles?.full_name || 'Sem nome',
-          document_number: doc.profiles?.document_number || 'Sem documento',
+          full_name: profileData?.full_name || 'Sem nome',
+          document_number: profileData?.document_number || 'Sem documento',
           documents: [],
           pending_count: 0,
           total_count: 0
@@ -139,7 +145,7 @@ export default function AdminDocuments() {
     }
 
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(user => 
+      filtered = filtered.filter(user =>
         user.documents.some(doc => doc.status === statusFilter)
       );
     }
@@ -147,153 +153,200 @@ export default function AdminDocuments() {
     setFilteredUsers(filtered);
   };
 
-  const pendingCount = documents.filter(d => d.status === 'under_review').length;
-
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/3" />
-          <div className="h-64 bg-muted rounded" />
-        </div>
-      </div>
-    );
-  }
+  const stats = {
+    total: documents.length,
+    pending: documents.filter(d => d.status === 'under_review' || d.status === 'pending').length,
+    approved: documents.filter(d => d.status === 'approved').length,
+    rejected: documents.filter(d => d.status === 'rejected').length
+  };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Validação de Documentos</h1>
-        <p className="text-muted-foreground">
-          Gerencie e valide os documentos enviados pelos clientes
-        </p>
-      </div>
-
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Estatísticas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold">{documents.length}</div>
-              <div className="text-sm text-muted-foreground">Total</div>
-            </div>
-            <div className="text-center p-4 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{pendingCount}</div>
-              <div className="text-sm text-blue-600">Pendentes</div>
-            </div>
-            <div className="text-center p-4 bg-green-100 dark:bg-green-900/20 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
-                {documents.filter(d => d.status === 'approved').length}
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex w-full min-h-screen bg-black text-white">
+        <AppSidebar />
+        <main className="flex-1 p-8 overflow-y-auto">
+          <div className="max-w-7xl mx-auto space-y-8">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/40 tracking-tight">
+                  Validação de <span className="text-[#00D4FF]">Documentos</span>
+                </h1>
+                <p className="text-white/40 mt-2 text-lg font-light">
+                  Mesa de Compliance: Autentique e valide a documentação institucional dos clientes.
+                </p>
               </div>
-              <div className="text-sm text-green-600">Aprovados</div>
-            </div>
-            <div className="text-center p-4 bg-red-100 dark:bg-red-900/20 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">
-                {documents.filter(d => d.status === 'rejected').length}
-              </div>
-              <div className="text-sm text-red-600">Reprovados</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchDocuments()}
+                className="border-white/10 hover:bg-white/5 bg-white/[0.02] backdrop-blur-md"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Sincronizar Protocolos
+              </Button>
+            </header>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por cliente ou CPF/CNPJ..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-white/[0.02] border-white/5 backdrop-blur-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-white/10 transition-all" />
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-1">Total Geral</p>
+                      <h3 className="text-3xl font-bold text-white tracking-tighter">{stats.total}</h3>
+                    </div>
+                    <FileText className="h-8 w-8 text-white/10" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-amber-500/5 border-amber-500/10 backdrop-blur-xl relative overflow-hidden group">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-amber-500/60 mb-1">Aguardando Revisão</p>
+                      <h3 className="text-3xl font-bold text-amber-500 tracking-tighter">{stats.pending}</h3>
+                    </div>
+                    <Clock className="h-8 w-8 text-amber-500/20" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-emerald-500/5 border-emerald-500/10 backdrop-blur-xl relative overflow-hidden group">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-500/60 mb-1">Certificados</p>
+                      <h3 className="text-3xl font-bold text-emerald-500 tracking-tighter">{stats.approved}</h3>
+                    </div>
+                    <CheckCircle2 className="h-8 w-8 text-emerald-500/20" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-red-500/5 border-red-500/10 backdrop-blur-xl relative overflow-hidden group">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-red-500/60 mb-1">Inconsistências</p>
+                      <h3 className="text-3xl font-bold text-red-500 tracking-tighter">{stats.rejected}</h3>
+                    </div>
+                    <XCircle className="h-8 w-8 text-red-500/20" />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="pending">Pendente</SelectItem>
-                <SelectItem value="under_review">Em Análise</SelectItem>
-                <SelectItem value="approved">Aprovado</SelectItem>
-                <SelectItem value="rejected">Reprovado</SelectItem>
-              </SelectContent>
-            </Select>
+
+            <Card className="bg-white/[0.02] border-white/5 shadow-2xl overflow-hidden backdrop-blur-xl border border-white/5">
+              <CardHeader className="bg-white/[0.01] border-b border-white/5 p-6 relative">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#00D4FF]/40 to-transparent opacity-50" />
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                  <div className="w-full md:w-96 relative group">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-[#00D4FF] transition-colors" />
+                    <Input
+                      placeholder="Filtrar por nome ou documento..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 bg-black/40 border-white/10 text-white focus:border-[#00D4FF] focus:ring-[#00D4FF]/10 transition-all h-11"
+                    />
+                  </div>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full md:w-[220px] bg-black/40 border-white/10 text-white h-11">
+                      <SelectValue placeholder="Status de Conformidade" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-neutral-900 border-white/10 text-white">
+                      <SelectItem value="all">Todos os Protocolos</SelectItem>
+                      <SelectItem value="pending">Apenas Pendentes</SelectItem>
+                      <SelectItem value="under_review">Em Análise</SelectItem>
+                      <SelectItem value="approved">Aprovados</SelectItem>
+                      <SelectItem value="rejected">Reprovados</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {loading && documents.length === 0 ? (
+                  <div className="flex flex-col justify-center items-center p-32 space-y-6">
+                    <div className="relative">
+                      <Loader2 className="h-12 w-12 animate-spin text-[#00D4FF]" />
+                      <div className="absolute inset-0 blur-xl bg-[#00D4FF]/20 animate-pulse" />
+                    </div>
+                    <p className="text-white/20 font-mono text-[10px] uppercase tracking-[0.3em]">Varrendo Protocolos...</p>
+                  </div>
+                ) : filteredUsers.length === 0 ? (
+                  <div className="text-center py-24">
+                    <AlertCircle className="h-16 w-16 mx-auto mb-6 text-white/5" />
+                    <p className="text-white/20 text-lg font-light italic">Nenhum registro de conformidade para os filtros aplicados.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader className="bg-white/[0.03]">
+                        <TableRow className="border-white/5 hover:bg-transparent">
+                          <TableHead className="text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5 pl-8">Identificação Cliente</TableHead>
+                          <TableHead className="text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5">Registro Fiscal</TableHead>
+                          <TableHead className="text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5">Massa Documental</TableHead>
+                          <TableHead className="text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5 text-right pr-8">Ação Decisória</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredUsers.map((user) => (
+                          <TableRow key={user.user_id} className="border-white/5 hover:bg-white/[0.02] transition-colors group">
+                            <TableCell className="py-6 pl-8">
+                              <span className="font-bold text-white text-base tracking-tight group-hover:text-[#00D4FF] transition-colors">{user.full_name}</span>
+                            </TableCell>
+                            <TableCell className="py-6">
+                              <span className="text-white/40 font-mono text-xs tracking-wider">{user.document_number}</span>
+                            </TableCell>
+                            <TableCell className="py-6">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="border-white/10 text-white/40 bg-white/[0.01] px-2 py-0.5 text-[10px] font-mono">
+                                  {user.total_count} arquivos
+                                </Badge>
+                                {user.pending_count > 0 && (
+                                  <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 px-2 py-0.5 text-[10px] font-bold">
+                                    {user.pending_count} Alerta{user.pending_count > 1 ? 's' : ''}
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right py-6 pr-8">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-[#00D4FF]/20 text-[#00D4FF] hover:bg-[#00D4FF]/10 bg-[#00D4FF]/5 font-bold uppercase text-[10px] tracking-widest h-9 px-6 transition-all"
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setUserModalOpen(true);
+                                }}
+                              >
+                                {user.pending_count > 0 ? (
+                                  <><Clock className="h-3 w-3 mr-2" /> Analisar</>
+                                ) : (
+                                  <><Eye className="h-3 w-3 mr-2" /> Visualizar</>
+                                )}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </CardHeader>
-        <CardContent>
-          {filteredUsers.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              Nenhum cliente encontrado
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>CPF/CNPJ</TableHead>
-                    <TableHead>Documentos</TableHead>
-                    <TableHead>Pendentes</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.user_id}>
-                      <TableCell className="font-medium">{user.full_name}</TableCell>
-                      <TableCell>{user.document_number}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{user.total_count} total</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.pending_count > 0 ? (
-                          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
-                            {user.pending_count} pendente{user.pending_count > 1 ? 's' : ''}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-green-600 dark:text-green-400">
-                            Tudo aprovado
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setUserModalOpen(true);
-                          }}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver Documentos
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+
+          {selectedUser && (
+            <UserDocumentsModal
+              isOpen={userModalOpen}
+              onClose={() => {
+                setUserModalOpen(false);
+                setSelectedUser(null);
+              }}
+              user={selectedUser}
+              onReviewComplete={fetchDocuments}
+            />
           )}
-        </CardContent>
-      </Card>
-
-      {selectedUser && (
-        <UserDocumentsModal
-          isOpen={userModalOpen}
-          onClose={() => {
-            setUserModalOpen(false);
-            setSelectedUser(null);
-          }}
-          user={selectedUser}
-          onReviewComplete={fetchDocuments}
-        />
-      )}
-    </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 }

@@ -72,105 +72,111 @@ const PageLoader = () => (
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/home" element={<PremiumLanding />} />
-              <Route path="/premium" element={<PremiumLanding />} />
-              <Route path="/old-home" element={<Landing />} />
-              <Route path="/empresas" element={<Empresas />} />
-              <Route path="/cotacao" element={<QuotePage />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:slug" element={<BlogPost />} />
-              <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/order/new" element={
-                <ProtectedRoute>
-                  <TradingOrderPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/order/:orderId" element={
-                <ProtectedRoute>
-                  <OrderDetails />
-                </ProtectedRoute>
-              } />
-              <Route path="/documents" element={
-                <ProtectedRoute>
-                  <Documents />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } />
-              <Route path="/analytics" element={
-                <ProtectedRoute>
-                  <Analytics />
-                </ProtectedRoute>
-              } />
-              <Route path="/parceiro" element={
-                <ProtectedRoute>
-                  <Partner />
-                </ProtectedRoute>
-              } />
-              <Route path="/partner" element={<Partner />} />
-              <Route path="/partner/b2b" element={<PartnerB2B />} />
-              <Route path="/partner-b2b" element={<PartnerB2B />} />
-              <Route path="/partner/b2b-otc" element={<ProtectedRoute><PartnerDashboard /></ProtectedRoute>} />
-              <Route path="/partner/dashboard" element={<ProtectedRoute><PartnerDashboard /></ProtectedRoute>} />
-              <Route path="/partner/clients" element={<ProtectedRoute><PartnerClients /></ProtectedRoute>} />
-              <Route path="/partner/financial" element={<ProtectedRoute><PartnerPricing /></ProtectedRoute>} />
-              <Route path="/suporte" element={
-                <ProtectedRoute>
-                  <Support />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-              <Route path="/admin/partners" element={<AdminProtectedRoute><AdminPartners /></AdminProtectedRoute>} />
-              <Route path="/admin/partners-b2b" element={<AdminProtectedRoute><AdminPartnersB2B /></AdminProtectedRoute>} />
-              <Route path="/admin/support" element={<AdminProtectedRoute><AdminSupport /></AdminProtectedRoute>} />
-              <Route path="/admin/leads" element={<AdminProtectedRoute><AdminLeads /></AdminProtectedRoute>} />
-              <Route path="/admin/documents" element={<AdminProtectedRoute><AdminDocuments /></AdminProtectedRoute>} />
-              <Route path="/admin/order/:orderId" element={<AdminProtectedRoute><AdminOrderDetails /></AdminProtectedRoute>} />
-              <Route path="/admin/users" element={<AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>} />
-              <Route path="/admin/users/:userId" element={<AdminProtectedRoute><AdminUserDetails /></AdminProtectedRoute>} />
-              <Route path="/admin/pricing" element={<AdminProtectedRoute><AdminPricing /></AdminProtectedRoute>} />
-              <Route path="/admin/offline-clients" element={<AdminProtectedRoute><AdminOfflineClients /></AdminProtectedRoute>} />
-              <Route path="/admin/offline-clients/:clientId" element={<AdminProtectedRoute><AdminOfflineClientDetails /></AdminProtectedRoute>} />
-              <Route path="/admin/otc-clients" element={<AdminProtectedRoute><AdminOtcClients /></AdminProtectedRoute>} />
-              <Route path="/admin/pld-compliance" element={<AdminProtectedRoute><AdminPLDCompliance /></AdminProtectedRoute>} />
-              <Route path="/admin/okx-operations" element={<AdminProtectedRoute><AdminOkxOperations /></AdminProtectedRoute>} />
-              <Route path="/admin/operational-notes" element={<AdminProtectedRoute><AdminOperationalNotes /></AdminProtectedRoute>} />
-              <Route path="/admin/blog" element={<AdminProtectedRoute><AdminBlog /></AdminProtectedRoute>} />
-              <Route path="/admin/marketing" element={<AdminProtectedRoute><AdminMarketing /></AdminProtectedRoute>} />
-              <Route path="/admin/notifications" element={<AdminProtectedRoute><AdminNotifications /></AdminProtectedRoute>} />
-              <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="/:slug" element={<OtcQuote />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/home" element={<PremiumLanding />} />
+                <Route path="/premium" element={<PremiumLanding />} />
+                <Route path="/old-home" element={<Landing />} />
+                <Route path="/empresas" element={<Empresas />} />
+                <Route path="/cotacao" element={<QuotePage />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:slug" element={<BlogPost />} />
+                <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/order/new" element={
+                  <ProtectedRoute>
+                    <TradingOrderPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/order/:orderId" element={
+                  <ProtectedRoute>
+                    <OrderDetails />
+                  </ProtectedRoute>
+                } />
+                <Route path="/documents" element={
+                  <ProtectedRoute>
+                    <Documents />
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/analytics" element={
+                  <ProtectedRoute>
+                    <Analytics />
+                  </ProtectedRoute>
+                } />
+                <Route path="/parceiro" element={
+                  <ProtectedRoute>
+                    <Partner />
+                  </ProtectedRoute>
+                } />
+                <Route path="/partner" element={<Partner />} />
+                <Route path="/partner/b2b" element={<PartnerB2B />} />
+                <Route path="/partner-b2b" element={<PartnerB2B />} />
+                <Route path="/partner/b2b-otc" element={<ProtectedRoute><PartnerDashboard /></ProtectedRoute>} />
+                <Route path="/partner/dashboard" element={<ProtectedRoute><PartnerDashboard /></ProtectedRoute>} />
+                <Route path="/partner/clients" element={<ProtectedRoute><PartnerClients /></ProtectedRoute>} />
+                <Route path="/partner/financial" element={<ProtectedRoute><PartnerPricing /></ProtectedRoute>} />
+                <Route path="/suporte" element={
+                  <ProtectedRoute>
+                    <Support />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+                <Route path="/admin/partners" element={<AdminProtectedRoute><AdminPartners /></AdminProtectedRoute>} />
+                <Route path="/admin/partners-b2b" element={<AdminProtectedRoute><AdminPartnersB2B /></AdminProtectedRoute>} />
+                <Route path="/admin/support" element={<AdminProtectedRoute><AdminSupport /></AdminProtectedRoute>} />
+                <Route path="/admin/leads" element={<AdminProtectedRoute><AdminLeads /></AdminProtectedRoute>} />
+                <Route path="/admin/documents" element={<AdminProtectedRoute><AdminDocuments /></AdminProtectedRoute>} />
+                <Route path="/admin/order/:orderId" element={<AdminProtectedRoute><AdminOrderDetails /></AdminProtectedRoute>} />
+                <Route path="/admin/users" element={<AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>} />
+                <Route path="/admin/users/:userId" element={<AdminProtectedRoute><AdminUserDetails /></AdminProtectedRoute>} />
+                <Route path="/admin/pricing" element={<AdminProtectedRoute><AdminPricing /></AdminProtectedRoute>} />
+                <Route path="/admin/offline-clients" element={<AdminProtectedRoute><AdminOfflineClients /></AdminProtectedRoute>} />
+                <Route path="/admin/offline-clients/:clientId" element={<AdminProtectedRoute><AdminOfflineClientDetails /></AdminProtectedRoute>} />
+                <Route path="/admin/otc-clients" element={<AdminProtectedRoute><AdminOtcClients /></AdminProtectedRoute>} />
+                <Route path="/admin/pld-compliance" element={<AdminProtectedRoute><AdminPLDCompliance /></AdminProtectedRoute>} />
+                <Route path="/admin/okx-operations" element={<AdminProtectedRoute><AdminOkxOperations /></AdminProtectedRoute>} />
+                <Route path="/admin/operational-notes" element={<AdminProtectedRoute><AdminOperationalNotes /></AdminProtectedRoute>} />
+                <Route path="/admin/blog" element={<AdminProtectedRoute><AdminBlog /></AdminProtectedRoute>} />
+                <Route path="/admin/marketing" element={<AdminProtectedRoute><AdminMarketing /></AdminProtectedRoute>} />
+                <Route path="/admin/notifications" element={<AdminProtectedRoute><AdminNotifications /></AdminProtectedRoute>} />
+                <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="/:slug" element={<OtcQuote />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

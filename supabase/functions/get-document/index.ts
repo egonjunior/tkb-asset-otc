@@ -70,28 +70,42 @@ serve(async (req) => {
     }
 
     // Decidir qual arquivo retornar
-    const fileUrl = fileType === 'tkb' ? document.tkb_file_url : document.client_file_url;
-    
+    let fileUrl = fileType === 'tkb' ? document.tkb_file_url : document.client_file_url;
+
     if (!fileUrl) {
-      console.error(`File not found for type: ${fileType}`);
-      return new Response(JSON.stringify({ 
-        error: `Arquivo ${fileType === 'tkb' ? 'TKB' : 'do cliente'} não encontrado` 
+      console.error(`File path is empty for type: ${fileType}. Document:`, document.id);
+      return new Response(JSON.stringify({
+        error: `Caminho do arquivo ${fileType === 'tkb' ? 'TKB' : 'do cliente'} não registrado no banco de dados.`
       }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log('Document found:', fileUrl);
+    // Limpar o path (remover barras extras no início se houver)
+    const cleanPath = fileUrl.startsWith('/') ? fileUrl.substring(1) : fileUrl;
+    console.log(`Generating signed URL for bucket 'documents', path: ${cleanPath}`);
 
     // Gerar signed URL com Service Role (bypass RLS)
     const { data: signedUrl, error: urlError } = await supabase.storage
       .from('documents')
-      .createSignedUrl(fileUrl, 3600); // 1 hora
+      .createSignedUrl(cleanPath, 3600); // 1 hora
 
     if (urlError) {
-      console.error('Error creating signed URL:', urlError);
-      return new Response(JSON.stringify({ error: 'Erro ao gerar URL: ' + urlError.message }), {
+      console.error('Error creating signed URL in bucket documents:', urlError);
+      return new Response(JSON.stringify({
+        error: 'Erro do Storage: ' + urlError.message,
+        details: urlError,
+        path: cleanPath
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!signedUrl?.signedUrl) {
+      console.error('Storage did not return a signed URL even without error');
+      return new Response(JSON.stringify({ error: 'Storage não retornou link assinado.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -99,19 +113,27 @@ serve(async (req) => {
 
     console.log('Signed URL created successfully');
 
-    // Log de auditoria
-    await supabase.from('document_audit_log').insert({
-      document_id: documentId,
-      action: 'admin_viewed',
-      performed_by: user.id,
-      metadata: { document_type: document.document_type }
-    });
+    // Log de auditoria - resiliente
+    try {
+      await supabase.from('document_audit_log').insert({
+        document_id: documentId,
+        action: 'admin_viewed',
+        performed_by: user.id,
+        metadata: {
+          document_type: document.document_type,
+          file_type: fileType,
+          path: cleanPath
+        }
+      });
+      console.log('Audit log created');
+    } catch (auditError) {
+      console.error('Audit log failed (resiliently ignored):', auditError);
+    }
 
-    console.log('Audit log created');
-
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       signedUrl: signedUrl.signedUrl,
-      document 
+      document,
+      path: cleanPath
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
