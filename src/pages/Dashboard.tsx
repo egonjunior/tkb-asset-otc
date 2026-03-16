@@ -169,7 +169,7 @@ const Dashboard = () => {
                 onNewOrder={() => navigate("/order/new")}
               />
 
-              {profile?.pricing_status === 'approved' ? (
+              {profile?.pricing_status === 'active' ? (
                 <>
                   <PremiumKPICards
                     totalPatrimonio={stats.totalPatrimonio}

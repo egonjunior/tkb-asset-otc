@@ -14,7 +14,7 @@ interface Profile {
   linkedin?: string | null;
   instagram?: string | null;
   twitter?: string | null;
-  pricing_status?: 'pending' | 'approved' | 'rejected' | null;
+  pricing_status?: 'pending' | 'active' | 'rejected' | null;
   commercial_details?: string | null;
   documents_accepted_at?: string | null;
   created_at: string;
@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .maybeSingle();
 
         if (isMounted) {
-          setProfile(profileData);
+          setProfile(profileData as any);
           setIsPartner(!!partnerConfig?.is_active || !!partnerReq);
         }
       } catch (error) {

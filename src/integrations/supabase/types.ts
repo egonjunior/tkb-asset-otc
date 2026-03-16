@@ -818,6 +818,11 @@ export type Database = {
           terms_accepted_at: string | null
           twitter: string | null
           updated_at: string
+          pricing_status: string | null
+          commercial_details: string | null
+          documents_accepted_at: string | null
+          documents_version: string | null
+          markup_percent: number | null
         }
         Insert: {
           address?: string | null
@@ -833,6 +838,11 @@ export type Database = {
           terms_accepted_at?: string | null
           twitter?: string | null
           updated_at?: string
+          markup_percent?: number | null
+          pricing_status?: string | null
+          commercial_details?: string | null
+          documents_accepted_at?: string | null
+          documents_version?: string | null
         }
         Update: {
           address?: string | null
@@ -848,6 +858,11 @@ export type Database = {
           terms_accepted_at?: string | null
           twitter?: string | null
           updated_at?: string
+          markup_percent?: number | null
+          pricing_status?: string | null
+          commercial_details?: string | null
+          documents_accepted_at?: string | null
+          documents_version?: string | null
         }
         Relationships: []
       }

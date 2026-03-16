@@ -82,8 +82,9 @@ export function OnboardingModal({ isOpen, onClose, userName }: OnboardingModalPr
             documents_version: "2026-03",
           }).eq("id", user.id);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Erro ao salvar aceite de documentos:", err);
+        toast.error("Erro ao salvar aceite de documentos: " + (err.message || "Tente novamente"));
       }
     }
     if (currentStep < steps.length - 1) {
