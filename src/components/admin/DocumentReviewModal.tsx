@@ -41,23 +41,38 @@ export function DocumentReviewModal({ isOpen, onClose, document: docData, onRevi
 
       setLoadingUrl(true);
       try {
+        // Tentar via Edge Function primeiro
         const { data, error } = await supabase.functions.invoke('get-document', {
           body: { documentId: docData.id }
         });
 
-        if (error) throw error;
-        if (!data?.signedUrl) throw new Error('URL assinada não recebida do servidor');
+        if (error || !data?.signedUrl) {
+          console.warn('Edge Function failed or missing, trying direct storage access...', error);
 
-        setDocumentUrl(data.signedUrl);
+          // Fallback: Acesso direto ao storage (funciona agora que o Egon é admin e o RLS permite)
+          const filePath = docData.client_file_url;
+          if (!filePath) throw new Error('Caminho do arquivo não encontrado');
 
-        // Detect if it's an image based on original client_file_url extension
+          const cleanPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+
+          const { data: directData, error: storageError } = await supabase.storage
+            .from('documents')
+            .createSignedUrl(cleanPath, 3600);
+
+          if (storageError) throw storageError;
+          setDocumentUrl(directData.signedUrl);
+        } else {
+          setDocumentUrl(data.signedUrl);
+        }
+
+        // Detect if it's an image
         const url = docData.client_file_url || "";
         const isImg = /\.(jpg|jpeg|png|webp|gif)$/i.test(url);
         setIsImage(isImg);
 
       } catch (error: any) {
-        console.error('Error fetching signed URL:', error);
-        toast.error('Erro ao carregar documento: ' + (error.message || 'Erro desconhecido'));
+        console.error('Error fetching document URL:', error);
+        toast.error('Erro ao carregar documento: ' + (error.message || 'Erro de permissão'));
       } finally {
         setLoadingUrl(false);
       }

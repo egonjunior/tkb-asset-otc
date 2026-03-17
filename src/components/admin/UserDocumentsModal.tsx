@@ -63,24 +63,36 @@ export function UserDocumentsModal({ isOpen, onClose, user, onReviewComplete }: 
 
   const handleDownload = async (doc: AdminDocument, fileType: 'client' | 'tkb' = 'client') => {
     try {
+      // Tentar via Edge Function primeiro
       const { data, error } = await supabase.functions.invoke('get-document', {
         body: { documentId: doc.id, fileType }
       });
 
-      if (error) throw error;
-      if (!data?.signedUrl) throw new Error('URL não recebida');
+      let signedUrl = data?.signedUrl;
+
+      if (error || !signedUrl) {
+        console.warn('Edge Function failed, trying direct storage...', error);
+        const filePath = fileType === 'tkb' ? doc.tkb_file_url : doc.client_file_url;
+        if (!filePath) throw new Error('Caminho do arquivo não encontrado');
+
+        const cleanPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+        const { data: storageData, error: storageError } = await supabase.storage
+          .from('documents')
+          .createSignedUrl(cleanPath, 3600);
+
+        if (storageError) throw storageError;
+        signedUrl = storageData.signedUrl;
+      }
 
       // Trigger download using the signed URL
       const link = document.createElement('a');
-      link.href = data.signedUrl;
+      link.href = signedUrl;
       link.setAttribute('target', '_blank');
-      // For images/PDFs, browsers often open instead of download, 
-      // but link.click() on a signed URL is the most reliable way to initiate access.
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      toast.success('Download iniciado');
+      toast.success('Acesso concedido');
     } catch (error: any) {
       console.error('Error downloading document:', error);
       toast.error('Erro ao baixar documento: ' + (error.message || 'Tente novamente'));
