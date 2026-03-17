@@ -7,18 +7,23 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // CORS handling
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
-    // Verificar autenticação
-    const authHeader = req.headers.get('Authorization')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get Auth Token
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing Authorization header');
+    }
+
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
@@ -30,117 +35,98 @@ serve(async (req) => {
       });
     }
 
-    console.log('Authenticated user:', user.id);
-
-    // Verificar se é admin
-    const { data: roles, error: rolesError } = await supabase
+    // Role check - Use the has_role function if possible, but let's be direct here for resilience
+    const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .eq('role', 'admin')
-      .single();
+      .maybeSingle();
 
-    if (rolesError || !roles) {
-      console.error('Not admin:', rolesError);
-      return new Response(JSON.stringify({ error: 'Acesso negado - apenas admins' }), {
+    if (roleError || !roleData) {
+      console.error('Role verification failed or user is not admin:', roleError);
+      return new Response(JSON.stringify({ error: 'Acesso negado - privilégios insuficientes' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log('Admin verified');
+    // Parse request body
+    const body = await req.json().catch(() => ({}));
+    const { documentId, fileType = 'client' } = body;
 
-    // Obter parâmetros
-    const { documentId, fileType = 'client' } = await req.json();
-    console.log('Fetching document:', documentId, 'fileType:', fileType);
+    if (!documentId) {
+      return new Response(JSON.stringify({ error: 'documentId é obrigatório' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
-    // Buscar documento
+    console.log(`Processing file request: ${documentId} (Type: ${fileType})`);
+
+    // Fetch document metadata - Simplified query to avoid join name issues
     const { data: document, error: docError } = await supabase
       .from('documents')
-      .select('*, profiles!documents_user_id_fkey(full_name, document_number)')
+      .select('*')
       .eq('id', documentId)
       .single();
 
     if (docError || !document) {
-      console.error('Document error:', docError);
-      return new Response(JSON.stringify({ error: 'Documento não encontrado' }), {
+      console.error('Error fetching document metadata:', docError);
+      return new Response(JSON.stringify({ error: 'Documento não localizado no registro' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Decidir qual arquivo retornar
-    let fileUrl = fileType === 'tkb' ? document.tkb_file_url : document.client_file_url;
+    // Determine path
+    const fileUrl = fileType === 'tkb' ? document.tkb_file_url : document.client_file_url;
 
     if (!fileUrl) {
-      console.error(`File path is empty for type: ${fileType}. Document:`, document.id);
-      return new Response(JSON.stringify({
-        error: `Caminho do arquivo ${fileType === 'tkb' ? 'TKB' : 'do cliente'} não registrado no banco de dados.`
-      }), {
+      return new Response(JSON.stringify({ error: `Ativo ${fileType} não contém anexo vinculado.` }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Limpar o path (remover barras extras no início se houver)
+    // Clean path
     const cleanPath = fileUrl.startsWith('/') ? fileUrl.substring(1) : fileUrl;
-    console.log(`Generating signed URL for bucket 'documents', path: ${cleanPath}`);
+    console.log(`Creating signed URL for: ${cleanPath}`);
 
-    // Gerar signed URL com Service Role (bypass RLS)
-    const { data: signedUrl, error: urlError } = await supabase.storage
+    // Generate Signed URL
+    const { data: signedData, error: urlError } = await supabase.storage
       .from('documents')
-      .createSignedUrl(cleanPath, 3600); // 1 hora
+      .createSignedUrl(cleanPath, 3600);
 
     if (urlError) {
-      console.error('Error creating signed URL in bucket documents:', urlError);
-      return new Response(JSON.stringify({
-        error: 'Erro do Storage: ' + urlError.message,
-        details: urlError,
-        path: cleanPath
-      }), {
+      console.error('Storage error:', urlError);
+      return new Response(JSON.stringify({ error: 'Falha ao acessar storage', details: urlError.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    if (!signedUrl?.signedUrl) {
-      console.error('Storage did not return a signed URL even without error');
-      return new Response(JSON.stringify({ error: 'Storage não retornou link assinado.' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    console.log('Signed URL created successfully');
-
-    // Log de auditoria - resiliente
-    try {
-      await supabase.from('document_audit_log').insert({
-        document_id: documentId,
-        action: 'admin_viewed',
-        performed_by: user.id,
-        metadata: {
-          document_type: document.document_type,
-          file_type: fileType,
-          path: cleanPath
-        }
-      });
-      console.log('Audit log created');
-    } catch (auditError) {
-      console.error('Audit log failed (resiliently ignored):', auditError);
-    }
+    // Audit log (non-blocking)
+    supabase.from('document_audit_log').insert({
+      document_id: documentId,
+      action: 'admin_viewed',
+      performed_by: user.id,
+      metadata: { file_type: fileType, timestamp: new Date().toISOString() }
+    }).then(({ error }) => {
+      if (error) console.error('Failed to write audit log:', error);
+    });
 
     return new Response(JSON.stringify({
-      signedUrl: signedUrl.signedUrl,
-      document,
+      signedUrl: signedData?.signedUrl,
+      documentId,
       path: cleanPath
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
-  } catch (error) {
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Erro desconhecido' }), {
+  } catch (error: any) {
+    console.error('Global edge function error:', error);
+    return new Response(JSON.stringify({ error: error.message || 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
