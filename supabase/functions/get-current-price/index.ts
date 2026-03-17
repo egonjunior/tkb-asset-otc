@@ -54,6 +54,7 @@ serve(async (req) => {
 
     // 3. Processar tanto os dados da Binance quanto o Profile em paralelo
     let markupPromise = Promise.resolve(DEFAULT_MARKUP);
+    let manualQuotePromise = Promise.resolve(null);
     const user = authResult?.data?.user;
     const userId = user?.id || 'anonymous';
     let userMarkup = DEFAULT_MARKUP;
@@ -70,6 +71,17 @@ serve(async (req) => {
           }
           return DEFAULT_MARKUP;
         });
+
+      // NOVO: Buscar cotação manual ativa (Price Lock)
+      manualQuotePromise = supabaseClient
+        .from('user_quotes')
+        .select('manual_price')
+        .eq('user_id', user.id)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+        .then(({ data }) => data?.manual_price || null);
     }
 
     if (updateCache) {
@@ -77,10 +89,11 @@ serve(async (req) => {
         throw new Error('Failed to fetch price from Binance');
       }
 
-      const [priceJSON, tickerJSON, resolvedMarkup] = await Promise.all([
+      const [priceJSON, tickerJSON, resolvedMarkup, resolvedManualPrice] = await Promise.all([
         priceResponse.json(),
         tickerResponse.json(),
-        markupPromise
+        markupPromise,
+        manualQuotePromise
       ]);
 
       userMarkup = resolvedMarkup;
@@ -94,27 +107,44 @@ serve(async (req) => {
         tradesCount: parseInt(tickerJSON.count || '0'),
       };
       binanceCache = binanceData;
-      console.log(`Fresh price from Binance fetched in parallel | Markup: ${((userMarkup - 1) * 100).toFixed(2)}%`);
+
+      // Aplicar preço manual se existir
+      const finalTkbPrice = resolvedManualPrice ? Number(resolvedManualPrice) : (binanceData.binancePrice * userMarkup);
+      const isManual = !!resolvedManualPrice;
+
+      console.log(`${isManual ? 'Manual price applied' : 'Dynamic price calculated'} | Markup: ${((userMarkup - 1) * 100).toFixed(2)}%`);
+
+      return new Response(
+        JSON.stringify({
+          ...binanceData,
+          tkbPrice: finalTkbPrice,
+          isManualPrice: isManual,
+          cached: false,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     } else {
-      userMarkup = await markupPromise;
-      console.log(`Using cached Binance price | Markup: ${((userMarkup - 1) * 100).toFixed(2)}%`);
+      const [resolvedMarkup, resolvedManualPrice] = await Promise.all([
+        markupPromise,
+        manualQuotePromise
+      ]);
+
+      userMarkup = resolvedMarkup;
+      const finalTkbPrice = resolvedManualPrice ? Number(resolvedManualPrice) : (binanceData.binancePrice * userMarkup);
+      const isManual = !!resolvedManualPrice;
+
+      console.log(`Using cached Binance price | ${isManual ? 'Manual price applied' : 'Dynamic price calculated'}`);
+
+      return new Response(
+        JSON.stringify({
+          ...binanceData,
+          tkbPrice: finalTkbPrice,
+          isManualPrice: isManual,
+          cached: true,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
-    if (!binanceData) throw new Error("Erro ao obter cotação base");
-
-    // 3. Calcular Preço TKB Dinâmico
-    const tkbPrice = binanceData.binancePrice * userMarkup;
-    const markupPercentStr = ((tkbPrice / binanceData.binancePrice - 1) * 100).toFixed(2);
-    console.log(`✅ Cotação Final [${userId}]: Binance=${binanceData.binancePrice.toFixed(4)} | TKB=${tkbPrice.toFixed(4)} | Spread Aplicado=${markupPercentStr}%`);
-
-    return new Response(
-      JSON.stringify({
-        ...binanceData,
-        tkbPrice,
-        cached: now === binanceData.timestamp ? false : true,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error) {
     console.error('Error fetching dynamic price:', error);
