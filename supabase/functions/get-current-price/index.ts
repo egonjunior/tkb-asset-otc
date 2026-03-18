@@ -43,12 +43,15 @@ serve(async (req) => {
     const authPromise = authHeader ? supabaseClient.auth.getUser() : Promise.resolve({ data: { user: null }, error: null });
 
     // Executar todas as promessas iniciais em paralelo de forma segura
+    // Fetch both sources in parallel so we can pick based on user preference
     const binancePricePromise = updateCache ? fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL') : Promise.resolve(null);
     const binanceTickerPromise = updateCache ? fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL') : Promise.resolve(null);
+    const okxTickerPromise = updateCache ? fetch('https://www.okx.com/api/v5/market/ticker?instId=USDT-BRL') : Promise.resolve(null);
 
-    const [priceResponse, tickerResponse, authResult] = await Promise.all([
+    const [priceResponse, tickerResponse, okxResponse, authResult] = await Promise.all([
       binancePricePromise,
       binanceTickerPromise,
+      okxTickerPromise,
       authPromise
     ]);
 
@@ -59,13 +62,18 @@ serve(async (req) => {
     const userId = user?.id || 'anonymous';
     let userMarkup = DEFAULT_MARKUP;
 
+    let userPriceSource = 'binance';
+
     if (user) {
       markupPromise = supabaseClient
         .from('profiles')
-        .select('markup_percent')
+        .select('markup_percent, price_source')
         .eq('id', user.id)
         .single()
         .then(({ data: profile }) => {
+          if (profile?.price_source) {
+            userPriceSource = profile.price_source;
+          }
           if (profile && profile.markup_percent !== null && profile.markup_percent !== undefined) {
             return 1 + (profile.markup_percent / 100);
           }
@@ -92,8 +100,30 @@ serve(async (req) => {
       let lowPrice24h: number;
       let tradesCount: number;
 
-      if (priceResponse?.ok && tickerResponse?.ok) {
-        // Binance OK
+      // Parse OKX response if available
+      let okxData: any = null;
+      try {
+        if (okxResponse?.ok) {
+          const parsed = await okxResponse.json();
+          if (parsed.code === '0' && parsed.data?.[0]) okxData = parsed.data[0];
+        }
+      } catch { /* ignore */ }
+
+      const useOKX = userPriceSource === 'okx';
+      const binanceOk = priceResponse?.ok && tickerResponse?.ok;
+
+      if (useOKX && okxData) {
+        // OKX preferred and available
+        basePrice = parseFloat(okxData.last);
+        const open = parseFloat(okxData.open24h);
+        dailyChangePercent = open > 0 ? ((basePrice - open) / open) * 100 : 0;
+        volumeUSDT = parseFloat(okxData.volCcy24h || '0');
+        highPrice24h = parseFloat(okxData.high24h || '0');
+        lowPrice24h = parseFloat(okxData.low24h || '0');
+        tradesCount = 0;
+        console.log(`📊 OKX price fetched (user preference): ${basePrice}`);
+      } else if (binanceOk) {
+        // Binance default (or OKX unavailable)
         const [priceJSON, tickerJSON] = await Promise.all([
           priceResponse.json(),
           tickerResponse.json(),
@@ -105,26 +135,19 @@ serve(async (req) => {
         lowPrice24h = parseFloat(tickerJSON.lowPrice || '0');
         tradesCount = parseInt(tickerJSON.count || '0');
         console.log(`📊 Binance price fetched: ${basePrice}`);
-      } else {
-        // Fallback: OKX
+      } else if (okxData) {
+        // Binance failed, fallback to OKX
         console.warn('⚠️ Binance failed, falling back to OKX...');
-        const okxResponse = await fetch('https://www.okx.com/api/v5/market/ticker?instId=USDT-BRL');
-        if (!okxResponse.ok) {
-          throw new Error('All price sources (Binance and OKX) are unavailable');
-        }
-        const okxData = await okxResponse.json();
-        if (okxData.code !== '0' || !okxData.data?.[0]) {
-          throw new Error('Invalid response from OKX');
-        }
-        const t = okxData.data[0];
-        basePrice = parseFloat(t.last);
-        const open = parseFloat(t.open24h);
+        basePrice = parseFloat(okxData.last);
+        const open = parseFloat(okxData.open24h);
         dailyChangePercent = open > 0 ? ((basePrice - open) / open) * 100 : 0;
-        volumeUSDT = parseFloat(t.volCcy24h || '0');
-        highPrice24h = parseFloat(t.high24h || '0');
-        lowPrice24h = parseFloat(t.low24h || '0');
+        volumeUSDT = parseFloat(okxData.volCcy24h || '0');
+        highPrice24h = parseFloat(okxData.high24h || '0');
+        lowPrice24h = parseFloat(okxData.low24h || '0');
         tradesCount = 0;
         console.log(`📊 OKX fallback price fetched: ${basePrice}`);
+      } else {
+        throw new Error('All price sources (Binance and OKX) are unavailable');
       }
 
       const [resolvedMarkup, resolvedManualPrice] = await Promise.all([

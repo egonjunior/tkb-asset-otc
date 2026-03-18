@@ -19,13 +19,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-export function AppSidebar() {
+export function AppSidebar({ forceAdmin = false }: { forceAdmin?: boolean }) {
   const { state } = useSidebar();
   const navigate = useNavigate();
   const location = useLocation();
   const { isPartner, isAdmin: isUserAdmin } = useAuth();
 
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  const isAdminRoute = forceAdmin || location.pathname.startsWith('/admin');
 
   const clientItems = [
     { title: "Dashboard", url: "/dashboard", icon: BarChart2 },
