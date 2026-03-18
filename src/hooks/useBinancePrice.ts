@@ -34,9 +34,11 @@ export const useBinancePrice = () => {
 
       return data;
     },
-    refetchInterval: 5000, // Atualizar a cada 5 segundos
-    staleTime: 4000, // Considerar dados obsoletos após 4 segundos
-    gcTime: 1000 * 60 * 5, // Manter em cache por 5 minutos
+    refetchInterval: 5000,
+    staleTime: 4000,
+    gcTime: 1000 * 60 * 5,
+    retry: 1, // Tentar apenas 1x em caso de erro (default é 3x) — evita delay de ~10s antes de usar fallback
+    refetchIntervalInBackground: false, // Não fazer polling quando a aba está em segundo plano
   });
 
   // Fallback values if error or loading

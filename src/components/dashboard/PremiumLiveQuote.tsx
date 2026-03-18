@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { AreaChart, Area, ResponsiveContainer } from "recharts";
-import { Lock, ArrowRight, Activity, TrendingUp } from "lucide-react";
+import { Lock, Activity, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+
+// Placeholder estático para quando não há dados reais — não usa Math.random()
+const EMPTY_SPARKLINE = Array.from({ length: 24 }, (_, i) => ({ time: `${i}:00`, price: 5.25 }));
 
 interface PremiumLiveQuoteProps {
     binancePrice: number | null;
@@ -19,18 +22,19 @@ interface PremiumLiveQuoteProps {
 export function PremiumLiveQuote({
     binancePrice,
     tkbPrice,
-    variation24h = 2.4, // Mock until we fetch real
-    high24h = 5.3450,
-    low24h = 5.1200,
-    volume24h = 1254000,
-    trades24h = 342,
-    sparklineData = Array.from({ length: 24 }).map((_, i) => ({ time: `${i}:00`, price: 5.2 + Math.random() * 0.15 })),
+    variation24h = 0,
+    high24h = 0,
+    low24h = 0,
+    volume24h = 0,
+    trades24h = 0,
+    sparklineData = EMPTY_SPARKLINE,
     onNewOrder,
     isLoading = false
 }: PremiumLiveQuoteProps) {
     const [lastUpdateSeconds, setLastUpdateSeconds] = useState(0);
 
     useEffect(() => {
+        setLastUpdateSeconds(0);
         const timer = setInterval(() => {
             setLastUpdateSeconds((prev) => (prev >= 60 ? 0 : prev + 1));
         }, 1000);

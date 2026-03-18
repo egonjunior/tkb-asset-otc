@@ -41,10 +41,6 @@ export function AppSidebar({ forceAdmin = false }: { forceAdmin?: boolean }) {
     { title: "Suporte", url: "/suporte", icon: MessageCircle },
   ];
 
-  if (isUserAdmin && !isAdminRoute) {
-    clientItems.push({ title: "Portal Admin", url: "/admin/dashboard", icon: ShieldCheck });
-  }
-
   const adminItems = [
     { title: "Dashboard Admin", url: "/admin/dashboard", icon: LayoutDashboard },
     { title: "Gestão de Usuários", url: "/admin/users", icon: Users },
