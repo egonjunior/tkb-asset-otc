@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +29,7 @@ interface AuthContextType {
   isAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,47 +43,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Stable fetch function — setState setters never change, supabase is a singleton
+  const fetchProfile = useCallback(async (userId: string) => {
+    try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      const { data: partnerConfig } = await supabase
+        .from('partner_b2b_config')
+        .select('is_active')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const { data: partnerReq } = await supabase
+        .from('partner_requests')
+        .select('status')
+        .eq('user_id', userId)
+        .eq('status', 'approved')
+        .maybeSingle();
+
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      setProfile(profileData as any);
+      setIsPartner(!!partnerConfig?.is_active || !!partnerReq);
+      setIsAdmin(!!adminRole);
+    } catch (error) {
+      console.error('[AuthContext] Error fetching profile:', error);
+    }
+  }, []);
+
+  // Exposed so components can re-fetch profile without reloading the page
+  const refreshProfile = useCallback(async () => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (currentUser) {
+      await fetchProfile(currentUser.id);
+    }
+  }, [fetchProfile]);
+
   useEffect(() => {
     let isMounted = true;
-
-    // Helper function to fetch profile
-    const fetchProfile = async (userId: string) => {
-      try {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-
-        const { data: partnerConfig } = await supabase
-          .from('partner_b2b_config')
-          .select('is_active')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        const { data: partnerReq } = await supabase
-          .from('partner_requests')
-          .select('status')
-          .eq('user_id', userId)
-          .eq('status', 'approved')
-          .maybeSingle();
-
-        const { data: adminRole } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', userId)
-          .eq('role', 'admin')
-          .maybeSingle();
-
-        if (isMounted) {
-          setProfile(profileData as any);
-          setIsPartner(!!partnerConfig?.is_active || !!partnerReq);
-          setIsAdmin(!!adminRole);
-        }
-      } catch (error) {
-        console.error('[AuthContext] Error fetching profile:', error);
-      }
-    };
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -92,12 +99,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Fetch profile when user logs in - use setTimeout to avoid deadlock
+        // INITIAL_SESSION is already handled by initializeAuth below.
+        // Skipping here prevents a duplicate fetchProfile on page load that
+        // causes the visible re-render / "F5 flicker" effect.
+        if (event === 'INITIAL_SESSION') return;
+
         if (session?.user) {
           setTimeout(() => {
-            if (isMounted) {
-              fetchProfile(session.user.id);
-            }
+            if (isMounted) fetchProfile(session.user.id);
           }, 0);
         } else {
           setProfile(null);
@@ -151,7 +160,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       subscription.unsubscribe();
       clearTimeout(safetyTimeout);
     };
-  }, []);
+  }, [fetchProfile]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -166,7 +175,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, session, isPartner, isAdmin, loading, signOut }}>
+    <AuthContext.Provider value={{ user, profile, session, isPartner, isAdmin, loading, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
