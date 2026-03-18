@@ -192,7 +192,7 @@ const Dashboard = () => {
                     maxOperation={stats.maxOperation}
                     pendingAmount={stats.pendingAmount}
                     lockedPrice={tkbPrice || 0}
-                    dailyChangePercent={12.5}
+                    dailyChangePercent={dailyChangePercent}
                     isLoading={ordersLoading || priceLoading}
                   />
 
