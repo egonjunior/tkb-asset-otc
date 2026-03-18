@@ -135,7 +135,7 @@ export function PremiumLiveQuote({
                                     strokeWidth={2}
                                     fill="url(#colorPrice)"
                                     dot={false}
-                                    isAnimationActive={true}
+                                    isAnimationActive={false}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
