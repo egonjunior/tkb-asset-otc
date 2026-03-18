@@ -58,16 +58,17 @@ const Dashboard = () => {
       pendingAmount: 0,
     };
 
-    let total = 0, today = 0, completed = 0, max = 0, pending = 0;
+    let totalUSDT = 0, todayUSDT = 0, completed = 0, max = 0, pending = 0;
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
+    const rate = tkbPrice ?? 5.40;
 
     ordersData.forEach((o) => {
       if (o.status === "completed" || o.status === "paid") {
-        total += o.amount;
+        totalUSDT += o.amount;
         completed++;
         if (o.amount > max) max = o.amount;
-        if (new Date(o.created_at) >= startOfDay) today += o.amount;
+        if (new Date(o.created_at) >= startOfDay) todayUSDT += o.amount;
       }
       if (o.status === "pending" || o.status === "processing") {
         pending += o.amount;
@@ -75,11 +76,11 @@ const Dashboard = () => {
     });
 
     return {
-      totalPatrimonio: total,
-      todayVolume: today,
+      totalPatrimonio: totalUSDT * rate,   // R$ (USDT × cotação)
+      todayVolume: todayUSDT * rate,        // R$ (USDT × cotação)
       completedOperations: completed,
       successRate: ordersData.length > 0 ? Math.round((completed / ordersData.length) * 100) : 0,
-      avgVolume: completed > 0 ? Math.round(total / completed) : 0,
+      avgVolume: completed > 0 ? Math.round(totalUSDT / completed) : 0,
       maxOperation: max,
       pendingAmount: pending
     };
@@ -112,6 +113,15 @@ const Dashboard = () => {
   }, []);
 
   if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
+        <div className="w-8 h-8 rounded-full border-2 border-[#00D4FF] border-r-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // user autenticado mas profile ainda não chegou (4 queries rodando async)
+  if (user && !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
         <div className="w-8 h-8 rounded-full border-2 border-[#00D4FF] border-r-transparent animate-spin" />

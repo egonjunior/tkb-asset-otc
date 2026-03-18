@@ -46,31 +46,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Stable fetch function — setState setters never change, supabase is a singleton
   const fetchProfile = useCallback(async (userId: string) => {
     try {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      const { data: partnerConfig } = await supabase
-        .from('partner_b2b_config')
-        .select('is_active')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      const { data: partnerReq } = await supabase
-        .from('partner_requests')
-        .select('status')
-        .eq('user_id', userId)
-        .eq('status', 'approved')
-        .maybeSingle();
-
-      const { data: adminRole } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', 'admin')
-        .maybeSingle();
+      // Todas as queries em paralelo: reduz de ~3s (serial) para ~800ms (paralelo)
+      const [
+        { data: profileData },
+        { data: partnerConfig },
+        { data: partnerReq },
+        { data: adminRole },
+      ] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', userId).single(),
+        supabase.from('partner_b2b_config').select('is_active').eq('user_id', userId).maybeSingle(),
+        supabase.from('partner_requests').select('status').eq('user_id', userId).eq('status', 'approved').maybeSingle(),
+        supabase.from('user_roles').select('role').eq('user_id', userId).eq('role', 'admin').maybeSingle(),
+      ]);
 
       setProfile(profileData as any);
       setIsPartner(!!partnerConfig?.is_active || !!partnerReq);
