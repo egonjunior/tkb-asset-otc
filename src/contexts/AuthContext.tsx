@@ -99,18 +99,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // INITIAL_SESSION is already handled by initializeAuth below.
-        // Skipping here prevents a duplicate fetchProfile on page load that
-        // causes the visible re-render / "F5 flicker" effect.
-        if (event === 'INITIAL_SESSION') return;
+        // INITIAL_SESSION → já tratado por initializeAuth abaixo (evita fetchProfile duplicado).
+        // TOKEN_REFRESHED → só renova o JWT, o perfil do usuário não muda, não re-buscar.
+        if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') return;
 
         if (session?.user) {
-          setTimeout(() => {
-            if (isMounted) fetchProfile(session.user.id);
-          }, 0);
+          fetchProfile(session.user.id);
         } else {
           setProfile(null);
           setIsPartner(false);
+          setIsAdmin(false);
         }
       }
     );

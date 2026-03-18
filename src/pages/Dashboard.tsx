@@ -26,6 +26,7 @@ const Dashboard = () => {
   const { binancePrice, tkbPrice, dailyChangePercent, highPrice24h, lowPrice24h, volumeUSDT, tradesCount, isLoading: priceLoading } = useBinancePrice();
 
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [sparklineHistory, setSparklineHistory] = useState<{ time: string; price: number }[]>([]);
 
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
     queryKey: ["user-orders", user?.id],
@@ -84,6 +85,16 @@ const Dashboard = () => {
       pendingAmount: pending
     };
   })();
+
+  // Acumula até 60 pontos de preço para o sparkline (1 a cada 5 segundos = ~5 minutos)
+  useEffect(() => {
+    if (!binancePrice) return;
+    setSparklineHistory(prev => {
+      const point = { time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), price: binancePrice };
+      const updated = [...prev, point];
+      return updated.length > 60 ? updated.slice(-60) : updated;
+    });
+  }, [binancePrice]);
 
   useEffect(() => {
     // Show onboarding if user hasn't accepted documents yet
@@ -193,6 +204,7 @@ const Dashboard = () => {
                     low24h={lowPrice24h}
                     volume24h={volumeUSDT}
                     trades24h={tradesCount}
+                    sparklineData={sparklineHistory.length >= 2 ? sparklineHistory : undefined}
                     onNewOrder={() => navigate("/order/new")}
                     isLoading={priceLoading}
                   />
