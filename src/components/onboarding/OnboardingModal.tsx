@@ -22,9 +22,10 @@ interface OnboardingModalProps {
   isOpen: boolean;
   onClose: () => void;
   userName: string;
+  onComplete?: () => Promise<void>;
 }
 
-export function OnboardingModal({ isOpen, onClose, userName }: OnboardingModalProps) {
+export function OnboardingModal({ isOpen, onClose, userName, onComplete }: OnboardingModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [commercialDetails, setCommercialDetails] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,7 +117,8 @@ export function OnboardingModal({ isOpen, onClose, userName }: OnboardingModalPr
       toast.success("Perfil enviado para análise da mesa!");
       localStorage.setItem("onboarding_completed", "true");
       onClose();
-      window.location.reload();
+      // Refresh profile data in context instead of reloading the whole page
+      if (onComplete) await onComplete();
     } catch (error: any) {
       console.error("Erro no onboarding:", error);
       toast.error("Erro ao salvar perfil.");

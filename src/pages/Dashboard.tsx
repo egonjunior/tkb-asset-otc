@@ -21,9 +21,9 @@ import tkbLogo from "@/assets/tkb-logo.png";
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, signOut, loading: authLoading } = useAuth();
+  const { user, profile, signOut, loading: authLoading, refreshProfile } = useAuth();
   const userName = profile?.full_name || user?.email?.split("@")[0] || "Usuário";
-  const { binancePrice, tkbPrice, isLoading: priceLoading } = useBinancePrice();
+  const { binancePrice, tkbPrice, dailyChangePercent, highPrice24h, lowPrice24h, volumeUSDT, tradesCount, isLoading: priceLoading } = useBinancePrice();
 
   const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -133,6 +133,7 @@ const Dashboard = () => {
           isOpen={showOnboarding}
           onClose={() => setShowOnboarding(false)}
           userName={userName}
+          onComplete={refreshProfile}
         />
 
         {/* Subtle ambient glow - Premium Depth */}
@@ -187,7 +188,11 @@ const Dashboard = () => {
                   <PremiumLiveQuote
                     binancePrice={binancePrice}
                     tkbPrice={tkbPrice}
-                    variation24h={5.2}
+                    variation24h={dailyChangePercent}
+                    high24h={highPrice24h}
+                    low24h={lowPrice24h}
+                    volume24h={volumeUSDT}
+                    trades24h={tradesCount}
                     onNewOrder={() => navigate("/order/new")}
                     isLoading={priceLoading}
                   />
