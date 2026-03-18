@@ -85,26 +85,62 @@ serve(async (req) => {
     }
 
     if (updateCache) {
-      if (!priceResponse?.ok || !tickerResponse?.ok) {
-        throw new Error('Failed to fetch price from Binance');
+      let basePrice: number;
+      let dailyChangePercent: number;
+      let volumeUSDT: number;
+      let highPrice24h: number;
+      let lowPrice24h: number;
+      let tradesCount: number;
+
+      if (priceResponse?.ok && tickerResponse?.ok) {
+        // Binance OK
+        const [priceJSON, tickerJSON] = await Promise.all([
+          priceResponse.json(),
+          tickerResponse.json(),
+        ]);
+        basePrice = parseFloat(priceJSON.price);
+        dailyChangePercent = parseFloat(tickerJSON.priceChangePercent || '0');
+        volumeUSDT = parseFloat(tickerJSON.volume || '0');
+        highPrice24h = parseFloat(tickerJSON.highPrice || '0');
+        lowPrice24h = parseFloat(tickerJSON.lowPrice || '0');
+        tradesCount = parseInt(tickerJSON.count || '0');
+        console.log(`📊 Binance price fetched: ${basePrice}`);
+      } else {
+        // Fallback: OKX
+        console.warn('⚠️ Binance failed, falling back to OKX...');
+        const okxResponse = await fetch('https://www.okx.com/api/v5/market/ticker?instId=USDT-BRL');
+        if (!okxResponse.ok) {
+          throw new Error('All price sources (Binance and OKX) are unavailable');
+        }
+        const okxData = await okxResponse.json();
+        if (okxData.code !== '0' || !okxData.data?.[0]) {
+          throw new Error('Invalid response from OKX');
+        }
+        const t = okxData.data[0];
+        basePrice = parseFloat(t.last);
+        const open = parseFloat(t.open24h);
+        dailyChangePercent = open > 0 ? ((basePrice - open) / open) * 100 : 0;
+        volumeUSDT = parseFloat(t.volCcy24h || '0');
+        highPrice24h = parseFloat(t.high24h || '0');
+        lowPrice24h = parseFloat(t.low24h || '0');
+        tradesCount = 0;
+        console.log(`📊 OKX fallback price fetched: ${basePrice}`);
       }
 
-      const [priceJSON, tickerJSON, resolvedMarkup, resolvedManualPrice] = await Promise.all([
-        priceResponse.json(),
-        tickerResponse.json(),
+      const [resolvedMarkup, resolvedManualPrice] = await Promise.all([
         markupPromise,
         manualQuotePromise
       ]);
 
       userMarkup = resolvedMarkup;
       binanceData = {
-        binancePrice: parseFloat(priceJSON.price),
+        binancePrice: basePrice,
         timestamp: now,
-        dailyChangePercent: parseFloat(tickerJSON.priceChangePercent || '0'),
-        volumeUSDT: parseFloat(tickerJSON.volume || '0'),
-        highPrice24h: parseFloat(tickerJSON.highPrice || '0'),
-        lowPrice24h: parseFloat(tickerJSON.lowPrice || '0'),
-        tradesCount: parseInt(tickerJSON.count || '0'),
+        dailyChangePercent,
+        volumeUSDT,
+        highPrice24h,
+        lowPrice24h,
+        tradesCount,
       };
       binanceCache = binanceData;
 

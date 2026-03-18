@@ -74,49 +74,62 @@ serve(async (req) => {
     let basePrice: number;
     let tickerData: any;
 
-    if (priceSource === 'okx') {
-      // Fetch from OKX
+    const fetchOKX = async () => {
       const okxResponse = await fetch('https://www.okx.com/api/v5/market/ticker?instId=USDT-BRL');
-      
-      if (!okxResponse.ok) {
-        throw new Error('Failed to fetch price from OKX');
-      }
-
+      if (!okxResponse.ok) throw new Error('Failed to fetch price from OKX');
       const okxData = await okxResponse.json();
-      
-      if (!okxData.data || okxData.data.length === 0) {
-        throw new Error('Invalid response from OKX');
-      }
-
-      const okxTicker = okxData.data[0];
-      basePrice = parseFloat(okxTicker.last);
-      
-      // Adapt OKX data to match our response format
-      tickerData = {
-        priceChangePercent: ((parseFloat(okxTicker.last) - parseFloat(okxTicker.open24h)) / parseFloat(okxTicker.open24h) * 100).toFixed(2),
-        volume: okxTicker.volCcy24h,
-        highPrice: okxTicker.high24h,
-        lowPrice: okxTicker.low24h,
-        count: '0', // OKX doesn't provide trade count
+      if (!okxData.data || okxData.data.length === 0) throw new Error('Invalid response from OKX');
+      const t = okxData.data[0];
+      return {
+        price: parseFloat(t.last),
+        ticker: {
+          priceChangePercent: ((parseFloat(t.last) - parseFloat(t.open24h)) / parseFloat(t.open24h) * 100).toFixed(2),
+          volume: t.volCcy24h,
+          highPrice: t.high24h,
+          lowPrice: t.low24h,
+          count: '0',
+        },
       };
+    };
 
-      console.log(`📊 OKX Price fetched: ${basePrice.toFixed(4)}`);
-    } else {
-      // Fetch from Binance (default)
+    const fetchBinance = async () => {
       const [priceResponse, tickerResponse] = await Promise.all([
         fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'),
         fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTBRL'),
       ]);
-
-      if (!priceResponse.ok || !tickerResponse.ok) {
-        throw new Error('Failed to fetch price from Binance');
-      }
-
+      if (!priceResponse.ok || !tickerResponse.ok) throw new Error('Failed to fetch price from Binance');
       const priceData = await priceResponse.json();
-      tickerData = await tickerResponse.json();
-      basePrice = parseFloat(priceData.price);
+      const ticker = await tickerResponse.json();
+      return { price: parseFloat(priceData.price), ticker };
+    };
 
-      console.log(`📊 Binance Price fetched: ${basePrice.toFixed(4)}`);
+    if (priceSource === 'okx') {
+      try {
+        const result = await fetchOKX();
+        basePrice = result.price;
+        tickerData = result.ticker;
+        console.log(`📊 OKX Price fetched: ${basePrice.toFixed(4)}`);
+      } catch (okxErr) {
+        console.warn('⚠️ OKX failed, falling back to Binance...', okxErr);
+        const result = await fetchBinance();
+        basePrice = result.price;
+        tickerData = result.ticker;
+        console.log(`📊 Binance fallback price fetched: ${basePrice.toFixed(4)}`);
+      }
+    } else {
+      // Binance default, with OKX fallback
+      try {
+        const result = await fetchBinance();
+        basePrice = result.price;
+        tickerData = result.ticker;
+        console.log(`📊 Binance Price fetched: ${basePrice.toFixed(4)}`);
+      } catch (binanceErr) {
+        console.warn('⚠️ Binance failed, falling back to OKX...', binanceErr);
+        const result = await fetchOKX();
+        basePrice = result.price;
+        tickerData = result.ticker;
+        console.log(`📊 OKX fallback price fetched: ${basePrice.toFixed(4)}`);
+      }
     }
 
     const tkbPrice = basePrice * markup;
