@@ -191,7 +191,7 @@ const AdminLeads = () => {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)]">
-        <AppSidebar />
+        <AppSidebar forceAdmin={true} />
         <SidebarInset className="flex-1">
           <div className="container mx-auto p-6 space-y-6">
             {/* Header */}

@@ -181,7 +181,7 @@ export default function AdminUsers() {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex w-full min-h-screen bg-black text-white">
-        <AppSidebar />
+        <AppSidebar forceAdmin={true} />
         <main className="flex-1 p-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto space-y-8">
             {/* Header */}
@@ -381,7 +381,5 @@ export default function AdminUsers() {
         </main>
       </div>
     </SidebarProvider>
-  );
-}
   );
 }

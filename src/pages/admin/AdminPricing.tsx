@@ -6,9 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, Percent, Clock, AlertCircle, RefreshCw, Users } from "lucide-react";
+import { Loader2, CheckCircle, Percent, Clock, AlertCircle, RefreshCw, Users, Lock } from "lucide-react";
 
 interface PricingProfile {
     id: string;
@@ -17,25 +20,41 @@ interface PricingProfile {
     pricing_status: string;
     markup_percent: number | null;
     commercial_details: string | null;
+    price_source: string | null;
     created_at: string;
+    _markup: string;
+    _price_source: string;
+}
+
+interface LockPriceForm {
+    userId: string;
+    userName: string;
+    price: string;
+    duration: string;
 }
 
 const AdminPricing = () => {
     const [profiles, setProfiles] = useState<PricingProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [savingId, setSavingId] = useState<string | null>(null);
+    const [lockForm, setLockForm] = useState<LockPriceForm | null>(null);
+    const [isLocking, setIsLocking] = useState(false);
 
     const fetchProfiles = async () => {
         setIsLoading(true);
         try {
             const { data, error } = await supabase
                 .from('profiles')
-                .select('id, full_name, email, pricing_status, markup_percent, commercial_details, created_at')
-                .order('pricing_status', { ascending: false }) // 'pending' will likely show first before 'active'
+                .select('id, full_name, email, pricing_status, markup_percent, commercial_details, price_source, created_at')
+                .order('pricing_status', { ascending: false })
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-            setProfiles(data || []);
+            setProfiles((data || []).map(p => ({
+                ...p,
+                _markup: p.markup_percent?.toString() ?? "",
+                _price_source: p.price_source || 'binance',
+            })));
         } catch (error: any) {
             console.error("Error fetching pricing profiles:", error);
             toast.error("Erro ao carregar perfis de precificação");
@@ -48,53 +67,82 @@ const AdminPricing = () => {
         fetchProfiles();
     }, []);
 
-    const handleUpdateMarkup = async (id: string, newMarkup: string, newStatus: string) => {
-        const parsedMarkup = parseFloat(newMarkup);
+    const updateLocalProfile = (id: string, field: '_markup' | '_price_source', value: string) => {
+        setProfiles(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+    };
+
+    const handleSave = async (profile: PricingProfile) => {
+        const parsedMarkup = parseFloat(profile._markup);
         if (isNaN(parsedMarkup) || parsedMarkup < 0) {
-            toast.error("Por favor, insira um valor de markup válido (ex: 1.5)");
+            toast.error("Insira um markup válido (ex: 1.5)");
             return;
         }
 
-        setSavingId(id);
-
+        setSavingId(profile.id);
         try {
             const { error, data } = await supabase
                 .from('profiles')
                 .update({
                     markup_percent: parsedMarkup,
-                    pricing_status: newStatus
+                    price_source: profile._price_source,
+                    pricing_status: 'active',
                 })
-                .eq('id', id)
+                .eq('id', profile.id)
                 .select();
 
             if (error) throw error;
-
             if (!data || data.length === 0) {
-                throw new Error("O servidor não confirmou a alteração. Isso geralmente acontece por falta de permissão (RLS) ou se o perfil não existe.");
+                throw new Error("Sem permissão para atualizar este perfil (verifique RLS).");
             }
 
-            toast.success(`Configuração para ${profiles.find(p => p.id === id)?.full_name} salva com sucesso!`);
-
-            // Update local state immediately
+            toast.success(`${profile.full_name} atualizado com sucesso!`);
             setProfiles(prev => prev.map(p =>
-                p.id === id ? { ...p, markup_percent: parsedMarkup, pricing_status: newStatus } : p
+                p.id === profile.id
+                    ? { ...p, markup_percent: parsedMarkup, price_source: profile._price_source, pricing_status: 'active' }
+                    : p
             ));
-
         } catch (error: any) {
-            console.error("Error updating markup:", error);
-            const errorMessage = error.message || "Erro ao atualizar o markup do cliente";
-            toast.error(errorMessage, {
-                description: "Certifique-se que o banco de dados permite atualizações por administradores."
-            });
+            toast.error(error.message || "Erro ao atualizar o cliente");
         } finally {
             setSavingId(null);
+        }
+    };
+
+    const handleLockPrice = async () => {
+        if (!lockForm) return;
+        const price = parseFloat(lockForm.price);
+        const duration = parseInt(lockForm.duration);
+        if (isNaN(price) || price <= 0) {
+            toast.error("Preço inválido");
+            return;
+        }
+
+        setIsLocking(true);
+        try {
+            const res = await supabase.functions.invoke('lock-price', {
+                body: {
+                    user_id: lockForm.userId,
+                    manual_price: price,
+                    duration_minutes: duration,
+                },
+            });
+
+            if (res.error) throw res.error;
+            if (res.data?.error) throw new Error(res.data.error);
+
+            toast.success(`Preço R$ ${price.toFixed(4)} travado para ${lockForm.userName} por ${duration} min`);
+            setLockForm(null);
+        } catch (error: any) {
+            toast.error(error.message || "Erro ao travar preço");
+        } finally {
+            setIsLocking(false);
         }
     };
 
     return (
         <SidebarProvider defaultOpen={true}>
             <div className="flex w-full min-h-screen bg-black text-white">
-                <AppSidebar />
+                <AppSidebar forceAdmin={true} />
                 <main className="flex-1 p-8 overflow-y-auto">
                     <div className="max-w-7xl mx-auto space-y-8">
                         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -103,7 +151,7 @@ const AdminPricing = () => {
                                     Precificação Comercial <span className="text-[#00D4FF]">Exclusiva</span>
                                 </h1>
                                 <p className="text-white/40 mt-2 text-lg font-light">
-                                    Configure o ecossistema de liquidação e defina o Markup (%) OTC de cada conta.
+                                    Avalie o perfil operacional dos clientes e defina o Markup (%) OTC de cada conta.
                                 </p>
                             </div>
                             <Button
@@ -158,7 +206,7 @@ const AdminPricing = () => {
                             </Card>
                         </div>
 
-                        <Card className="bg-white/[0.02] border-white/5 shadow-2xl overflow-hidden backdrop-blur-xl border border-white/5">
+                        <Card className="bg-white/[0.02] border-white/5 shadow-2xl overflow-hidden backdrop-blur-xl">
                             <CardHeader className="bg-white/[0.01] border-b border-white/5 p-6 relative">
                                 <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#00D4FF]/40 to-transparent opacity-50" />
                                 <CardTitle className="text-xl flex items-center gap-2 text-white font-bold tracking-tight">
@@ -166,33 +214,31 @@ const AdminPricing = () => {
                                     Grade de Cotações dos Clientes
                                 </CardTitle>
                                 <CardDescription className="text-white/40 font-light">
-                                    Ajuste o multiplicador de lucro por cliente. Clientes com markup ativo visualizam taxas em tempo real.
+                                    Selecione os clientes em análise para liberar suas cotações e o uso do dashboard.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0">
                                 {isLoading ? (
                                     <div className="flex flex-col justify-center items-center p-32 space-y-6">
-                                        <div className="relative">
-                                            <Loader2 className="h-12 w-12 animate-spin text-[#00D4FF]" />
-                                            <div className="absolute inset-0 blur-xl bg-[#00D4FF]/20 animate-pulse" />
-                                        </div>
-                                        <p className="text-white/20 font-mono text-[10px] uppercase tracking-[0.3em]">Protocolo de Sincronização Ativo...</p>
+                                        <Loader2 className="h-12 w-12 animate-spin text-[#00D4FF]" />
+                                        <p className="text-white/20 font-mono text-[10px] uppercase tracking-[0.3em]">Carregando...</p>
                                     </div>
                                 ) : profiles.length === 0 ? (
                                     <div className="p-24 text-center">
                                         <AlertCircle className="h-16 w-16 mx-auto mb-6 text-white/5" />
-                                        <p className="text-white/20 text-lg font-light italic">Nenhum registro encontrado no banco de dados.</p>
+                                        <p className="text-white/20 text-lg font-light italic">Nenhum registro encontrado.</p>
                                     </div>
                                 ) : (
                                     <div className="overflow-x-auto">
                                         <Table>
                                             <TableHeader className="bg-white/[0.03]">
                                                 <TableRow className="border-white/5 hover:bg-transparent">
-                                                    <TableHead className="w-[300px] text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5">Identificação do Cliente</TableHead>
-                                                    <TableHead className="w-[140px] text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5">Status Operacional</TableHead>
-                                                    <TableHead className="text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5">Observações de Onboarding</TableHead>
-                                                    <TableHead className="w-[180px] text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5">Markup OTC (%)</TableHead>
-                                                    <TableHead className="w-[150px] text-right text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5 pr-8">Comandos</TableHead>
+                                                    <TableHead className="text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5">Cliente</TableHead>
+                                                    <TableHead className="w-[120px] text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5">Status</TableHead>
+                                                    <TableHead className="text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5">Detalhes da Operação (Onboarding)</TableHead>
+                                                    <TableHead className="w-[150px] text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5">Markup (%)</TableHead>
+                                                    <TableHead className="w-[140px] text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5">Fonte Preço</TableHead>
+                                                    <TableHead className="w-[200px] text-right text-white/40 text-[10px] uppercase font-bold tracking-[0.15em] py-5 pr-6">Ações</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
@@ -201,64 +247,87 @@ const AdminPricing = () => {
 
                                                     return (
                                                         <TableRow key={profile.id} className="border-white/5 hover:bg-white/[0.02] transition-colors group">
-                                                            <TableCell className="py-6">
+                                                            <TableCell className="py-5">
                                                                 <div className="flex flex-col">
-                                                                    <span className="font-bold text-white text-base tracking-tight group-hover:text-[#00D4FF] transition-colors">{profile.full_name || 'Sem Nome'}</span>
-                                                                    <span className="text-xs text-white/30 font-mono mt-1">{profile.email}</span>
+                                                                    <span className="font-bold text-white text-sm tracking-tight group-hover:text-[#00D4FF] transition-colors">
+                                                                        {profile.full_name || 'Sem Nome'}
+                                                                    </span>
+                                                                    <span className="text-xs text-white/30 font-mono mt-0.5">{profile.email}</span>
                                                                 </div>
                                                             </TableCell>
-                                                            <TableCell className="py-6">
+                                                            <TableCell className="py-5">
                                                                 {!isActive ? (
-                                                                    <Badge variant="outline" className="bg-amber-500/5 text-amber-500 border-amber-500/20 px-3 py-1 text-[10px] uppercase font-bold tracking-wider">
-                                                                        <Clock className="w-3 h-3 mr-1.5" /> Pendente
+                                                                    <Badge variant="outline" className="bg-amber-500/5 text-amber-500 border-amber-500/20 px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider">
+                                                                        <Clock className="w-3 h-3 mr-1" /> Pendente
                                                                     </Badge>
                                                                 ) : (
-                                                                    <Badge variant="outline" className="bg-emerald-500/5 text-emerald-500 border-emerald-500/20 px-3 py-1 text-[10px] uppercase font-bold tracking-wider">
-                                                                        <CheckCircle className="w-3 h-3 mr-1.5" /> Ativo
+                                                                    <Badge variant="outline" className="bg-emerald-500/5 text-emerald-500 border-emerald-500/20 px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider">
+                                                                        <CheckCircle className="w-3 h-3 mr-1" /> Ativo
                                                                     </Badge>
                                                                 )}
                                                             </TableCell>
-                                                            <TableCell className="py-6">
-                                                                <div className="text-xs text-white/40 bg-white/[0.01] p-4 rounded-xl border border-white/5 min-h-[70px] flex items-center leading-relaxed font-light italic">
-                                                                    {profile.commercial_details || "Nenhum dado adicional fornecido durante o registro."}
+                                                            <TableCell className="py-5">
+                                                                <div className="text-xs text-white/40 italic">
+                                                                    {profile.commercial_details || "Cliente antigo ou sem onboarding preenchido."}
                                                                 </div>
                                                             </TableCell>
-                                                            <TableCell className="py-6">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="relative group/input">
-                                                                        <Input
-                                                                            type="number"
-                                                                            step="0.01"
-                                                                            placeholder="1.00"
-                                                                            defaultValue={profile.markup_percent ?? ""}
-                                                                            id={`markup-${profile.id}`}
-                                                                            className="w-28 text-right bg-black/40 border-white/10 text-white focus:border-[#00D4FF] focus:ring-[#00D4FF]/10 transition-all font-mono font-bold text-base h-11"
-                                                                        />
-                                                                        <div className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#00D4FF] group-focus-within/input:w-full transition-all duration-300" />
-                                                                    </div>
-                                                                    <span className="text-white/20 font-mono font-bold">%</span>
+                                                            <TableCell className="py-5">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <Input
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        min="0"
+                                                                        placeholder="1.00"
+                                                                        value={profile._markup}
+                                                                        onChange={(e) => updateLocalProfile(profile.id, '_markup', e.target.value)}
+                                                                        className="w-24 text-right bg-black/40 border-white/10 text-white focus:border-[#00D4FF] font-mono font-bold text-sm h-9"
+                                                                    />
+                                                                    <span className="text-white/20 font-mono text-sm">%</span>
                                                                 </div>
                                                             </TableCell>
-                                                            <TableCell className="text-right py-6 pr-8">
-                                                                <Button
-                                                                    size="sm"
-                                                                    disabled={savingId === profile.id}
-                                                                    className={!isActive
-                                                                        ? "bg-[#00D4FF] hover:bg-[#00D4FF]/80 text-black font-extrabold uppercase text-[10px] tracking-widest px-6 h-10 shadow-[0_10px_20px_rgba(0,212,255,0.15)]"
-                                                                        : "bg-white/5 hover:bg-white/10 text-white border border-white/10 uppercase text-[10px] tracking-widest h-10 px-6"}
-                                                                    onClick={() => {
-                                                                        const input = document.getElementById(`markup-${profile.id}`) as HTMLInputElement;
-                                                                        handleUpdateMarkup(profile.id, input.value, 'active');
-                                                                    }}
+                                                            <TableCell className="py-5">
+                                                                <Select
+                                                                    value={profile._price_source}
+                                                                    onValueChange={(v) => updateLocalProfile(profile.id, '_price_source', v)}
                                                                 >
-                                                                    {savingId === profile.id ? (
-                                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                                    ) : !isActive ? (
-                                                                        "Ativar"
-                                                                    ) : (
-                                                                        "Atualizar"
-                                                                    )}
-                                                                </Button>
+                                                                    <SelectTrigger className="w-28 h-9 bg-black/40 border-white/10 text-white text-xs focus:border-[#00D4FF]">
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent className="bg-zinc-900 border-white/10">
+                                                                        <SelectItem value="binance" className="text-white text-xs focus:bg-white/10">Binance</SelectItem>
+                                                                        <SelectItem value="okx" className="text-white text-xs focus:bg-white/10">OKX</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </TableCell>
+                                                            <TableCell className="text-right py-5 pr-6">
+                                                                <div className="flex items-center justify-end gap-2">
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        className="border-[#00D4FF]/20 text-[#00D4FF] hover:bg-[#00D4FF]/10 h-8 px-2 text-[10px]"
+                                                                        onClick={() => setLockForm({
+                                                                            userId: profile.id,
+                                                                            userName: profile.full_name || profile.email,
+                                                                            price: '',
+                                                                            duration: '30',
+                                                                        })}
+                                                                    >
+                                                                        <Lock className="h-3 w-3 mr-1" />
+                                                                        Travar
+                                                                    </Button>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        disabled={savingId === profile.id}
+                                                                        className={!isActive
+                                                                            ? "bg-[#00D4FF] hover:bg-[#00D4FF]/80 text-black font-extrabold uppercase text-[10px] tracking-widest px-4 h-8"
+                                                                            : "bg-white/5 hover:bg-white/10 text-white border border-white/10 uppercase text-[10px] tracking-widest h-8 px-4"}
+                                                                        onClick={() => handleSave(profile)}
+                                                                    >
+                                                                        {savingId === profile.id ? (
+                                                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                                                        ) : !isActive ? "Ativar" : "Salvar"}
+                                                                    </Button>
+                                                                </div>
                                                             </TableCell>
                                                         </TableRow>
                                                     );
@@ -272,6 +341,69 @@ const AdminPricing = () => {
                     </div>
                 </main>
             </div>
+
+            {/* Modal: Lock Price */}
+            <Dialog open={!!lockForm} onOpenChange={(open) => !open && setLockForm(null)}>
+                <DialogContent className="bg-zinc-900 border-white/10 text-white sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-white">
+                            <Lock className="h-4 w-4 text-[#00D4FF]" />
+                            Travar Preço Manual
+                        </DialogTitle>
+                    </DialogHeader>
+                    {lockForm && (
+                        <div className="space-y-4 py-2">
+                            <p className="text-sm text-white/50">
+                                Cliente: <span className="text-white font-medium">{lockForm.userName}</span>
+                            </p>
+                            <div className="space-y-2">
+                                <Label className="text-xs text-white/50 uppercase tracking-wider">Preço Manual (R$)</Label>
+                                <Input
+                                    type="number"
+                                    step="0.0001"
+                                    placeholder="Ex: 5.8250"
+                                    value={lockForm.price}
+                                    onChange={(e) => setLockForm(f => f ? { ...f, price: e.target.value } : f)}
+                                    className="bg-black/40 border-white/10 text-white focus:border-[#00D4FF] font-mono"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs text-white/50 uppercase tracking-wider">Duração</Label>
+                                <Select
+                                    value={lockForm.duration}
+                                    onValueChange={(v) => setLockForm(f => f ? { ...f, duration: v } : f)}
+                                >
+                                    <SelectTrigger className="bg-black/40 border-white/10 text-white focus:border-[#00D4FF]">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-zinc-900 border-white/10">
+                                        <SelectItem value="15" className="text-white focus:bg-white/10">15 minutos</SelectItem>
+                                        <SelectItem value="30" className="text-white focus:bg-white/10">30 minutos</SelectItem>
+                                        <SelectItem value="60" className="text-white focus:bg-white/10">1 hora</SelectItem>
+                                        <SelectItem value="120" className="text-white focus:bg-white/10">2 horas</SelectItem>
+                                        <SelectItem value="480" className="text-white focus:bg-white/10">8 horas</SelectItem>
+                                        <SelectItem value="1440" className="text-white focus:bg-white/10">24 horas</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setLockForm(null)} className="border-white/10 text-white/50 hover:bg-white/5">
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleLockPrice}
+                            disabled={isLocking || !lockForm?.price}
+                            className="bg-[#00D4FF] hover:bg-[#00D4FF]/80 text-black font-bold"
+                        >
+                            {isLocking ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                                <><Lock className="h-4 w-4 mr-2" />Confirmar Trava</>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </SidebarProvider>
     );
 };
