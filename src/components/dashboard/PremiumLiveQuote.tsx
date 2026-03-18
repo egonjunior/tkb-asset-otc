@@ -14,7 +14,6 @@ interface PremiumLiveQuoteProps {
     low24h?: number;
     volume24h?: number;
     trades24h?: number;
-    sparklineData?: { price: number; time: string }[];
     onNewOrder?: () => void;
     isLoading?: boolean;
 }
@@ -27,11 +26,20 @@ export function PremiumLiveQuote({
     low24h = 0,
     volume24h = 0,
     trades24h = 0,
-    sparklineData = EMPTY_SPARKLINE,
     onNewOrder,
     isLoading = false
 }: PremiumLiveQuoteProps) {
     const [lastUpdateSeconds, setLastUpdateSeconds] = useState(0);
+    const [sparklineData, setSparklineData] = useState<{ price: number; time: string }[]>(EMPTY_SPARKLINE);
+
+    useEffect(() => {
+        if (!binancePrice) return;
+        setSparklineData(prev => {
+            const point = { time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), price: binancePrice };
+            const updated = [...prev.filter(p => p.price !== 5.25), point];
+            return updated.length > 60 ? updated.slice(-60) : updated;
+        });
+    }, [binancePrice]);
 
     useEffect(() => {
         setLastUpdateSeconds(0);
