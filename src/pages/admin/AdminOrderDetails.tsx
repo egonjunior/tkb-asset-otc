@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, Download, CheckCircle2, AlertCircle,
   FileText, Send, Mail, Eye, ExternalLink,
-  History, Shield, Zap, Loader2, ArrowUpRight
+  History, Shield, Zap, Loader2, ArrowUpRight, Users
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
