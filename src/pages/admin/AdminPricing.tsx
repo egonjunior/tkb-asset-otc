@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -140,11 +139,8 @@ const AdminPricing = () => {
     };
 
     return (
-        <SidebarProvider defaultOpen={true}>
-            <div className="flex w-full min-h-screen bg-black text-white">
-                <AppSidebar forceAdmin={true} />
-                <main className="flex-1 p-8 overflow-y-auto">
-                    <div className="max-w-7xl mx-auto space-y-8">
+        <AdminLayout>
+            <div className="max-w-7xl mx-auto space-y-8">
                         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div>
                                 <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/40 tracking-tight">
@@ -338,8 +334,6 @@ const AdminPricing = () => {
                                 )}
                             </CardContent>
                         </Card>
-                    </div>
-                </main>
             </div>
 
             {/* Modal: Lock Price */}
@@ -404,7 +398,7 @@ const AdminPricing = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </SidebarProvider>
+        </AdminLayout>
     );
 };
 

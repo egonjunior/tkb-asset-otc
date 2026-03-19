@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { AppSidebar } from "@/components/AppSidebar";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -189,11 +188,8 @@ const AdminLeads = () => {
   };
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-[hsl(220,20%,98%)] via-[hsl(200,30%,96%)] to-[hsl(180,25%,97%)]">
-        <AppSidebar forceAdmin={true} />
-        <SidebarInset className="flex-1">
-          <div className="container mx-auto p-6 space-y-6">
+    <AdminLayout>
+      <div className="container mx-auto space-y-6">
             {/* Header */}
             <div className="flex justify-between items-start">
               <div>
@@ -351,8 +347,6 @@ const AdminLeads = () => {
                 </TableBody>
               </Table>
             </Card>
-          </div>
-        </SidebarInset>
       </div>
 
       <LeadDetailsModal
@@ -361,7 +355,7 @@ const AdminLeads = () => {
         onClose={() => setIsModalOpen(false)}
         onUpdate={fetchLeads}
       />
-    </SidebarProvider>
+    </AdminLayout>
   );
 };
 
