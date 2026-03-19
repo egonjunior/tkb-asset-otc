@@ -341,7 +341,6 @@ export default function AdminDocuments() {
               onReviewComplete={fetchDocuments}
             />
           )}
-      </div>
     </AdminLayout>
   );
 }
