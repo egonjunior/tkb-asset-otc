@@ -16,7 +16,7 @@ import {
   Users, Handshake, MessageCircle, Building2,
   UserCog, FileText, Percent, Presentation,
   ArrowUpRight, ArrowDownRight, Zap, Bell,
-  Search, RefreshCw, Loader2, Briefcase, Newspaper
+  Search, RefreshCw, Loader2, Briefcase, Newspaper, Link2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
@@ -346,6 +346,13 @@ const AdminDashboard = () => {
                 icon={Newspaper}
                 onClick={() => navigate('/admin/blog')}
                 color="pink"
+              />
+              <QuickActionCard
+                title="Links OTC"
+                subtitle="Cotação externa"
+                icon={Link2}
+                onClick={() => navigate('/admin/otc-clients')}
+                color="emerald"
               />
             </div>
 
