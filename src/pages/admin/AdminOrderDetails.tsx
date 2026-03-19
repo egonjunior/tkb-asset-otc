@@ -12,8 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 const AdminOrderDetails = () => {
   const navigate = useNavigate();
@@ -347,11 +346,8 @@ const AdminOrderDetails = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex w-full min-h-screen bg-black text-white">
-        <AppSidebar forceAdmin={true} />
-        <main className="flex-1 p-8 overflow-y-auto">
-          <div className="max-w-6xl mx-auto space-y-8">
+    <AdminLayout>
+      <div className="max-w-6xl mx-auto space-y-8">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <Button
@@ -597,10 +593,8 @@ const AdminOrderDetails = () => {
                 </Card>
               </div>
             </div>
-          </div>
-        </main>
       </div>
-    </SidebarProvider>
+    </AdminLayout>
   );
 };
 

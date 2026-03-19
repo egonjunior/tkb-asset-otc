@@ -69,7 +69,14 @@ export function AppSidebar({ forceAdmin = false }: { forceAdmin?: boolean }) {
   };
 
   return (
-    <Sidebar collapsible="none" className="border-r border-white/[0.02] bg-black md:top-[64px] md:h-[calc(100svh-64px)] !w-[18rem]">
+    <Sidebar
+      collapsible="offcanvas"
+      className={[
+        "border-r border-white/[0.02] bg-black",
+        // Client routes have a 64px fixed top header — offset the sidebar
+        !isAdminRoute ? "md:top-[64px] md:h-[calc(100svh-64px)]" : "",
+      ].join(" ")}
+    >
       {/* Botão X para fechar no mobile */}
       <div className="flex justify-end p-2 md:hidden">
         <SidebarTrigger className="text-white/20 hover:text-white transition-colors" />

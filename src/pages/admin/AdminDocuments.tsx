@@ -9,8 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserDocumentsModal } from "@/components/admin/UserDocumentsModal";
 import { Eye, Search, FileText, CheckCircle2, XCircle, Clock, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import type { DocumentStatus } from "@/lib/documentHelpers";
 
 interface AdminDocument {
@@ -161,11 +160,8 @@ export default function AdminDocuments() {
   };
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex w-full min-h-screen bg-black text-white">
-        <AppSidebar forceAdmin={true} />
-        <main className="flex-1 p-8 overflow-y-auto">
-          <div className="max-w-7xl mx-auto space-y-8">
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto space-y-8">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
                 <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/40 tracking-tight">
@@ -345,8 +341,7 @@ export default function AdminDocuments() {
               onReviewComplete={fetchDocuments}
             />
           )}
-        </main>
       </div>
-    </SidebarProvider>
+    </AdminLayout>
   );
 }
