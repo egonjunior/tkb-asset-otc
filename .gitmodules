@@ -4,3 +4,6 @@
 [submodule ".claude/skills/ui-ux-pro-max"]
 	path = .claude/skills/ui-ux-pro-max
 	url = https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git
+[submodule ".claude/skills/obsidian-skills"]
+	path = .claude/skills/obsidian-skills
+	url = https://github.com/kepano/obsidian-skills.git
