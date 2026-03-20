@@ -1,0 +1,37 @@
+filters:
+  - property: tags
+    operator: contains
+    value: cliente
+formulas:
+  dias_desde_ultimo_trade: >
+    dateDiff(today(), prop("ultimo_trade"), "days")
+views:
+  - type: table
+    name: Todos os Clientes
+    order:
+      - nome
+      - segmento
+      - status
+      - volume_mensal
+      - ultimo_trade
+      - formula.dias_desde_ultimo_trade
+  - type: cards
+    name: Ativos
+    filters:
+      - property: status
+        operator: is
+        value: Ativo
+    order:
+      - nome
+      - volume_mensal
+      - segmento
+  - type: table
+    name: Em Onboarding
+    filters:
+      - property: status
+        operator: is
+        value: Em Onboarding
+    order:
+      - nome
+      - etapa_onboarding
+      - responsavel
