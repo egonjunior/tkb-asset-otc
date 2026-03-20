@@ -1,0 +1,182 @@
+{
+  "nodes": [
+    {
+      "id": "cliente",
+      "type": "text",
+      "x": -600,
+      "y": 0,
+      "width": 160,
+      "height": 60,
+      "text": "## Cliente\nInicia operação",
+      "color": "4"
+    },
+    {
+      "id": "abertura",
+      "type": "text",
+      "x": -380,
+      "y": -120,
+      "width": 180,
+      "height": 60,
+      "text": "### 1. Abertura de Conta\nKYC + Onboarding",
+      "color": "6"
+    },
+    {
+      "id": "cotacao",
+      "type": "text",
+      "x": -160,
+      "y": 0,
+      "width": 180,
+      "height": 60,
+      "text": "### 2. Cotação\nget-otc-quote",
+      "color": "1"
+    },
+    {
+      "id": "lock",
+      "type": "text",
+      "x": 60,
+      "y": 0,
+      "width": 180,
+      "height": 60,
+      "text": "### 3. Lock de Preço\nlock-price (5 min)",
+      "color": "1"
+    },
+    {
+      "id": "pagamento",
+      "type": "text",
+      "x": 280,
+      "y": 0,
+      "width": 180,
+      "height": 60,
+      "text": "### 4. Pagamento PIX\nComprovante / Webhook",
+      "color": "3"
+    },
+    {
+      "id": "aprovacao",
+      "type": "text",
+      "x": 500,
+      "y": 0,
+      "width": 180,
+      "height": 60,
+      "text": "### 5. Aprovação\nManual → Automática",
+      "color": "3"
+    },
+    {
+      "id": "okx",
+      "type": "text",
+      "x": 720,
+      "y": 0,
+      "width": 180,
+      "height": 60,
+      "text": "### 6. Envio OKX\nokx-operations",
+      "color": "2"
+    },
+    {
+      "id": "usdt",
+      "type": "text",
+      "x": 940,
+      "y": 0,
+      "width": 160,
+      "height": 60,
+      "text": "## USDT Entregue\nTRC-20 / ERC-20",
+      "color": "4"
+    },
+    {
+      "id": "expiracao",
+      "type": "text",
+      "x": 60,
+      "y": 140,
+      "width": 180,
+      "height": 50,
+      "text": "⚠️ Lock expirado\n→ Nova cotação",
+      "color": "5"
+    },
+    {
+      "id": "divergencia",
+      "type": "text",
+      "x": 500,
+      "y": 140,
+      "width": 180,
+      "height": 50,
+      "text": "⚠️ Valor divergente\n→ Revisão manual",
+      "color": "5"
+    },
+    {
+      "id": "legenda",
+      "type": "text",
+      "x": -600,
+      "y": 200,
+      "width": 300,
+      "height": 130,
+      "text": "**Legenda**\n🟡 Cliente\n🔵 Automático\n🟠 Semi-manual\n🟢 Concluído\n🔴 Erro / Exceção",
+      "color": "6"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "fromNode": "cliente",
+      "toNode": "abertura",
+      "label": "Primeiro acesso"
+    },
+    {
+      "id": "e2",
+      "fromNode": "abertura",
+      "toNode": "cotacao",
+      "label": "Conta ativa"
+    },
+    {
+      "id": "e3",
+      "fromNode": "cliente",
+      "toNode": "cotacao",
+      "label": "Retorno"
+    },
+    {
+      "id": "e4",
+      "fromNode": "cotacao",
+      "toNode": "lock",
+      "label": "Confirmar"
+    },
+    {
+      "id": "e5",
+      "fromNode": "lock",
+      "toNode": "pagamento",
+      "label": "Dentro do prazo"
+    },
+    {
+      "id": "e6",
+      "fromNode": "lock",
+      "toNode": "expiracao",
+      "label": "Tempo esgotado"
+    },
+    {
+      "id": "e7",
+      "fromNode": "expiracao",
+      "toNode": "cotacao",
+      "label": "Retry"
+    },
+    {
+      "id": "e8",
+      "fromNode": "pagamento",
+      "toNode": "aprovacao",
+      "label": "PIX recebido"
+    },
+    {
+      "id": "e9",
+      "fromNode": "aprovacao",
+      "toNode": "divergencia",
+      "label": "Divergência"
+    },
+    {
+      "id": "e10",
+      "fromNode": "aprovacao",
+      "toNode": "okx",
+      "label": "Aprovado"
+    },
+    {
+      "id": "e11",
+      "fromNode": "okx",
+      "toNode": "usdt",
+      "label": "On-chain"
+    }
+  ]
+}
