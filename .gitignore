@@ -48,3 +48,10 @@ Thumbs.db
 .aiox-core/node_modules/
 .claude/settings.local.json
 .aiox/install-log.txt
+
+# claude-mem (deps instaladas localmente, não versionar)
+.claude-mem/node_modules/
+.claude-mem/plugin/node_modules/
+.claude-mem/.bun/
+.claude-mem/ragtime/
+.claude-mem/data/
