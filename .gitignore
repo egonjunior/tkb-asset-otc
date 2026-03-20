@@ -55,3 +55,7 @@ Thumbs.db
 .claude-mem/.bun/
 .claude-mem/ragtime/
 .claude-mem/data/
+
+# ui-ux-pro-max (skill, não versionar cache)
+.claude/skills/ui-ux-pro-max/__pycache__/
+.claude/skills/ui-ux-pro-max/src/**/__pycache__/
