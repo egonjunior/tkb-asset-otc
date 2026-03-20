@@ -55,6 +55,7 @@ const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
 const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
 const Notificacoes = lazy(() => import("./pages/Notificacoes"));
+const MeetingSquad = lazy(() => import("./pages/MeetingSquad"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -168,6 +169,7 @@ const App = () => {
                 <Route path="/admin/notifications" element={<AdminProtectedRoute><AdminNotifications /></AdminProtectedRoute>} />
                 <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="/meeting" element={<ProtectedRoute><MeetingSquad /></ProtectedRoute>} />
                 <Route path="/:slug" element={<OtcQuote />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
